@@ -11,6 +11,6 @@ Then, drop the LC_API.dll file in Lethal Company\BepInEx\plugins
 If you want to use the API in your plugin, add the LC_API.dll as a project reference!
 
 # Features
-AssetBundle loading - Drop asset bundles BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
+AssetBundle loading - Put asset bundles in BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
 
 More soon!
