@@ -13,4 +13,4 @@ If you want to use the API in your plugin, add the LC_API.dll as a project refer
 # Features
 AssetBundle loading - Put asset bundles in BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
 
-More soon!
+ServerAPI - Automatically alerts other users when you host that your server is modded, and lets mod authors make their mods put users in special matchmaking where they can only play with other modded users
