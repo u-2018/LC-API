@@ -26,11 +26,6 @@ namespace LC_API.ManualPatches
             return (true);
         }
 
-        private static void LobbyIsJoinable()
-        {
-
-        }
-
         private static bool Vers(MenuManager __instance)
         {
             SVAPI.MenuManager = __instance;
