@@ -12,13 +12,22 @@ using UnityEngine.Android;
 
 namespace LC_API.BundleAPI
 {
+    /// <summary>
+    /// Use the BundleLoader to load and get custom assets. A folder for placing custom assets will be generated in BepInEx/Bundles.
+    /// </summary>
     public class BundleLoader
     {
         public static ConcurrentDictionary<string, UnityEngine.Object> assets;
         public delegate void OnLoadedAssetsDelegate();
 
+        /// <summary>
+        /// This is called when the BundleLoader finishes loading assets.
+        /// </summary>
         public static OnLoadedAssetsDelegate OnLoadedAssets;
 
+        /// <summary>
+        /// Loads all asset bundles present in the bundle directory. It is not recommended to call this method, as it will introduce instability.
+        /// </summary>
         public static void Load()
         {
             assets = new ConcurrentDictionary<string, UnityEngine.Object>();
@@ -54,6 +63,9 @@ namespace LC_API.BundleAPI
             OnLoadedAssets();
         }
 
+        /// <summary>
+        /// Saves all assets from a bundle at the given path. It is not recommended to call this method, as it can introduce instability.
+        /// </summary>
         public static void SaveAsset(string path)
         {
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
@@ -81,6 +93,9 @@ namespace LC_API.BundleAPI
             }
         }
 
+        /// <summary>
+        /// Get an asset from all the loaded assets. Use this to access your custom assets.
+        /// </summary>
         public static AssetType GetLoadedAsset<AssetType>(string itemPath) where AssetType : UnityEngine.Object
         {
             UnityEngine.Object @object;
@@ -89,7 +104,7 @@ namespace LC_API.BundleAPI
             return (AssetType)asset;
         }
 
-        public static void LoadAssetsCompleted()
+        private static void LoadAssetsCompleted()
         {
             Plugin.Log.LogMessage("BundleAPI finished loading all assets.");
         }

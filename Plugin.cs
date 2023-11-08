@@ -44,6 +44,10 @@ namespace LC_API
 
             MethodInfo patch3 = AccessTools.Method(typeof(ServerPatch), "Vers");
 
+            MethodInfo original4 = AccessTools.Method(typeof(HUDManager), "AddChatMessage");
+
+            MethodInfo patch4 = AccessTools.Method(typeof(ServerPatch), "ChatInterpreter");
+
             harmony.Patch(original3, new HarmonyMethod(patch3));
 
             harmony.Patch(original, new HarmonyMethod(patch));
