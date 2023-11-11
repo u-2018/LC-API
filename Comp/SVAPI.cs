@@ -1,4 +1,11 @@
-﻿namespace LC_API.Comp;
+﻿// -----------------------------------------------------------------------
+// <copyright file="SVAPI.cs" company="Lethal Company Modding Community">
+// Copyright (c) Lethal Company Modding Community. All rights reserved.
+// Licensed under the GPL-3.0 license.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace LC_API.Comp;
 
 // ReSharper disable RedundantNameQualifier
 using LC_API.ServerAPI;

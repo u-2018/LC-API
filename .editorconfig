@@ -1,19 +1,22 @@
 ﻿# Remove BepInEx auto-generated info files. (womp-womp)
 [MyPluginInfo.cs]
 
-# Field should not contain an underscore
+# SA1310: Field should not contain an underscore
 dotnet_diagnostic.SA1310.severity = none
 
-# Elements should be documented
+# SA1600: Elements should be documented
 dotnet_diagnostic.SA1600.severity = none
 
-# Missing XML comment for publicly visible type or member.
+# CS1591: Missing XML comment for publicly visible type or member.
 dotnet_diagnostic.CS1591.severity = none
+
+# SA1633: File should have header 
+dotnet_diagnostic.SA1633.severity = none
 
 [*.cs]
 
 # SA1633: File should have header
-dotnet_diagnostic.SA1633.severity = none
+dotnet_diagnostic.SA1633.severity = Warning
 
 # IDE0003: Remove qualification
 dotnet_diagnostic.IDE0003.severity = none

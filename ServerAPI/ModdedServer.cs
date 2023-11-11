@@ -1,4 +1,11 @@
-﻿namespace LC_API.ServerAPI;
+﻿// -----------------------------------------------------------------------
+// <copyright file="ModdedServer.cs" company="Lethal Company Modding Community">
+// Copyright (c) Lethal Company Modding Community. All rights reserved.
+// Licensed under the GPL-3.0 license.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace LC_API.ServerAPI;
 
 // Field should be made private.
 #pragma warning disable SA1401

@@ -1,4 +1,11 @@
-﻿namespace LC_API.BundleAPI;
+﻿// -----------------------------------------------------------------------
+// <copyright file="BundleLoader.cs" company="Lethal Company Modding Community">
+// Copyright (c) Lethal Company Modding Community. All rights reserved.
+// Licensed under the GPL-3.0 license.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace LC_API.BundleAPI;
 
 using System;
 using System.Collections.Concurrent;
