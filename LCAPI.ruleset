@@ -6,5 +6,6 @@
         <Rule Id="SA1118" Action="None" />
         <Rule Id="SA1135" Action="None" />
         <Rule Id="SA1503" Action="None" />
-    </Rules> 
+        <Rule Id="SA1633" Action="Warning" />
+    </Rules>
 </RuleSet>
