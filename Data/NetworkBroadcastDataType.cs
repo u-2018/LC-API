@@ -1,16 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace LC_API.Data;
 
-namespace LC_API.Data
+/// <summary>
+/// Represents the type of data that has been received.
+/// </summary>
+// ReSharper disable IdentifierTypo
+public enum NetworkBroadcastDataType
 {
-    public enum NetworkBroadcastDataType
-    {
-        BDint,
-        BDfloat,
-        BDvector3,
-        BDstring,
-    }
+    /// <summary>
+    /// Represents data that is an integer.
+    /// </summary>
+    BDint = 0,
+
+    /// <summary>
+    /// Represents data that is a float.
+    /// </summary>
+    BDfloat = 1,
+
+    /// <summary>
+    /// Represents data that is a vector.
+    /// </summary>
+    BDvector3 = 2,
+
+    /// <summary>
+    /// Represents data that is a string.
+    /// </summary>
+    BDstring = 3,
 }
