@@ -44,5 +44,8 @@
   
   <ItemGroup>
     <AdditionalFiles Include="stylecop.json" />
+    <None Include="obj/$(Configuration)/$(TargetFramework)/MyPluginInfo.cs">
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+    </None>
   </ItemGroup>
 </Project>
