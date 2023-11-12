@@ -38,7 +38,6 @@ namespace LC_API
             MethodInfo original2 = AccessTools.Method(typeof(GameNetworkManager), "LobbyDataIsJoinable");
 
             MethodInfo patch = AccessTools.Method(typeof(ManualPatches.ServerPatch), "OnLobbyCreate");
-            MethodInfo patch2 = AccessTools.Method(typeof(ManualPatches.ServerPatch), "LobbyIsJoinable");
 
             MethodInfo original3 = AccessTools.Method(typeof(MenuManager), "Awake");
 
@@ -51,7 +50,6 @@ namespace LC_API
             harmony.Patch(original3, new HarmonyMethod(patch3));
 
             harmony.Patch(original, new HarmonyMethod(patch));
-            harmony.Patch(original2, new HarmonyMethod(patch2));
         }
 
         private void OnDestroy()
