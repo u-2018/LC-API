@@ -48,7 +48,7 @@ namespace LC_API
             MethodInfo patch4 = AccessTools.Method(typeof(ServerPatch), "ChatInterpreter");
 
             harmony.Patch(original3, new HarmonyMethod(patch3));
-
+            harmony.Patch(original4, new HarmonyMethod(patch4));
             harmony.Patch(original, new HarmonyMethod(patch));
         }
 

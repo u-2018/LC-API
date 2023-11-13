@@ -11,6 +11,7 @@ namespace LC_API.Comp
     internal class SVAPI : MonoBehaviour
     {
         public static MenuManager MenuManager;
+        public float netTester;
         public void Update()
         {
             if (!ModdedServer.setModdedOnly)

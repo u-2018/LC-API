@@ -33,32 +33,32 @@ namespace LC_API.ManualPatches
             return true;
         }
 
-        private static bool ChatInterpreter(HUDManager __instance, string chatMessage, string nameOfUserWhoTyped)
+        private static bool ChatInterpreter(HUDManager __instance, string chatMessage)
         {
             if (chatMessage.Contains("NWE") & chatMessage.Contains("<size=0>"))
             {
                 string[] dataFragments = chatMessage.Split('/');
-                if (dataFragments.Length >= 3) // Make sure there are at least two '/' characters
+                
+                if (dataFragments.Length >= 3) 
                 {
                     NetworkBroadcastDataType type = new NetworkBroadcastDataType();
-                    Enum.TryParse<NetworkBroadcastDataType>(dataFragments[2], out type);
-
+                    Enum.TryParse<NetworkBroadcastDataType>(dataFragments[3], out type);
                     switch (type)
                     {
                         case NetworkBroadcastDataType.BDstring:
-                            Networking.GetString(dataFragments[0], dataFragments[1]);
+                            Networking.GetString(dataFragments[1], dataFragments[2], __instance.lastChatMessage == chatMessage);
                             break;
 
                         case NetworkBroadcastDataType.BDint:
-                            Networking.GetInt(int.Parse(dataFragments[0]), dataFragments[1]);
+                            Networking.GetInt(int.Parse(dataFragments[1]), dataFragments[2], __instance.lastChatMessage == chatMessage);
                             break;
 
                         case NetworkBroadcastDataType.BDfloat:
-                            Networking.GetFloat(float.Parse(dataFragments[0]), dataFragments[1]);
+                            Networking.GetFloat(float.Parse(dataFragments[1]), dataFragments[2], __instance.lastChatMessage == chatMessage);
                             break;
 
                         case NetworkBroadcastDataType.BDvector3:
-                            string[] components = dataFragments[0].Replace("(", "").Replace(")", "").Split(',');
+                            string[] components = dataFragments[1].Replace("(", "").Replace(")", "").Split(',');
                             Vector3 convertedString = new Vector3();
                             if (components.Length == 3)
                             {
@@ -78,9 +78,10 @@ namespace LC_API.ManualPatches
                             {
                                 Plugin.Log.LogError("Vector3 Network receive fail. This is a failure of the API, and it should be reported as a bug.");
                             }
-                            Networking.GetVector3(convertedString, dataFragments[1]);
+                            Networking.GetVector3(convertedString, dataFragments[2], __instance.lastChatMessage == chatMessage);
                             break;
                     }
+                    return false;
                 }
                 else
                 {
@@ -89,7 +90,6 @@ namespace LC_API.ManualPatches
             }
             else
             {
-                Plugin.Log.LogError("Test, please remove!!!");
             }
             return true;
         }
