@@ -1,5 +1,5 @@
 # LC-API
-An API for use when modding Lethal Company to make your life easier
+The definitive Lethal Company modding API. Includes some very useful features to make modding life easier.
 
 # Installation
 First, install BepInEx 5 into your game
