@@ -5,7 +5,8 @@ The definitive Lethal Company modding API. Includes some very useful features to
 First, install BepInEx 5 into your game
 (https://github.com/BepInEx/BepInEx)
 
-Then, drop the LC_API.dll file in Lethal Company\BepInEx\plugins
+Then, get the latest release off of thunderstore 
+(https://thunderstore.io/c/lethal-company/p/2018/LC_API/)
 
 # For Developers
 If you want to use the API in your plugin, add the LC_API.dll as a project reference!
