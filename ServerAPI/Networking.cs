@@ -11,7 +11,7 @@ using static LC_API.BundleAPI.BundleLoader;
 namespace LC_API.ServerAPI
 {
     /// <summary>
-    /// Netoworking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data.
+    /// Networking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data.
     /// </summary>
     public class Networking
     {
