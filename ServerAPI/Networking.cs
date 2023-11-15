@@ -69,7 +69,7 @@ namespace LC_API.ServerAPI
         /// <summary>
         /// Send data across the network. The signature is an identifier for use when receiving data.
         /// </summary>
-        public static void Broadcast(Vector3 data, string signature)
+        public static void Broadcast(UnityEngine.Vector3 data, string signature)
         {
             HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDvector3.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
         }
