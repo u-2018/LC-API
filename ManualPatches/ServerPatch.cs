@@ -22,7 +22,6 @@ namespace LC_API.ManualPatches
                 Debug.LogError(string.Format("Lobby could not be created! {0}", result), __instance);
             }
             __instance.lobbyHostSettings.lobbyName = "[MODDED]" + __instance.lobbyHostSettings.lobbyName.ToString();
-            //lobby.SetData("vers", "This server requires mods. " + GameNetworkManager.Instance.gameVersionNum.ToString());
             Plugin.Log.LogMessage("server pre-setup success");
             return (true);
         }
@@ -38,23 +37,34 @@ namespace LC_API.ManualPatches
             if (chatMessage.Contains("NWE") & chatMessage.Contains("<size=0>"))
             {
                 string[] dataFragments = chatMessage.Split('/');
-                
+
                 if (dataFragments.Length >= 3) 
                 {
+                    int parsedplayer;
+                    bool success = int.TryParse(dataFragments[4], out parsedplayer);
+                    if (!success)
+                    {
+                        Plugin.Log.LogWarning("Failed to parse player ID!!");
+                        return false;
+                    }
+                    if (parsedplayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId)
+                    {
+                        return false;
+                    }
                     NetworkBroadcastDataType type = new NetworkBroadcastDataType();
                     Enum.TryParse<NetworkBroadcastDataType>(dataFragments[3], out type);
                     switch (type)
                     {
                         case NetworkBroadcastDataType.BDstring:
-                            Networking.GetString(dataFragments[1], dataFragments[2], __instance.lastChatMessage == chatMessage);
+                            Networking.GetString(dataFragments[1], dataFragments[2]);
                             break;
 
                         case NetworkBroadcastDataType.BDint:
-                            Networking.GetInt(int.Parse(dataFragments[1]), dataFragments[2], __instance.lastChatMessage == chatMessage);
+                            Networking.GetInt(int.Parse(dataFragments[1]), dataFragments[2]);
                             break;
 
                         case NetworkBroadcastDataType.BDfloat:
-                            Networking.GetFloat(float.Parse(dataFragments[1]), dataFragments[2], __instance.lastChatMessage == chatMessage);
+                            Networking.GetFloat(float.Parse(dataFragments[1]), dataFragments[2]);
                             break;
 
                         case NetworkBroadcastDataType.BDvector3:
@@ -78,7 +88,7 @@ namespace LC_API.ManualPatches
                             {
                                 Plugin.Log.LogError("Vector3 Network receive fail. This is a failure of the API, and it should be reported as a bug.");
                             }
-                            Networking.GetVector3(convertedString, dataFragments[2], __instance.lastChatMessage == chatMessage);
+                            Networking.GetVector3(convertedString, dataFragments[2]);
                             break;
                     }
                     return false;
@@ -87,9 +97,6 @@ namespace LC_API.ManualPatches
                 {
                     Plugin.Log.LogError("Generic Network receive fail. This is a failure of the API, and it should be reported as a bug.");
                 }
-            }
-            else
-            {
             }
             return true;
         }

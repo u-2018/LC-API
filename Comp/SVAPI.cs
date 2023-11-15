@@ -11,9 +11,16 @@ namespace LC_API.Comp
     internal class SVAPI : MonoBehaviour
     {
         public static MenuManager MenuManager;
-        public float netTester;
+        public bool netTester;
         public void Update()
         {
+            if (HUDManager.Instance != null & netTester)
+            {
+                if (GameNetworkManager.Instance.localPlayerController  != null)
+                {
+                    Networking.Broadcast("testerData", "testerSignature");
+                }
+            }
             if (!ModdedServer.setModdedOnly)
             {
                 ModdedServer.OnSceneLoaded();
