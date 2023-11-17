@@ -20,3 +20,6 @@ ModdedServer - Automatically alerts other users when you host a server that your
 It also lets mod authors make their mods put users in special matchmaking where they can only play with other modded users
 
 Networking - Easily send data across the network to sync data between clients effortlessly
+
+# Notes
+I dont allow forks of the API, or using the code outside the context of the API.
