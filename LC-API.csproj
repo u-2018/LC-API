@@ -36,6 +36,9 @@
     <Reference Include="netstandard">
       <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\netstandard.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.InputSystem.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Netcode.Runtime">
       <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
     </Reference>

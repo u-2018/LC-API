@@ -1,4 +1,5 @@
-﻿using LC_API.ServerAPI;
+﻿using LC_API.GameInterfaceAPI;
+using LC_API.ServerAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,9 +12,13 @@ namespace LC_API.Comp
     internal class SVAPI : MonoBehaviour
     {
         public static MenuManager MenuManager;
-        public bool netTester;
+        public static bool netTester = false;
+        private static int playerCount;
+        private static bool wanttoCheckMods;
+        private static float lobbychecktimer;
         public void Update()
         {
+            GameState.GSUpdate();
             if (HUDManager.Instance != null & netTester)
             {
                 if (GameNetworkManager.Instance.localPlayerController  != null)
@@ -35,6 +40,30 @@ namespace LC_API.Comp
                     }
                 }
             }
+
+            if (GameNetworkManager.Instance != null)
+            {
+                if (playerCount < GameNetworkManager.Instance.connectedPlayers)
+                {
+                    lobbychecktimer = -8f;
+                    wanttoCheckMods = true;
+                }
+                playerCount = GameNetworkManager.Instance.connectedPlayers;
+            }
+            if (lobbychecktimer < 0)
+            {
+                lobbychecktimer += Time.deltaTime;
+            }
+            else if (wanttoCheckMods)
+            {
+                wanttoCheckMods = false;
+                CD();
+            }
+        }
+
+        private void CD()
+        {
+            CheatDatabase.OtherPlayerCheatDetector();
         }
     }
 }

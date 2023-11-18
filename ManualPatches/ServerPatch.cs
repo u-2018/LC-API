@@ -10,6 +10,8 @@ using HarmonyLib;
 using LC_API.ServerAPI;
 using LC_API.Comp;
 using LC_API.Data;
+using System.Runtime.Remoting.Contexts;
+using UnityEngine.InputSystem;
 
 namespace LC_API.ManualPatches
 {
@@ -47,7 +49,7 @@ namespace LC_API.ManualPatches
                         Plugin.Log.LogWarning("Failed to parse player ID!!");
                         return false;
                     }
-                    if (parsedplayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId)
+                    if (parsedplayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId & !SVAPI.netTester)
                     {
                         return false;
                     }
@@ -91,12 +93,26 @@ namespace LC_API.ManualPatches
                             Networking.GetVector3(convertedString, dataFragments[2]);
                             break;
                     }
+                    if (SVAPI.netTester)
+                    {
+                        //Plugin.Log.LogWarning("Success! Received data with no errors.");
+                    }
                     return false;
                 }
                 else
                 {
                     Plugin.Log.LogError("Generic Network receive fail. This is a failure of the API, and it should be reported as a bug.");
                 }
+            }
+            return true;
+        }
+
+        private static bool ChatCommands(HUDManager __instance, InputAction.CallbackContext context)
+        {
+            if (__instance.chatTextField.text.ToLower().Contains("/modcheck"))
+            {
+                CheatDatabase.OtherPlayerCheatDetector();
+                return false;
             }
             return true;
         }

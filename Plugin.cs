@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -10,6 +11,12 @@ using UnityEngine;
 
 namespace LC_API
 {
+//.____    _________           _____  __________ .___  
+//|    |   \_   ___ \         /  _  \ \______   \|   | 
+//|    |   /    \  \/        /  /_\  \ |     ___/|   | 
+//|    |___\     \____      /    |    \|    |    |   | 
+//|_______ \\______  /______\____|__  /|____|    |___| 
+//        \/       \//_____/        \/                 
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
@@ -26,12 +33,12 @@ namespace LC_API
 
             Log = Logger;
             // Plugin startup logic
-            Logger.LogInfo($"LC-API Starting up..");
+            Logger.LogWarning("\n.____    _________           _____  __________ .___  \r\n|    |   \\_   ___ \\         /  _  \\ \\______   \\|   | \r\n|    |   /    \\  \\/        /  /_\\  \\ |     ___/|   | \r\n|    |___\\     \\____      /    |    \\|    |    |   | \r\n|_______ \\\\______  /______\\____|__  /|____|    |___| \r\n        \\/       \\//_____/        \\/                 \r\n                                                     ");
+            Logger.LogInfo($"LC_API Starting up..");
             if (configOverrideModServer.Value)
             {
                 ModdedServer.SetServerModdedOnly();
             }
-                
 
             Harmony harmony = new Harmony("ModAPI");
             MethodInfo original = AccessTools.Method(typeof(GameNetworkManager), "SteamMatchmaking_OnLobbyCreated");
@@ -50,6 +57,8 @@ namespace LC_API
             harmony.Patch(original3, new HarmonyMethod(patch3));
             harmony.Patch(original4, new HarmonyMethod(patch4));
             harmony.Patch(original, new HarmonyMethod(patch));
+            
+            Networking.GetString += CheatDatabase.RequestModList;
         }
 
         private void OnDestroy()
@@ -58,6 +67,14 @@ namespace LC_API
             GameObject gameObject = new GameObject("API");
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<SVAPI>();
+            Logger.LogInfo($"LC_API Started!");
+            CheatDatabase.RunLocalCheatDetector();
+            
+        }
+
+        private static void PatchMethodManual(MethodInfo method, MethodInfo patch, Harmony harmony)
+        {
+            harmony.Patch(method, new HarmonyMethod(patch));
         }
     }
 }
