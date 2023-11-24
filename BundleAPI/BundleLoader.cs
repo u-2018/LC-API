@@ -18,6 +18,7 @@ namespace LC_API.BundleAPI
     public class BundleLoader
     {
         public static ConcurrentDictionary<string, UnityEngine.Object> assets;
+        public static bool assetsInLegacyDirectory;
         public delegate void OnLoadedAssetsDelegate();
 
         /// <summary>
@@ -30,24 +31,46 @@ namespace LC_API.BundleAPI
         /// </summary>
         public static void Load()
         {
+            assetsInLegacyDirectory = true;
             assets = new ConcurrentDictionary<string, UnityEngine.Object>();
             Plugin.Log.LogMessage("BundleAPI will now load all asset bundles...");
             string dir1 = Path.Combine(Paths.BepInExRootPath, "Bundles");
             if (!Directory.Exists(dir1))
             {
                 Directory.CreateDirectory(dir1);
-                Plugin.Log.LogMessage("BundleAPI Created bundle directory in BepInEx/Bundles");
+                Plugin.Log.LogMessage("BundleAPI Created legacy bundle directory in BepInEx/Bundles");
             }
-            string[] array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories)
-                         .Where(x => !x.EndsWith(".manifest", StringComparison.CurrentCultureIgnoreCase))
-                         .ToArray();
+            string[] array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".manifest", StringComparison.CurrentCultureIgnoreCase)).ToArray();
 
             if (array.Length == 0)
             {
-                Plugin.Log.LogMessage("BundleAPI got no assets to load, stopping loading!");
-                return;
+                Plugin.Log.LogMessage("BundleAPI got no assets to load from legacy directory");
+                assetsInLegacyDirectory = false;
             }
+            if (assetsInLegacyDirectory)
+            {
+                Plugin.Log.LogWarning("The path BepInEx > Bundles is outdated and should not be used anymore! Bundles will be loaded from BepInEx > plugins from now on");
+                LoadAllAssetsFromDirectory(array);
+            }
+            dir1 = Path.Combine(Paths.BepInExRootPath, "plugins");
+            array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).ToArray();
+
+            if (array.Length == 0)
+            {
+                Plugin.Log.LogMessage("BundleAPI got no assets to load from plugins folder");
+            }
+            else
+            {
+                LoadAllAssetsFromDirectory(array);
+            }
+            OnLoadedAssets += LoadAssetsCompleted;
+            OnLoadedAssets();
+        }
+
+        private static void LoadAllAssetsFromDirectory(string[] array)
+        {
             Plugin.Log.LogMessage("BundleAPI got " + array.Length.ToString() + " AssetBundles to load!");
+            
             for (int i = 0; i < array.Length; i++)
             {
                 try
@@ -59,8 +82,6 @@ namespace LC_API.BundleAPI
                     Plugin.Log.LogError("Failed to load an assetbundle! Path: " + array[i]);
                 }
             }
-            OnLoadedAssets += LoadAssetsCompleted;
-            OnLoadedAssets();
         }
 
         /// <summary>
