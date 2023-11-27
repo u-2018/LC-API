@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
+using DigitalRuby.ThunderAndLightning;
 using Steamworks.Data;
 using UnityEngine;
 using UnityEngine.Android;
@@ -19,6 +20,7 @@ namespace LC_API.BundleAPI
     {
         public static ConcurrentDictionary<string, UnityEngine.Object> assets;
         public static bool assetsInLegacyDirectory;
+        public static bool legacyLoadingEnabled;
         public delegate void OnLoadedAssetsDelegate();
 
         /// <summary>
@@ -29,9 +31,10 @@ namespace LC_API.BundleAPI
         /// <summary>
         /// Loads all asset bundles present in the bundle directory. It is not recommended to call this method, as it will introduce instability.
         /// </summary>
-        public static void Load()
+        public static void Load(bool legacyLoading)
         {
             assetsInLegacyDirectory = true;
+            legacyLoadingEnabled = legacyLoading;
             assets = new ConcurrentDictionary<string, UnityEngine.Object>();
             Plugin.Log.LogMessage("BundleAPI will now load all asset bundles...");
             string dir1 = Path.Combine(Paths.BepInExRootPath, "Bundles");
@@ -50,7 +53,7 @@ namespace LC_API.BundleAPI
             if (assetsInLegacyDirectory)
             {
                 Plugin.Log.LogWarning("The path BepInEx > Bundles is outdated and should not be used anymore! Bundles will be loaded from BepInEx > plugins from now on");
-                LoadAllAssetsFromDirectory(array);
+                LoadAllAssetsFromDirectory(array, legacyLoading);
             }
             dir1 = Path.Combine(Paths.BepInExRootPath, "plugins");
             array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).ToArray();
@@ -61,13 +64,13 @@ namespace LC_API.BundleAPI
             }
             else
             {
-                LoadAllAssetsFromDirectory(array);
+                LoadAllAssetsFromDirectory(array, legacyLoading);
             }
             OnLoadedAssets += LoadAssetsCompleted;
             OnLoadedAssets();
         }
 
-        private static void LoadAllAssetsFromDirectory(string[] array)
+        private static void LoadAllAssetsFromDirectory(string[] array, bool legacyLoading)
         {
             Plugin.Log.LogMessage("BundleAPI got " + array.Length.ToString() + " AssetBundles to load!");
             
@@ -75,7 +78,7 @@ namespace LC_API.BundleAPI
             {
                 try
                 {
-                    SaveAsset(array[i]);
+                    SaveAsset(array[i], legacyLoading);
                 }
                 catch (Exception ex)
                 {
@@ -87,7 +90,7 @@ namespace LC_API.BundleAPI
         /// <summary>
         /// Saves all assets from a bundle at the given path. It is not recommended to call this method, as it can introduce instability.
         /// </summary>
-        public static void SaveAsset(string path)
+        public static void SaveAsset(string path, bool legacyLoad)
         {
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
             string[] array = bundle.GetAllAssetNames();
@@ -98,7 +101,12 @@ namespace LC_API.BundleAPI
                 UnityEngine.Object obj = bundle.LoadAsset(text);
                 if (obj != null)
                 {
-                    string text2 = text.ToUpper();
+                    
+                    string text2 = text.ToLower();
+                    if (legacyLoad)
+                    {
+                        text2 = text2.ToUpper();
+                    }
                     if (assets.ContainsKey(text2))
                     {
                         Plugin.Log.LogError("BundleAPI got duplicate asset!");
@@ -120,7 +128,14 @@ namespace LC_API.BundleAPI
         public static AssetType GetLoadedAsset<AssetType>(string itemPath) where AssetType : UnityEngine.Object
         {
             UnityEngine.Object @object;
-            assets.TryGetValue(itemPath.ToUpper(), out @object);
+            if (legacyLoadingEnabled)
+            {
+                assets.TryGetValue(itemPath.ToUpper(), out @object);
+            }
+            else
+            {
+                assets.TryGetValue(itemPath.ToLower(), out @object);
+            }
             UnityEngine.Object asset = @object;
             return (AssetType)asset;
         }

@@ -23,12 +23,11 @@ namespace LC_API
         public static ManualLogSource Log;
 
         private ConfigEntry<bool> configOverrideModServer;
+        private ConfigEntry<bool> configLegacyAssetLoading;
         private void Awake()
         {
-            configOverrideModServer = Config.Bind("General",
-                                                "Force modded server browser",
-                                                false,
-                                                "Should the API force you into the modded server browser?");
+            configOverrideModServer = Config.Bind("General","Force modded server browser",false,"Should the API force you into the modded server browser?");
+            configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
 
 
             Log = Logger;
@@ -63,7 +62,7 @@ namespace LC_API
 
         private void OnDestroy()
         {
-            BundleAPI.BundleLoader.Load();
+            BundleAPI.BundleLoader.Load(configLegacyAssetLoading.Value);
             GameObject gameObject = new GameObject("API");
             DontDestroyOnLoad(gameObject);
             gameObject.AddComponent<SVAPI>();
