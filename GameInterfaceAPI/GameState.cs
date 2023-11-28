@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace LC_API.GameInterfaceAPI
 {
     public class GameState
+    public static class GameState
     {
         public delegate void GenericGameEventDelegate();
 

@@ -16,7 +16,7 @@ namespace LC_API.BundleAPI
     /// <summary>
     /// Use the BundleLoader to load and get custom assets. A folder for placing custom assets will be generated in BepInEx/Bundles.
     /// </summary>
-    public class BundleLoader
+    public static class BundleLoader
     {
         public static ConcurrentDictionary<string, UnityEngine.Object> assets;
         public static bool assetsInLegacyDirectory;

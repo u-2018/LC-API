@@ -19,6 +19,7 @@ namespace LC_API
 //        \/       \//_____/        \/                 
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
+    public sealed class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Log;
         public static bool Initialized = false;

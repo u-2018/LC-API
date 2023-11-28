@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace LC_API
 {
-    public class CheatDatabase
+    internal static class CheatDatabase
     {
         private static Dictionary<string, PluginInfo> PluginsLoaded = new Dictionary<string, PluginInfo>();
 

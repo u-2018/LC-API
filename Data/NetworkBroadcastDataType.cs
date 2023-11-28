@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace LC_API.Data
 {
-    public enum NetworkBroadcastDataType
+    internal enum NetworkBroadcastDataType
     {
+        Unknown,
         BDint,
         BDfloat,
         BDvector3,

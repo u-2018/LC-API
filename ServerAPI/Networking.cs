@@ -13,7 +13,7 @@ namespace LC_API.ServerAPI
     /// <summary>
     /// Networking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data. Note that the local player will not receive data that they broadcast.
     /// </summary>
-    public class Networking
+    public static class Networking
     {
         public delegate void GotStringEventDelegate(string data, string signature);
         public delegate void GotIntEventDelegate(int data, string signature);
