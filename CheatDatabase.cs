@@ -11,6 +11,10 @@ namespace LC_API
 {
     internal static class CheatDatabase
     {
+        const string DAT_CD_BROADCAST = "LC_API_CD_Broadcast";
+        const string SIG_REQ_GUID = "LC_API_ReqGUID";
+        const string SIG_SEND_MODS = "LC_APISendMods";
+
         private static Dictionary<string, PluginInfo> PluginsLoaded = new Dictionary<string, PluginInfo>();
 
         public static void RunLocalCheatDetector()
@@ -19,22 +23,14 @@ namespace LC_API
 
             foreach (PluginInfo info in PluginsLoaded.Values)
             {
-                if (info.Metadata.GUID == "mikes.lethalcompany.mikestweaks")
+                switch(info.Metadata.GUID)
                 {
-                    ServerAPI.ModdedServer.SetServerModdedOnly();
-                }
-                if (info.Metadata.GUID == "mom.llama.enhancer")
-                {
-                    ServerAPI.ModdedServer.SetServerModdedOnly();
-                }
-                if (info.Metadata.GUID == "Posiedon.GameMaster")
-                {
-                    
-                    ServerAPI.ModdedServer.SetServerModdedOnly();
-                }
-                if (info.Metadata.GUID == "LethalCompanyScalingMaster")
-                {
-                    ServerAPI.ModdedServer.SetServerModdedOnly();
+                    case "mikes.lethalcompany.mikestweaks":
+                    case "mom.llama.enhancer":
+                    case "Posiedon.GameMaster":
+                    case "LethalCompanyScalingMaster":
+                        ServerAPI.ModdedServer.SetServerModdedOnly();
+                        break;
                 }
             }
         }
@@ -43,22 +39,22 @@ namespace LC_API
         {
             Plugin.Log.LogWarning("Asking all other players for their mod list..");
             HUDManager.Instance.chatText.text += "\n" + "<color=white>Grabbing all connected users mod list\nCheck the log for results!!</color>";
-            Networking.Broadcast("LC_API_CD_Broadcast", "LC_API_ReqGUID");
+            Networking.Broadcast(DAT_CD_BROADCAST, SIG_REQ_GUID);
         }
 
         internal static void RequestModList(string data, string signature)
         {
-            if (data == "LC_API_CD_Broadcast" & signature == "LC_API_ReqGUID")
+            if (data == DAT_CD_BROADCAST && signature == SIG_REQ_GUID)
             {
                 string mods = "";
                 foreach (PluginInfo info in PluginsLoaded.Values)
                 {
                     mods += "\n" + info.Metadata.GUID;
                 }
-                Networking.Broadcast(GameNetworkManager.Instance.localPlayerController.playerUsername + " responded with these mods:" + mods, "LC_APISendMods");
+                Networking.Broadcast(GameNetworkManager.Instance.localPlayerController.playerUsername + " responded with these mods:" + mods, SIG_SEND_MODS);
             }
 
-            if (signature == "LC_APISendMods")
+            if (signature == SIG_SEND_MODS)
             {
                 Plugin.Log.LogWarning(data);
             }
