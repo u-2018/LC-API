@@ -21,20 +21,32 @@ namespace LC_API.BundleAPI
     /// </summary>
     public static class BundleLoader
     {
-        public static ConcurrentDictionary<string, UnityEngine.Object> assets;
-        public static bool assetsInLegacyDirectory;
-        public static bool legacyLoadingEnabled;
-        public delegate void OnLoadedAssetsDelegate();
+        /// <summary>
+        /// Is set to <see langword="true"/> if there are any files not ending in '.manifest' in the legacy bundle dir. <see langword="false"/> if there are no files or only .manifest files.
+        /// </summary>
+        public static bool AssetsInLegacyDirectory { get; private set; }
 
+        /// <summary>
+        /// Is set to <see langword="true"/> if asset loading legacy bundle dir was enabled. <see langword="false"/> if assets were not allowed to be loaded from the legacy bundle dir.
+        /// </summary>
+        public static bool LegacyLoadingEnabled { get; private set; }
+
+        // i think eventually 'assets' should be privatized and changed to a Dictionary. Unity is comically thread-unsafe, so using a thread-safe ConcurrentDict is overkill.
+        [Obsolete("Use GetLoadedAsset instead. This will be removed/private in a future update.")]
+        public static ConcurrentDictionary<string, UnityEngine.Object> assets = new ConcurrentDictionary<string, UnityEngine.Object>();
+
+        [Obsolete("Use OnLoadedBundles instead. This will be removed/private in a future update.")]
+        public delegate void OnLoadedAssetsDelegate();
         /// <summary>
         /// This is called when the BundleLoader finishes loading assets.
         /// </summary>
-        public static OnLoadedAssetsDelegate OnLoadedAssets;
+        [Obsolete("Use OnLoadedBundles instead. This will be removed/private in a future update.")]
+        public static OnLoadedAssetsDelegate OnLoadedAssets = LoadAssetsCompleted;
 
         /// <summary>
         /// Loads all asset bundles present in the bundle directory. It is not recommended to call this method, as it will introduce instability.
         /// </summary>
-        public static void Load(bool legacyLoading)
+        public static event Action OnLoadedBundles = LoadAssetsCompleted;
         {
             assetsInLegacyDirectory = true;
             legacyLoadingEnabled = legacyLoading;
@@ -69,8 +81,9 @@ namespace LC_API.BundleAPI
             {
                 LoadAllAssetsFromDirectory(array, legacyLoading);
             }
-            OnLoadedAssets += LoadAssetsCompleted;
-            OnLoadedAssets();
+
+            OnLoadedAssets.InvokeParameterlessDelegate();
+            OnLoadedBundles.InvokeActionSafe();
         }
 
         private static void LoadAllAssetsFromDirectory(string[] array, bool legacyLoading)
@@ -173,3 +186,4 @@ namespace LC_API.BundleAPI
         }
     }
 }
+#pragma warning restore CS0618 // Type or member is obsolete - we're the ones obsoleting things.
