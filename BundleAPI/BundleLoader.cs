@@ -11,6 +11,9 @@ using Steamworks.Data;
 using UnityEngine;
 using UnityEngine.Android;
 
+//todo: force all paths to lowercase after privating 'assets' to ensure all paths get normalized when accessing.
+
+#pragma warning disable CS0618 // Type or member is obsolete - we're the ones obsoleting things.
 namespace LC_API.BundleAPI
 {
     /// <summary>

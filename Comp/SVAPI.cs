@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
+#pragma warning disable CS0618 // Member is obsolete
 namespace LC_API.Comp
 {
     internal class SVAPI : MonoBehaviour
@@ -67,3 +68,4 @@ namespace LC_API.Comp
         }
     }
 }
+#pragma warning restore CS0618 // Member is obsolete
