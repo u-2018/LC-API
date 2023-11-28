@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using DigitalRuby.ThunderAndLightning;
+using LC_API.Extensions;
 using Steamworks.Data;
 using UnityEngine;
-using UnityEngine.Android;
 
 //todo: force all paths to lowercase after privating 'assets' to ensure all paths get normalized when accessing.
 
@@ -44,42 +44,44 @@ namespace LC_API.BundleAPI
         public static OnLoadedAssetsDelegate OnLoadedAssets = LoadAssetsCompleted;
 
         /// <summary>
-        /// Loads all asset bundles present in the bundle directory. It is not recommended to call this method, as it will introduce instability.
+        /// This is called when the BundleLoader finishes loading assets.
         /// </summary>
         public static event Action OnLoadedBundles = LoadAssetsCompleted;
+
+        internal static void Load(bool legacyLoading)
         {
-            assetsInLegacyDirectory = true;
-            legacyLoadingEnabled = legacyLoading;
-            assets = new ConcurrentDictionary<string, UnityEngine.Object>();
+            LegacyLoadingEnabled = legacyLoading;
             Plugin.Log.LogMessage("BundleAPI will now load all asset bundles...");
-            string dir1 = Path.Combine(Paths.BepInExRootPath, "Bundles");
-            if (!Directory.Exists(dir1))
+            string bundleDir = Path.Combine(Paths.BepInExRootPath, "Bundles");
+            if (!Directory.Exists(bundleDir))
             {
-                Directory.CreateDirectory(dir1);
+                Directory.CreateDirectory(bundleDir);
                 Plugin.Log.LogMessage("BundleAPI Created legacy bundle directory in BepInEx/Bundles");
             }
-            string[] array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".manifest", StringComparison.CurrentCultureIgnoreCase)).ToArray();
+            string[] bundles = Directory.GetFiles(bundleDir, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".manifest", StringComparison.CurrentCultureIgnoreCase)).ToArray();
 
-            if (array.Length == 0)
+            AssetsInLegacyDirectory = bundles.Length != 0;
+
+            if (!AssetsInLegacyDirectory)
             {
                 Plugin.Log.LogMessage("BundleAPI got no assets to load from legacy directory");
-                assetsInLegacyDirectory = false;
             }
-            if (assetsInLegacyDirectory)
+
+            if (AssetsInLegacyDirectory)
             {
                 Plugin.Log.LogWarning("The path BepInEx > Bundles is outdated and should not be used anymore! Bundles will be loaded from BepInEx > plugins from now on");
-                LoadAllAssetsFromDirectory(array, legacyLoading);
+                LoadAllAssetsFromDirectory(bundles, legacyLoading);
             }
-            dir1 = Path.Combine(Paths.BepInExRootPath, "plugins");
-            array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".txt", StringComparison.CurrentCultureIgnoreCase)).ToArray();
+            bundleDir = Path.Combine(Paths.BepInExRootPath, "plugins");
+            bundles = Directory.GetFiles(bundleDir, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".txt", StringComparison.CurrentCultureIgnoreCase)).ToArray();
 
-            if (array.Length == 0)
+            if (bundles.Length == 0)
             {
                 Plugin.Log.LogMessage("BundleAPI got no assets to load from plugins folder");
             }
             else
             {
-                LoadAllAssetsFromDirectory(array, legacyLoading);
+                LoadAllAssetsFromDirectory(bundles, legacyLoading);
             }
 
             OnLoadedAssets.InvokeParameterlessDelegate();
@@ -129,60 +131,48 @@ namespace LC_API.BundleAPI
         public static void SaveAsset(string path, bool legacyLoad)
         {
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
-            string[] array = bundle.GetAllAssetNames();
+            string[] assetPaths = bundle.GetAllAssetNames();
             //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
-            foreach (string text in array)
+            foreach (string assetPath in assetPaths)
             {
-                Plugin.Log.LogMessage("Got asset for load: " + text);
-                UnityEngine.Object obj = bundle.LoadAsset(text);
-                if (obj != null)
+                Plugin.Log.LogMessage("Got asset for load: " + assetPath);
+                UnityEngine.Object loadedAsset = bundle.LoadAsset(assetPath);
+                if (loadedAsset == null)
                 {
-                    
-                    string text2 = text.ToLower();
-                    if (legacyLoad)
-                    {
-                        text2 = text2.ToUpper();
-                    }
-                    if (assets.ContainsKey(text2))
-                    {
-                        Plugin.Log.LogError("BundleAPI got duplicate asset!");
-                        return;
-                    }
-                    assets.TryAdd(text2, obj);
-                    Plugin.Log.LogMessage("Loaded asset: " + obj.name);
+                    Plugin.Log.LogWarning($"Skipped/failed loading an asset (from bundle '{bundle.name}') - Asset path: {loadedAsset}");
+                    continue;
                 }
-                else
+
+                string text2 = legacyLoad ? assetPath.ToUpper() : assetPath.ToLower();
+
+                if (assets.ContainsKey(text2))
                 {
-                    Plugin.Log.LogWarning("Skipped loading an asset");
+                    Plugin.Log.LogError("BundleAPI got duplicate asset!");
+                    return;
                 }
+                assets.TryAdd(text2, loadedAsset);
+                Plugin.Log.LogMessage("Loaded asset: " + loadedAsset.name);
             }
         }
 
         /// <summary>
-        /// Get an asset from all the loaded assets. Use this to access your custom assets.
+        /// Get an asset from all the loaded assets. Use this to access your custom assets. Returned value may be null.
         /// </summary>
-        public static AssetType GetLoadedAsset<AssetType>(string itemPath) where AssetType : UnityEngine.Object
+        public static TAsset GetLoadedAsset<TAsset>(string itemPath) where TAsset : UnityEngine.Object
         {
-            UnityEngine.Object @object;
-            if (legacyLoadingEnabled)
-            {
-                assets.TryGetValue(itemPath.ToUpper(), out @object);
-            }
-            else
-            {
-                assets.TryGetValue(itemPath.ToLower(), out @object);
-            }
-            UnityEngine.Object asset = @object;
-            return (AssetType)asset;
+            UnityEngine.Object? asset = null;
+            if (LegacyLoadingEnabled)
+                assets.TryGetValue(itemPath.ToUpper(), out asset);
+
+            if (asset == null)
+                assets.TryGetValue(itemPath.ToLower(), out asset);
+
+            return (TAsset)asset;
         }
 
         private static void LoadAssetsCompleted()
         {
             Plugin.Log.LogMessage("BundleAPI finished loading all assets.");
-        }
-
-        void Awake()
-        {
         }
     }
 }
