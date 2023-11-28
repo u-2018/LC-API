@@ -143,10 +143,6 @@ namespace LC_API.BundleAPI
                     }
                 }
             }
-            catch
-            {
-                throw;
-            }
             finally
             {
                 bundle?.Unload(false);
