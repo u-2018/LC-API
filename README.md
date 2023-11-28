@@ -21,5 +21,3 @@ It also lets mod authors make their mods put users in special matchmaking where 
 
 Networking - Easily send data across the network to sync data between clients
 
-# Notes
-I dont allow forks of the API, or using the code outside the context of the API.
