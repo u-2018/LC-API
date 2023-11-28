@@ -21,7 +21,7 @@ namespace LC_API
     /// <summary>
     /// The Lethal Company modding API plugin!
     /// </summary>
-    [BepInPlugin(LCAPIPluginInfo.PLUGIN_GUID, LCAPIPluginInfo.PLUGIN_NAME, LCAPIPluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public sealed class Plugin : BaseUnityPlugin
     {
         /// <summary>
