@@ -21,13 +21,15 @@ namespace LC_API
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Log;
-
+        public static bool Initialized;
         private ConfigEntry<bool> configOverrideModServer;
         private ConfigEntry<bool> configLegacyAssetLoading;
+        private ConfigEntry<bool> configDisableBundleLoader;
         private void Awake()
         {
             configOverrideModServer = Config.Bind("General","Force modded server browser",false,"Should the API force you into the modded server browser?");
             configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
+            configLegacyAssetLoading = Config.Bind("General", "Disable BundleLoader", false, "Should the BundleLoader be turned off? Enable this if you are having problems with mods that load assets using a different method from LC_API's BundleLoader.");
 
 
             Log = Logger;
@@ -60,15 +62,38 @@ namespace LC_API
             Networking.GetString += CheatDatabase.RequestModList;
         }
 
+        public void Start()
+        {
+            if (!Initialized)
+            {
+                Initialized = true;
+                if (!configDisableBundleLoader.Value)
+                {
+                    BundleAPI.BundleLoader.Load(configLegacyAssetLoading.Value); 
+                }
+                GameObject gameObject = new GameObject("API");
+                DontDestroyOnLoad(gameObject);
+                gameObject.AddComponent<SVAPI>();
+                Logger.LogInfo($"LC_API Started!");
+                CheatDatabase.RunLocalCheatDetector();
+            }
+        }
+
         private void OnDestroy()
         {
-            BundleAPI.BundleLoader.Load(configLegacyAssetLoading.Value);
-            GameObject gameObject = new GameObject("API");
-            DontDestroyOnLoad(gameObject);
-            gameObject.AddComponent<SVAPI>();
-            Logger.LogInfo($"LC_API Started!");
-            CheatDatabase.RunLocalCheatDetector();
-            
+            if (!Initialized)
+            {
+                Initialized = true;
+                if (!configDisableBundleLoader.Value)
+                {
+                    BundleAPI.BundleLoader.Load(configLegacyAssetLoading.Value);
+                }
+                GameObject gameObject = new GameObject("API");
+                DontDestroyOnLoad(gameObject);
+                gameObject.AddComponent<SVAPI>();
+                Logger.LogInfo($"LC_API Started!");
+                CheatDatabase.RunLocalCheatDetector();
+            }
         }
 
         private static void PatchMethodManual(MethodInfo method, MethodInfo patch, Harmony harmony)

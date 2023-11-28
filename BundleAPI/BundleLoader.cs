@@ -56,7 +56,7 @@ namespace LC_API.BundleAPI
                 LoadAllAssetsFromDirectory(array, legacyLoading);
             }
             dir1 = Path.Combine(Paths.BepInExRootPath, "plugins");
-            array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).ToArray();
+            array = Directory.GetFiles(dir1, "*", SearchOption.AllDirectories).Where(x => !x.EndsWith(".dll", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".json", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".png", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".md", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".old", StringComparison.CurrentCultureIgnoreCase)).Where(x => !x.EndsWith(".txt", StringComparison.CurrentCultureIgnoreCase)).ToArray();
 
             if (array.Length == 0)
             {
@@ -72,19 +72,39 @@ namespace LC_API.BundleAPI
 
         private static void LoadAllAssetsFromDirectory(string[] array, bool legacyLoading)
         {
-            Plugin.Log.LogMessage("BundleAPI got " + array.Length.ToString() + " AssetBundles to load!");
-            
-            for (int i = 0; i < array.Length; i++)
+            if (legacyLoading)
             {
-                try
+                Plugin.Log.LogMessage("BundleAPI got " + array.Length.ToString() + " AssetBundles to load!");
+
+                for (int i = 0; i < array.Length; i++)
                 {
-                    SaveAsset(array[i], legacyLoading);
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.LogError("Failed to load an assetbundle! Path: " + array[i]);
+                    try
+                    {
+                        SaveAsset(array[i], legacyLoading);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.LogError("Failed to load an assetbundle! Path: " + array[i]);
+                    }
                 }
             }
+            else
+            {
+                Plugin.Log.LogMessage("BundleAPI got " + array.Length.ToString() + " AssetBundles to load!");
+
+                for (int i = 0; i < array.Length; i++)
+                {
+                    try
+                    {
+                        SaveAsset(array[i], legacyLoading);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.LogError("Failed to load an assetbundle! Path: " + array[i]);
+                    }
+                }
+            }
+            
         }
 
         /// <summary>
