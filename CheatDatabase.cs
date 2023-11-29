@@ -31,6 +31,7 @@ namespace LC_API
                     case "mom.llama.enhancer":
                     case "Posiedon.GameMaster":
                     case "LethalCompanyScalingMaster":
+                    case "verity.amberalert":
                         ServerAPI.ModdedServer.SetServerModdedOnly();
                         break;
                 }
