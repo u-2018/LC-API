@@ -113,32 +113,39 @@ namespace LC_API.BundleAPI
         public static void SaveAsset(string path, bool legacyLoad)
         {
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
-            string[] array = bundle.GetAllAssetNames();
-            //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
-            foreach (string text in array)
+            try
             {
-                Plugin.Log.LogMessage("Got asset for load: " + text);
-                UnityEngine.Object obj = bundle.LoadAsset(text);
-                if (obj != null)
+                string[] array = bundle.GetAllAssetNames();
+                //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
+                foreach (string text in array)
                 {
-                    
-                    string text2 = text.ToLower();
-                    if (legacyLoad)
+                    Plugin.Log.LogMessage("Got asset for load: " + text);
+                    UnityEngine.Object obj = bundle.LoadAsset(text);
+                    if (obj != null)
                     {
-                        text2 = text2.ToUpper();
+
+                        string text2 = text.ToLower();
+                        if (legacyLoad)
+                        {
+                            text2 = text2.ToUpper();
+                        }
+                        if (assets.ContainsKey(text2))
+                        {
+                            Plugin.Log.LogError("BundleAPI got duplicate asset!");
+                            return;
+                        }
+                        assets.TryAdd(text2, obj);
+                        Plugin.Log.LogMessage("Loaded asset: " + obj.name);
                     }
-                    if (assets.ContainsKey(text2))
+                    else
                     {
-                        Plugin.Log.LogError("BundleAPI got duplicate asset!");
-                        return;
+                        Plugin.Log.LogWarning("Skipped loading an asset");
                     }
-                    assets.TryAdd(text2, obj);
-                    Plugin.Log.LogMessage("Loaded asset: " + obj.name);
                 }
-                else
-                {
-                    Plugin.Log.LogWarning("Skipped loading an asset");
-                }
+            }
+            finally
+            {
+                bundle?.Unload(false);
             }
         }
 
