@@ -72,26 +72,20 @@ namespace LC_API
             harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
             
             Networking.GetString += CheatDatabase.CDNetGetString;
+            Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
         }
 
         internal void Start()
         {
-            if (!Initialized)
-            {
-                Initialized = true;
-                if (!configDisableBundleLoader.Value)
-                {
-                    BundleAPI.BundleLoader.Load(configLegacyAssetLoading.Value); 
-                }
-                GameObject gameObject = new GameObject("API");
-                DontDestroyOnLoad(gameObject);
-                gameObject.AddComponent<LC_APIManager>();
-                Logger.LogInfo($"LC_API Started!");
-                CheatDatabase.RunLocalCheatDetector();
-            }
+            Initialize();
         }
 
         internal void OnDestroy()
+        {
+            Initialize();
+        }
+
+        internal void Initialize()
         {
             if (!Initialized)
             {

@@ -13,6 +13,7 @@ using LC_API.Data;
 using System.Runtime.Remoting.Contexts;
 using UnityEngine.InputSystem;
 using LC_API.Extensions;
+using System.Linq;
 
 namespace LC_API.ManualPatches
 {
@@ -97,6 +98,11 @@ namespace LC_API.ManualPatches
                                 Plugin.Log.LogError("Vector3 Network receive fail. This is a failure of the API, and it should be reported as a bug.");
                             }
                             Networking.GetVector3(convertedString, dataFragments[2]);
+                            break;
+
+                        case NetworkBroadcastDataType.BDlistString:
+                            string[] items = dataFragments[1].Split('\n');
+                            Networking.GetListString(items.ToList(), dataFragments[2]);
                             break;
                     }
                     if (LC_APIManager.netTester)

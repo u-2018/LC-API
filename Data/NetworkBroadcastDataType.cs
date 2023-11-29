@@ -13,5 +13,6 @@ namespace LC_API.Data
         BDfloat,
         BDvector3,
         BDstring,
+        BDlistString
     }
 }
