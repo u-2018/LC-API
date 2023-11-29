@@ -5,12 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 
+#pragma warning disable CS0618 // Member is obsolete
 namespace LC_API.ServerAPI
 {
-    public class ModdedServer
+    /// <summary>
+    /// You're probably here for <see cref="SetServerModdedOnly"/>
+    /// </summary>
+    public static class ModdedServer
     {
         private static bool moddedOnly;
-        public static bool setModdedOnly;
+        [Obsolete("Use SetServerModdedOnly() instead. This will be removed/private in a future update.")]
+        public static bool setModdedOnly; // obsolete for the purposes of getting peoples' IDE's to bitch at them.
 
         /// <summary>
         /// Has the user been placed in modded only servers?
@@ -42,3 +47,4 @@ namespace LC_API.ServerAPI
         }
     }
 }
+#pragma warning restore CS0618 // Member is obsolete

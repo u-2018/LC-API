@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using LC_API.Data;
+using LC_API.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,72 +10,69 @@ using System.Threading.Tasks;
 
 namespace LC_API.GameInterfaceAPI
 {
-    public class GameState
+    /// <summary>
+    /// Contains callbacks and information about the game's current state.
+    /// </summary>
+    public static class GameState
     {
-        public delegate void GenericGameEventDelegate();
+        // stops the compiler whining about nullability
+        private readonly static Action NothingAction = () => { };
 
-        public static int AlivePlayerCount;
-        public static ShipStateEnum ShipState;
-        public static GenericGameEventDelegate PlayerDied = GSPlayerDied;
-        public static GenericGameEventDelegate LandOnMoon = GSLandOnMood;
-        public static GenericGameEventDelegate WentIntoOrbit = GSGoIntoOrbit;
-        public static GenericGameEventDelegate ShipStartedLeaving = GSStartLeavingMoon;
+        /// <summary>
+        /// Provides the count of living players, as gotten through
+        /// </summary>
+        public static int AlivePlayerCount { get ; private set; }
+        /// <summary>
+        /// The state the ship is currently in. See <see cref="Data.ShipState"/>.
+        /// </summary>
+        public static ShipState ShipState { get ; private set; }
 
-        public static void GSUpdate()
+        /// <summary>
+        /// Executes the frame after a player dies (determined by a living player count comparison)
+        /// </summary>
+        public static event Action PlayerDied = NothingAction;
+        /// <summary>
+        /// Executes the frame after the ship has landed.
+        /// </summary>
+        public static event Action LandOnMoon = NothingAction;
+        /// <summary>
+        /// Executes when the ship reaches orbit.
+        /// </summary>
+        public static event Action WentIntoOrbit = NothingAction;
+        /// <summary>
+        /// Executes when the ship starts taking off.
+        /// </summary>
+        public static event Action ShipStartedLeaving = NothingAction;
+
+        internal static void GSUpdate()
         {
-            if (StartOfRound.Instance != null)
+            if (StartOfRound.Instance == null)
+                return;
+
+            if (StartOfRound.Instance.shipHasLanded && ShipState != ShipState.OnMoon)
             {
-                if (StartOfRound.Instance.shipHasLanded)
-                {
-                    if (ShipState != ShipStateEnum.OnMoon)
-                    {
-                        ShipState = ShipStateEnum.OnMoon;
-                        LandOnMoon();
-                    }
-                }
-                if (StartOfRound.Instance.inShipPhase)
-                {
-                    if (ShipState != ShipStateEnum.InOrbit)
-                    {
-                        ShipState = ShipStateEnum.InOrbit;
-                        WentIntoOrbit();
-                    }
-                }
-                if (StartOfRound.Instance.shipIsLeaving)
-                {
-                    if (ShipState != ShipStateEnum.LeavingMoon)
-                    {
-                        ShipState = ShipStateEnum.LeavingMoon;
-                        ShipStartedLeaving();
-                    }
-                }
-                int aliveP = AlivePlayerCount;
-                if (aliveP < StartOfRound.Instance.livingPlayers)
-                {
-                    PlayerDied();
-                }
-                AlivePlayerCount = StartOfRound.Instance.livingPlayers;
+                ShipState = ShipState.OnMoon;
+                LandOnMoon.InvokeActionSafe();
             }
-        }
 
-        private static void GSPlayerDied()
-        {
+            if (StartOfRound.Instance.inShipPhase && ShipState != ShipState.InOrbit)
+            {
+                ShipState = ShipState.InOrbit;
+                WentIntoOrbit.InvokeActionSafe();
+            }
 
-        }
+            if (StartOfRound.Instance.shipIsLeaving && ShipState != ShipState.LeavingMoon)
+            {
+                ShipState = ShipState.LeavingMoon;
+                ShipStartedLeaving.InvokeActionSafe();
+            }
 
-        private static void GSLandOnMood()
-        {
-
-        }
-
-        private static void GSGoIntoOrbit()
-        {
-
-        }
-
-        private static void GSStartLeavingMoon()
-        {
-
+            int aliveP = AlivePlayerCount;
+            if (aliveP < StartOfRound.Instance.livingPlayers)
+            {
+                PlayerDied.InvokeActionSafe();
+            }
+            AlivePlayerCount = StartOfRound.Instance.livingPlayers;
         }
     }
 }
