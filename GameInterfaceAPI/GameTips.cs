@@ -10,7 +10,7 @@ namespace LC_API.GameInterfaceAPI
     /// <summary>
     /// Allows for displaying information through the tip box on the players screen, without any tips overlapping.
     /// </summary>
-    internal class GameTips
+    public class GameTips
     {
         private static List<string> tipHeaders = new List<string>();
         private static List<string> tipBodys = new List<string>();
