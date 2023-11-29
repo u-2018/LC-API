@@ -6,3 +6,14 @@ obj/LC-API.csproj.nuget.g.targets
 obj/project.assets.json
 obj/project.nuget.cache
 obj/Debug/net46/LC-API.csproj.AssemblyReference.cache
+.vs/LC-API/FileContentIndex/read.lock
+.vs/LC-API/FileContentIndex/5b5e8832-71d6-48d5-8978-a3283b1c3eec.vsidx
+obj/Release/net46/.NETFramework,Version=v4.6.AssemblyAttributes.cs
+obj/Release/net46/LC-API.AssemblyInfo.cs
+obj/Release/net46/LC-API.AssemblyInfoInputs.cache
+obj/Release/net46/LC-API.assets.cache
+obj/Release/net46/LC-API.csproj.AssemblyReference.cache
+obj/Release/net46/LC-API.GeneratedMSBuildEditorConfig.editorconfig
+obj/Release/net46/MyPluginInfo.cs
+.vs/LC-API/FileContentIndex/752372ff-2fc1-4aee-bf01-5b7da1e825fd.vsidx
+*.vsidx
