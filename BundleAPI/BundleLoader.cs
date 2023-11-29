@@ -159,27 +159,29 @@ namespace LC_API.BundleAPI
                     {
                         Plugin.Log.LogWarning("Skipped loading an asset");
                     }
-            string[] assetPaths = bundle.GetAllAssetNames();
-            //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
-            foreach (string assetPath in assetPaths)
-            {
-                Plugin.Log.LogMessage("Got asset for load: " + assetPath);
-                UnityEngine.Object loadedAsset = bundle.LoadAsset(assetPath);
-                if (loadedAsset == null)
-                {
-                    Plugin.Log.LogWarning($"Skipped/failed loading an asset (from bundle '{bundle.name}') - Asset path: {loadedAsset}");
-                    continue;
-                }
+                    string[] assetPaths = bundle.GetAllAssetNames();
+                    //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
+                    foreach (string assetPath in assetPaths)
+                    {
+                        Plugin.Log.LogMessage("Got asset for load: " + assetPath);
+                        UnityEngine.Object loadedAsset = bundle.LoadAsset(assetPath);
+                        if (loadedAsset == null)
+                        {
+                            Plugin.Log.LogWarning($"Skipped/failed loading an asset (from bundle '{bundle.name}') - Asset path: {loadedAsset}");
+                            continue;
+                        }
 
-                string text2 = legacyLoad ? assetPath.ToUpper() : assetPath.ToLower();
+                        string text2 = legacyLoad ? assetPath.ToUpper() : assetPath.ToLower();
 
-                if (assets.ContainsKey(text2))
-                {
-                    Plugin.Log.LogError("BundleAPI got duplicate asset!");
-                    return;
+                        if (assets.ContainsKey(text2))
+                        {
+                            Plugin.Log.LogError("BundleAPI got duplicate asset!");
+                            return;
+                        }
+                        assets.TryAdd(text2, loadedAsset);
+                        Plugin.Log.LogMessage("Loaded asset: " + loadedAsset.name);
+                    }
                 }
-                assets.TryAdd(text2, loadedAsset);
-                Plugin.Log.LogMessage("Loaded asset: " + loadedAsset.name);
             }
             finally
             {

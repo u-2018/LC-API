@@ -45,7 +45,6 @@ namespace LC_API.ManualPatches
 
             if (dataFragments.Length < 5)
             {
-                string[] dataFragments = chatMessage.Split('/');
 
                 if (dataFragments.Length >= 3) 
                 {
@@ -60,9 +59,9 @@ namespace LC_API.ManualPatches
                     {
                         return false;
                     }
-                    NetworkBroadcastDataType type = new NetworkBroadcastDataType();
-                    Enum.TryParse<NetworkBroadcastDataType>(dataFragments[3], out type);
-                    switch (type)
+                    NetworkBroadcastDataType dataType;
+                    Enum.TryParse<NetworkBroadcastDataType>(dataFragments[3], out dataType);
+                    switch (dataType)
                     {
                         case NetworkBroadcastDataType.BDstring:
                             Networking.GetString(dataFragments[1], dataFragments[2]);
@@ -120,7 +119,7 @@ namespace LC_API.ManualPatches
                 return false;
             }
 
-            if (parsedPlayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId & !SVAPI.netTester)
+            if (parsedPlayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId & !LC_APIManager.netTester)
             {
                 return false;
             }
@@ -174,7 +173,7 @@ namespace LC_API.ManualPatches
                     break;
             }
 
-            if (SVAPI.netTester)
+            if (LC_APIManager.netTester)
             {
                 //Plugin.Log.LogWarning("Success! Received data with no errors.");
             }
