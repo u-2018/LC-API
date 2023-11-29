@@ -30,7 +30,7 @@ namespace LC_API.ManualPatches
 
         private static bool Vers(MenuManager __instance)
         {
-            SVAPI.MenuManager = __instance;
+            LC_APIManager.MenuManager = __instance;
             return true;
         }
 
@@ -49,7 +49,7 @@ namespace LC_API.ManualPatches
                         Plugin.Log.LogWarning("Failed to parse player ID!!");
                         return false;
                     }
-                    if (parsedplayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId & !SVAPI.netTester)
+                    if (parsedplayer == (int)GameNetworkManager.Instance.localPlayerController.playerClientId & !LC_APIManager.netTester)
                     {
                         return false;
                     }
@@ -93,7 +93,7 @@ namespace LC_API.ManualPatches
                             Networking.GetVector3(convertedString, dataFragments[2]);
                             break;
                     }
-                    if (SVAPI.netTester)
+                    if (LC_APIManager.netTester)
                     {
                         //Plugin.Log.LogWarning("Success! Received data with no errors.");
                     }

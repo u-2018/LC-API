@@ -59,7 +59,7 @@ namespace LC_API
             harmony.Patch(original4, new HarmonyMethod(patch4));
             harmony.Patch(original, new HarmonyMethod(patch));
             
-            Networking.GetString += CheatDatabase.RequestModList;
+            Networking.GetString += CheatDatabase.CDNetGetString;
         }
 
         public void Start()
@@ -73,7 +73,7 @@ namespace LC_API
                 }
                 GameObject gameObject = new GameObject("API");
                 DontDestroyOnLoad(gameObject);
-                gameObject.AddComponent<SVAPI>();
+                gameObject.AddComponent<LC_APIManager>();
                 Logger.LogInfo($"LC_API Started!");
                 CheatDatabase.RunLocalCheatDetector();
             }
@@ -90,7 +90,7 @@ namespace LC_API
                 }
                 GameObject gameObject = new GameObject("API");
                 DontDestroyOnLoad(gameObject);
-                gameObject.AddComponent<SVAPI>();
+                gameObject.AddComponent<LC_APIManager>();
                 Logger.LogInfo($"LC_API Started!");
                 CheatDatabase.RunLocalCheatDetector();
             }
