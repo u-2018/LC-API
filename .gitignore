@@ -17,3 +17,4 @@ obj/Release/net46/LC-API.GeneratedMSBuildEditorConfig.editorconfig
 obj/Release/net46/MyPluginInfo.cs
 .vs/LC-API/FileContentIndex/752372ff-2fc1-4aee-bf01-5b7da1e825fd.vsidx
 *.vsidx
+.vs/LC-API/v17/.suo
