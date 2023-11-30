@@ -133,54 +133,27 @@ namespace LC_API.BundleAPI
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
             try
             {
-                string[] array = bundle.GetAllAssetNames();
+                string[] assetPaths = bundle.GetAllAssetNames();
                 //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
-                foreach (string text in array)
+                foreach (string assetPath in assetPaths)
                 {
-                    Plugin.Log.LogMessage("Got asset for load: " + text);
-                    UnityEngine.Object obj = bundle.LoadAsset(text);
-                    if (obj != null)
+                    Plugin.Log.LogMessage("Got asset for load: " + assetPath);
+                    UnityEngine.Object loadedAsset = bundle.LoadAsset(assetPath);
+                    if (loadedAsset == null)
                     {
-
-                        string text2 = text.ToLower();
-                        if (legacyLoad)
-                        {
-                            text2 = text2.ToUpper();
-                        }
-                        if (assets.ContainsKey(text2))
-                        {
-                            Plugin.Log.LogError("BundleAPI got duplicate asset!");
-                            return;
-                        }
-                        assets.TryAdd(text2, obj);
-                        Plugin.Log.LogMessage("Loaded asset: " + obj.name);
+                        Plugin.Log.LogWarning($"Skipped/failed loading an asset (from bundle '{bundle.name}') - Asset path: {loadedAsset}");
+                        continue;
                     }
-                    else
+
+                    string text2 = legacyLoad ? assetPath.ToUpper() : assetPath.ToLower();
+
+                    if (assets.ContainsKey(text2))
                     {
-                        Plugin.Log.LogWarning("Skipped loading an asset");
+                        Plugin.Log.LogError("BundleAPI got duplicate asset!");
+                        return;
                     }
-                    string[] assetPaths = bundle.GetAllAssetNames();
-                    //Plugin.Log.LogMessage("Assets: [" + string.Join(", ", array) + "]");
-                    foreach (string assetPath in assetPaths)
-                    {
-                        Plugin.Log.LogMessage("Got asset for load: " + assetPath);
-                        UnityEngine.Object loadedAsset = bundle.LoadAsset(assetPath);
-                        if (loadedAsset == null)
-                        {
-                            Plugin.Log.LogWarning($"Skipped/failed loading an asset (from bundle '{bundle.name}') - Asset path: {loadedAsset}");
-                            continue;
-                        }
-
-                        string text2 = legacyLoad ? assetPath.ToUpper() : assetPath.ToLower();
-
-                        if (assets.ContainsKey(text2))
-                        {
-                            Plugin.Log.LogError("BundleAPI got duplicate asset!");
-                            return;
-                        }
-                        assets.TryAdd(text2, loadedAsset);
-                        Plugin.Log.LogMessage("Loaded asset: " + loadedAsset.name);
-                    }
+                    assets.TryAdd(text2, loadedAsset);
+                    Plugin.Log.LogMessage("Loaded asset: " + loadedAsset.name);
                 }
             }
             finally

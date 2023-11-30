@@ -31,7 +31,10 @@ namespace LC_API.GameInterfaceAPI
             if (tipHeaders.Count > 0 & lastMessageTime < 0)
             {
                 lastMessageTime = 5f;
-                HUDManager.Instance.DisplayTip(tipHeaders[0], tipBodys[0]);
+                if (HUDManager.Instance != null)
+                {
+                    HUDManager.Instance.DisplayTip(tipHeaders[0], tipBodys[0]);
+                }
                 tipHeaders.RemoveAt(0);
                 tipBodys.RemoveAt(0);
             }
