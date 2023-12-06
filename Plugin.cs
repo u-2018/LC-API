@@ -3,6 +3,7 @@ using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using LC_API.ClientAPI;
 using LC_API.Comp;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
@@ -43,6 +44,7 @@ namespace LC_API
             configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
             configDisableBundleLoader = Config.Bind("General", "Disable BundleLoader", false, "Should the BundleLoader be turned off? Enable this if you are having problems with mods that load assets using a different method from LC_API's BundleLoader.");
 
+            CommandHandler.commandPrefix = Config.Bind("General", "Prefix", "/", "Command prefix");
 
             Log = Logger;
             // Plugin startup logic
@@ -67,10 +69,15 @@ namespace LC_API
 
             MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
 
+            MethodInfo originalSubmitChat = AccessTools.Method(typeof(HUDManager), "SubmitChat_performed");
+
+            MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
+
             harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
             harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
             harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
-            
+            harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+
             Networking.GetString += CheatDatabase.CDNetGetString;
             Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
         }
