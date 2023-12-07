@@ -4,6 +4,8 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using LC_API.Comp;
+using LC_API.GameInterfaceAPI.Events;
+using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
 using System;
@@ -73,6 +75,8 @@ namespace LC_API
             
             Networking.GetString += CheatDatabase.CDNetGetString;
             Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
+
+            Events.Patch(harmony);
         }
 
         internal void Start()
