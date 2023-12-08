@@ -90,18 +90,7 @@ namespace LC_API.BundleAPI
                     fs.Read(buffer, 0, buffer.Length);
                 }
 
-                bool isProper = true;
-
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    if (buffer[i] != bundleStart[i])
-                    {
-                        isProper = false;
-                        break;
-                    }
-                }
-
-                if (isProper)
+                if (buffer.SequenceEqual(bundleStart))
                 {
                     properBundles.Add(path);
                 }
