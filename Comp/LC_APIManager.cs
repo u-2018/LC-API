@@ -55,7 +55,7 @@ namespace LC_API.Comp
             {
                 lobbychecktimer += Time.deltaTime;
             }
-            else if (wanttoCheckMods)
+            else if (wanttoCheckMods && HUDManager.Instance != null)
             {
                 wanttoCheckMods = false;
                 CD();
