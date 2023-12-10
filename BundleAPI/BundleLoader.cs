@@ -77,6 +77,27 @@ namespace LC_API.BundleAPI
             bundleDir = Path.Combine(Paths.BepInExRootPath, "plugins");
             bundles = Directory.GetFiles(bundleDir, "*", SearchOption.AllDirectories).Where(file => !invalidEndings.Any(ending => file.EndsWith(ending, StringComparison.CurrentCultureIgnoreCase))).ToArray();
 
+            byte[] bundleStart = Encoding.ASCII.GetBytes("UnityFS");
+
+            List<string> properBundles = new List<string>();
+
+            foreach (string path in bundles)
+            {
+                byte[] buffer = new byte[bundleStart.Length];
+
+                using (FileStream fs = File.Open(path, FileMode.Open))
+                {
+                    fs.Read(buffer, 0, buffer.Length);
+                }
+
+                if (buffer.SequenceEqual(bundleStart))
+                {
+                    properBundles.Add(path);
+                }
+            }
+
+            bundles = properBundles.ToArray();
+
             if (bundles.Length == 0)
             {
                 Plugin.Log.LogMessage("BundleAPI got no assets to load from plugins folder");
