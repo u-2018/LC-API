@@ -19,7 +19,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 Cache.Player.ConnectedPlayers.Contains(player.playerSteamId))
             {
                 Cache.Player.ConnectedPlayers.Remove(player.playerSteamId);
-                Handlers.Player.OnLeft(new PlayerLeftEventArgs(player));
+                Handlers.Player.OnLeft(new PlayerLeftEventArgs(Features.Player.Get(player)));
             }
         }
     }
@@ -30,7 +30,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Prefix(StartOfRound __instance)
         {
             PlayerControllerB player = __instance.localPlayerController;
-            Handlers.Player.OnLeft(new PlayerLeftEventArgs(player));
+            Handlers.Player.OnLeft(new PlayerLeftEventArgs(Features.Player.Get(player)));
             Cache.Player.ConnectedPlayers.Clear();
         }
     }

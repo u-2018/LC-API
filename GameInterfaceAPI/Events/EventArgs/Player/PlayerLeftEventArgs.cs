@@ -15,13 +15,13 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         /// <summary>
         /// Gets the player that is leaving.
         /// </summary>
-        public PlayerControllerB Player { get; }
+        public Features.Player Player { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlayerLeftEventArgs"/> class.
         /// </summary>
         /// <param name="player"><inheritdoc cref="Player" /></param>
-        public PlayerLeftEventArgs(PlayerControllerB player)
+        public PlayerLeftEventArgs(Features.Player player)
         {
             Player = player;
         }

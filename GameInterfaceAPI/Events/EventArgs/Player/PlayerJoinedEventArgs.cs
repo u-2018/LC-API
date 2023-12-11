@@ -15,13 +15,13 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         /// <summary>
         /// Gets the joined player.
         /// </summary>
-        public PlayerControllerB Player { get; }
+        public Features.Player Player { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlayerJoinedEventArgs"/> class.
         /// </summary>
         /// <param name="player"><inheritdoc cref="Player" /></param>
-        public PlayerJoinedEventArgs(PlayerControllerB player)
+        public PlayerJoinedEventArgs(Features.Player player)
         {
             Player = player;
         }

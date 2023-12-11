@@ -15,23 +15,23 @@ namespace LC_API.GameInterfaceAPI.Events.Handlers
     public static class Player
     {
         /// <summary>
-        /// Invoked after a <see cref="PlayerControllerB"/> joined the server, including the host.
+        /// Invoked after a <see cref="Features.Player"/> joined the server, including the host.
         /// </summary>
         public static event CustomEventHandler<PlayerJoinedEventArgs> Joined;
 
         /// <summary>
-        /// Invoked right before a <see cref="PlayerControllerB"/> leaves the server, including the local client.
+        /// Invoked right before a <see cref="Features.Player"/> leaves the server, including the local client.
         /// </summary>
         public static event CustomEventHandler<PlayerLeftEventArgs> Left;
 
         /// <summary>
-        /// Called after a <see cref="PlayerControllerB"/> joined the server, including the host.
+        /// Called after a <see cref="Features.Player"/> joined the server, including the host.
         /// </summary>
         /// <param name="ev">The <see cref="PlayerJoinedEventArgs"/> event arguments.</param>
         public static void OnJoined(PlayerJoinedEventArgs ev) => Joined.InvokeSafely(ev);
 
         /// <summary>
-        /// Called right before a <see cref="PlayerControllerB"/> leaves the server, including the local client.
+        /// Called right before a <see cref="Features.Player"/> leaves the server, including the local client.
         /// </summary>
         /// <param name="ev">The <see cref="PlayerLeftEventArgs"/> event arguments.</param>
         public static void OnLeft(PlayerLeftEventArgs ev) => Left.InvokeSafely(ev);
