@@ -73,7 +73,7 @@ namespace LC_API.BundleAPI
                 LoadAllAssetsFromDirectory(bundles, legacyLoading);
             }
 
-            string[] invalidEndings = { ".dll", ".json", ".png", ".md", ".old", ".txt", ".exe" };
+            string[] invalidEndings = { ".dll", ".json", ".png", ".md", ".old", ".txt", ".exe", ".lem" };
             bundleDir = Path.Combine(Paths.BepInExRootPath, "plugins");
             bundles = Directory.GetFiles(bundleDir, "*", SearchOption.AllDirectories).Where(file => !invalidEndings.Any(ending => file.EndsWith(ending, StringComparison.CurrentCultureIgnoreCase))).ToArray();
 
