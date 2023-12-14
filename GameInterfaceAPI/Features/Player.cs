@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using BepInEx.Configuration;
+using GameNetcodeStuff;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
+using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -15,6 +17,8 @@ namespace LC_API.GameInterfaceAPI.Features
     /// </summary>
     public class Player : NetworkBehaviour
     {
+        internal static GameObject PlayerNetworkPrefab { get; set; }
+
         /// <summary>
         /// Gets a dictionary containing all <see cref="Player"/>'s. Even inactive ones.
         /// </summary>
@@ -34,7 +38,9 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets the encapsulated <see cref="PlayerControllerB"/>.
         /// </summary>
-        public PlayerControllerB PlayerController { get; private set; }
+        public PlayerControllerB PlayerController { get; internal set; }
+
+        internal NetworkVariable<ulong> NetworkClientId { get; } = new NetworkVariable<ulong>();
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s client id.
@@ -42,15 +48,69 @@ namespace LC_API.GameInterfaceAPI.Features
         public ulong ClientId => PlayerController.actualClientId;
 
         /// <summary>
-        /// Gets whether or not this <see cref="Player"/> is the host.
+        /// Gets the <see cref="Player"/>'s steam id.
+        /// </summary>
+        public ulong SteamId => PlayerController.playerSteamId;
+
+        /// <summary>
+        /// Gets whether or not the <see cref="Player"/> is the host.
         /// </summary>
         public new bool IsHost => PlayerController.isHostPlayerObject;
 
         /// <summary>
-        /// Gets whether or not this <see cref="Player"/> is currently being controlled.
+        /// Gets whether or not the <see cref="Player"/> is currently being controlled.
         /// Lethal Company creates PlayerControllers ahead of time, so all of them always exist.
         /// </summary>
         public bool IsPlayerControlled => PlayerController.isPlayerControlled;
+
+        /// <summary>
+        /// Gets or sets the <see cref="Player"/>'s sprint meter.
+        /// </summary>
+        public float SprintMeter
+        {
+            get
+            {
+                return PlayerController.sprintMeter;
+            }
+            set
+            {
+                PlayerController.sprintMeter = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="Player"/>'s position. 
+        /// If you set a player's position out of bounds, they will be teleported back to a safe location next to the ship or entrance/exit to a dungeon.
+        /// </summary>
+        /// <exception cref="Exception">Thrown when attempting to set position from the client.</exception>
+        public Vector3 Position
+        {
+            get
+            {
+                return PlayerController.transform.position;
+            }
+            set
+            {
+                Plugin.Log.LogInfo("SETTING POSITION");
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to set position on client.");
+
+                PlayerController.transform.position = value;
+                PlayerController.serverPlayerPosition = value;
+
+                TeleportPlayerClientRpc(value);
+            }
+        }
+
+        // UpdatePlayerPositionClientRpc doesn't actually set the player's position, so we need a custom rpc to do so.
+        [ClientRpc]
+        private void TeleportPlayerClientRpc(Vector3 position)
+        {
+            if (!NetworkManager.Singleton.IsClient) return;
+
+            PlayerController.TeleportPlayer(position);
+
+            PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
+        }
 
         private NetworkVariable<int> _healthSync { get; } = new NetworkVariable<int>();
 
@@ -72,22 +132,37 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
-        private void Awake()
+        private void Start()
         {
-            PlayerController = GetComponent<PlayerControllerB>();
-
-            Dictionary.Add(PlayerController, this);
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+            {
+                Dictionary.Add(PlayerController, this);
+            }
+            else
+            {
+                PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
+                NetworkClientId.OnValueChanged += clientIdChanged;
+            }
 
             _healthSync.OnValueChanged += healthSyncChanged;
         }
 
-#pragma warning disable CS1591
+        /// <summary>
+        /// For internal use only. Do not use.
+        /// </summary>
         public override void OnDestroy()
         {
             _healthSync.OnValueChanged -= healthSyncChanged;
-        }
-#pragma warning restore
 
+            if (NetworkManager.Singleton.IsClient)
+            {
+                NetworkClientId.OnValueChanged -= clientIdChanged;
+            }
+
+            base.OnDestroy();
+        }
+
+        #region Network variable handlers
         private void healthSyncChanged(int oldHealth, int newHealth)
         {
             int health = newHealth;
@@ -101,7 +176,46 @@ namespace LC_API.GameInterfaceAPI.Features
                 PlayerController.KillPlayer(default, true, CauseOfDeath.Unknown, 0);
             }
         }
-        
+
+        private void clientIdChanged(ulong oldId, ulong newId)
+        {
+            PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == newId);
+        }
+        #endregion
+
+        #region Player getters
+        /// <summary>
+        /// Gets or adds a player from a <see cref="PlayerControllerB"/>.
+        /// </summary>
+        /// <param name="playerController">The player's <see cref="PlayerControllerB"/>.</param>
+        /// <returns>A <see cref="Player"/>.</returns>
+        public static Player GetOrAdd(PlayerControllerB playerController)
+        {
+            if (Dictionary.TryGetValue(playerController, out Player player)) return player;
+
+            foreach (Player p in FindObjectsOfType<Player>())
+            {
+                if (p.ClientId == playerController.actualClientId)
+                {
+                    Dictionary.Add(playerController, p);
+                    return p;
+                }
+            }
+
+            if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+            {
+                GameObject go = Instantiate(PlayerNetworkPrefab, Vector3.zero, default);
+                go.SetActive(true);
+                Player p = go.GetComponent<Player>();
+                p.PlayerController = playerController;
+                go.GetComponent<NetworkObject>().Spawn(false);
+
+                return p;
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Gets a player from a <see cref="PlayerControllerB"/>.
         /// </summary>
@@ -150,5 +264,6 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             return (player = Get(clientId)) != null;
         }
+        #endregion
     }
 }

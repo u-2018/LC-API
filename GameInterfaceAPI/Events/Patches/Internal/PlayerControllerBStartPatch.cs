@@ -1,0 +1,27 @@
+﻿using GameNetcodeStuff;
+using HarmonyLib;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Unity.Netcode;
+using UnityEngine;
+
+namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
+{
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.Start))]
+    class PlayerControllerBStartPatch
+    {
+        private static void Postfix(PlayerControllerB __instance)
+        {
+            if (__instance.IsServer && !Features.Player.TryGet(__instance, out Features.Player _))
+            {
+                GameObject go = UnityEngine.Object.Instantiate(Features.Player.PlayerNetworkPrefab);
+                go.SetActive(true);
+                go.GetComponent<Features.Player>().PlayerController = __instance;
+                go.GetComponent<NetworkObject>().Spawn(false);
+            }
+        }
+    }
+}
