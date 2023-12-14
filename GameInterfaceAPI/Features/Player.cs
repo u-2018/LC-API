@@ -66,6 +66,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s sprint meter.
         /// </summary>
+        /// <exception cref="Exception">Thrown when attempting to set position from the client.</exception>
         public float SprintMeter
         {
             get
@@ -74,8 +75,19 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to sprint meter on client.");
+
                 PlayerController.sprintMeter = value;
+                SetSprintMeterClientRpc(value);
             }
+        }
+
+        [ClientRpc]
+        private void SetSprintMeterClientRpc(float value)
+        {
+            if (!NetworkManager.Singleton.IsClient) return;
+
+            PlayerController.sprintMeter = value;
         }
 
         /// <summary>
@@ -112,8 +124,6 @@ namespace LC_API.GameInterfaceAPI.Features
             PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
         }
 
-        private NetworkVariable<int> _healthSync { get; } = new NetworkVariable<int>();
-
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s health.
         /// </summary>
@@ -126,9 +136,28 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                if (!PlayerController.IsServer) throw new Exception("Tried to set health on client.");
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to set health on client.");
 
-                _healthSync.Value = value;
+                PlayerController.health = value;
+
+                SetHealthClientRpc(value);
+            }
+        }
+
+        [ClientRpc]
+        private void SetHealthClientRpc(int health)
+        {
+            if (!NetworkManager.Singleton.IsClient) return;
+
+            int oldHealth = PlayerController.health;
+
+            PlayerController.health = health;
+
+            if (PlayerController.IsOwner) HUDManager.Instance.UpdateHealthUI(health, health < oldHealth);
+
+            if (health <= 0 && !PlayerController.isPlayerDead && PlayerController.AllowPlayerDeath())
+            {
+                PlayerController.KillPlayer(default, true, CauseOfDeath.Unknown, 0);
             }
         }
 
@@ -143,8 +172,6 @@ namespace LC_API.GameInterfaceAPI.Features
                 PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
                 NetworkClientId.OnValueChanged += clientIdChanged;
             }
-
-            _healthSync.OnValueChanged += healthSyncChanged;
         }
 
         /// <summary>
@@ -152,8 +179,6 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public override void OnDestroy()
         {
-            _healthSync.OnValueChanged -= healthSyncChanged;
-
             if (NetworkManager.Singleton.IsClient)
             {
                 NetworkClientId.OnValueChanged -= clientIdChanged;
@@ -163,20 +188,6 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         #region Network variable handlers
-        private void healthSyncChanged(int oldHealth, int newHealth)
-        {
-            int health = newHealth;
-
-            PlayerController.health = health;
-
-            if (PlayerController.IsOwner) HUDManager.Instance.UpdateHealthUI(health, health < oldHealth);
-
-            if (health <= 0 && !PlayerController.isPlayerDead && PlayerController.AllowPlayerDeath())
-            {
-                PlayerController.KillPlayer(default, true, CauseOfDeath.Unknown, 0);
-            }
-        }
-
         private void clientIdChanged(ulong oldId, ulong newId)
         {
             PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == newId);
