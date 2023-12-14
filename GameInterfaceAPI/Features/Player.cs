@@ -103,7 +103,6 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                Plugin.Log.LogInfo("SETTING POSITION");
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to set position on client.");
 
                 PlayerController.transform.position = value;
