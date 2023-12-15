@@ -23,7 +23,7 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         public int Damage { get; set; }
 
         /// <summary>
-        /// Gets or sets whether or not this damage will play sfx.
+        /// Gets or sets whether or not this damage will play sfx, if it has any.
         /// </summary>
         public bool HasSFX { get; set; }
 

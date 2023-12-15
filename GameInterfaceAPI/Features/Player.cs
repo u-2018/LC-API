@@ -137,7 +137,10 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to sprint meter on client.");
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to sprint meter on client.");
+                }
 
                 PlayerController.sprintMeter = value;
                 SetSprintMeterClientRpc(value);
@@ -165,7 +168,10 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to set position on client.");
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set position on client.");
+                }
 
                 PlayerController.transform.position = value;
                 PlayerController.serverPlayerPosition = value;
@@ -186,6 +192,62 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
+        /// Gets or sets the <see cref="Player"/>'s euler angles.
+        /// </summary>
+        /// <exception cref="Exception">Thrown when attempting to update euler angles from a client that isn't the local client, or the host.</exception>
+        public Vector3 EulerAngles
+        {
+            get
+            {
+                return PlayerController.transform.eulerAngles;
+            }
+            set 
+            {
+                if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
+                {
+                    throw new Exception("Tried to update euler angles from other client.");
+                }
+
+                PlayerController.transform.eulerAngles = value;
+
+                // Only the local client or the host can set rotation, but if we are the host, we need to sync that to everyone.
+                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+                {
+                    PlayerController.UpdatePlayerRotationFullClientRpc(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="Player"/>'s rotation. Quaternions can't gimbal lock, but they are harder to understand.
+        /// Use <see cref="Player.EulerAngles"/> if you don't know what you're doing.
+        /// </summary>
+        /// <exception cref="Exception">Thrown when attempting to update rotation from a client that isn't the local client, or the host.</exception>
+        public Quaternion Rotation
+        {
+            get
+            {
+                return PlayerController.transform.rotation;
+            }
+            set
+            {
+                if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
+                {
+                    throw new Exception("Tried to update rotation from other client.");
+                }
+
+                PlayerController.transform.rotation = value;
+                PlayerController.transform.eulerAngles = value.eulerAngles;
+
+                // Only the local client or the host can set rotation, but if we are the host, we need to sync that to everyone.
+                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+                {
+                    PlayerController.UpdatePlayerRotationFullClientRpc(value.eulerAngles);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the <see cref="Player"/>'s health.
         /// </summary>
         /// <exception cref="Exception">Thrown when attempting to set health from the client.</exception>
@@ -197,7 +259,10 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) throw new Exception("Tried to set health on client.");
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set health on client.");
+                }
 
                 PlayerController.health = value;
 
@@ -234,6 +299,65 @@ namespace LC_API.GameInterfaceAPI.Features
             }
 
             NetworkClientId.OnValueChanged += clientIdChanged;
+        }
+
+        /// <summary>
+        /// Hurts the <see cref="Player"/>.
+        /// </summary>
+        /// <param name="damage">The amount of health to take from the <see cref="Player"/>.</param>
+        /// <param name="causeOfDeath">The cause of death to show on the end screen.</param>
+        /// <param name="bodyVelocity">he velocity to launch the ragdoll at, if killed.</param>
+        /// <param name="overrideOneShotProtection">Whether or not to override one shot protection.</param>
+        /// <param name="deathAnimation">Which death animation to use.</param>
+        /// <param name="fallDamage">Whether or not this should be considered fall damage.</param>
+        /// <param name="hasSFX">Whether or not this damage has sfx.</param>
+        /// <exception cref="Exception">Thrown when attempting to hurt a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
+        public void Hurt(int damage, CauseOfDeath causeOfDeath = CauseOfDeath.Unknown, Vector3 bodyVelocity = default, bool overrideOneShotProtection = false, int deathAnimation = 0, bool fallDamage = false, bool hasSFX = true)
+        {
+            if (overrideOneShotProtection && Health - damage <= 0)
+            {
+                Kill(bodyVelocity, true, causeOfDeath, deathAnimation);
+                return;
+            }
+
+            if (IsLocalPlayer)
+            {
+                PlayerController.DamagePlayer(damage, hasSFX, true, causeOfDeath, deathAnimation, fallDamage, bodyVelocity);
+            }
+            else
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new Exception("Tried to kill player from other client.");
+                }
+
+                PlayerController.DamagePlayerClientRpc(damage, Health - damage);
+            }
+        }
+
+        /// <summary>
+        /// Kills the <see cref="Player"/>.
+        /// </summary>
+        /// <param name="bodyVelocity">The velocity to launch the ragdoll at, if spawned.</param>
+        /// <param name="spawnBody">Whether or not to spawn a ragdoll.</param>
+        /// <param name="causeOfDeath">The cause of death to show on the end screen.</param>
+        /// <param name="deathAnimation">Which death animation to use.</param>
+        /// <exception cref="Exception">Thrown when attempting to kill a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
+        public void Kill(Vector3 bodyVelocity = default, bool spawnBody = true, CauseOfDeath causeOfDeath = CauseOfDeath.Unknown, int deathAnimation = 0)
+        {
+            if (IsLocalPlayer)
+            {
+                PlayerController.KillPlayer(bodyVelocity, spawnBody, causeOfDeath, deathAnimation);
+            }
+            else
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new Exception("Tried to kill player from other client.");
+                }
+
+                PlayerController.KillPlayerClientRpc((int)ClientId, spawnBody, bodyVelocity, (int)causeOfDeath, deathAnimation);
+            }
         }
 
         /// <summary>
