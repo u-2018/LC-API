@@ -14,9 +14,11 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
     [HarmonyPatch(typeof(GameNetworkManager), nameof(GameNetworkManager.Start) )]
     class GameNetworkManagerStartPatch
     {
+        private const string PLAYER_NETWORKING_BUNDLE_LOCATION = "assets/lc_api/playernetworkingprefab.prefab";
+
         private static void Postfix(GameNetworkManager __instance)
         {
-            GameObject obj = BundleAPI.BundleLoader.GetLoadedAsset<GameObject>("assets/lc_api/playernetworkingprefab.prefab");
+            GameObject obj = BundleAPI.BundleLoader.GetLoadedAsset<GameObject>(PLAYER_NETWORKING_BUNDLE_LOCATION);
             obj.AddComponent<Features.Player>();
             __instance.GetComponent<NetworkManager>().AddNetworkPrefab(obj);
 

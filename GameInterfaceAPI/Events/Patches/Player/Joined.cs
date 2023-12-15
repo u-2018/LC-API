@@ -25,7 +25,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             {
                 Cache.Player.ConnectedPlayers.Add(__instance.playerSteamId);
 
-                Handlers.Player.OnJoined(new PlayerJoinedEventArgs(Features.Player.GetOrAdd(__instance)));
+                Handlers.Player.OnJoined(new JoinedEventArgs(Features.Player.GetOrAdd(__instance)));
             }
         }
     }

@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
     /// <summary>
-    /// Contains all the information after a player joined the server. Including the host.
+    /// Contains all the information after a <see cref="Features.Player"/> joined the server. Including the host.
     /// </summary>
-    public class PlayerJoinedEventArgs : System.EventArgs
+    public class JoinedEventArgs : System.EventArgs
     {
         /// <summary>
         /// Gets the joined player.
@@ -18,10 +18,10 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         public Features.Player Player { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PlayerJoinedEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="JoinedEventArgs"/> class.
         /// </summary>
         /// <param name="player"><inheritdoc cref="Player" /></param>
-        public PlayerJoinedEventArgs(Features.Player player)
+        public JoinedEventArgs(Features.Player player)
         {
             Player = player;
         }

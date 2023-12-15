@@ -103,7 +103,7 @@ namespace LC_API.GameInterfaceAPI.Features
 
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s position. 
-        /// If you set a player's position out of bounds, they will be teleported back to a safe location next to the ship or entrance/exit to a dungeon.
+        /// If you set a <see cref="Features.Player"/>'s position out of bounds, they will be teleported back to a safe location next to the ship or entrance/exit to a dungeon.
         /// </summary>
         /// <exception cref="Exception">Thrown when attempting to set position from the client.</exception>
         public Vector3 Position
@@ -206,7 +206,7 @@ namespace LC_API.GameInterfaceAPI.Features
 
         #region Player getters
         /// <summary>
-        /// Gets or adds a player from a <see cref="PlayerControllerB"/>.
+        /// Gets or adds a <see cref="Features.Player"/> from a <see cref="PlayerControllerB"/>.
         /// </summary>
         /// <param name="playerController">The player's <see cref="PlayerControllerB"/>.</param>
         /// <returns>A <see cref="Player"/>.</returns>
@@ -238,7 +238,7 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Gets a player from a <see cref="PlayerControllerB"/>.
+        /// Gets a <see cref="Features.Player"/> from a <see cref="PlayerControllerB"/>.
         /// </summary>
         /// <param name="playerController">The player's <see cref="PlayerControllerB"/>.</param>
         /// <returns>A <see cref="Player"/> or <see langword="null"/> if not found.</returns>
@@ -250,18 +250,18 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Tries to get a player from a <see cref="PlayerControllerB"/>.
+        /// Tries to get a <see cref="Features.Player"/> from a <see cref="PlayerControllerB"/>.
         /// </summary>
         /// <param name="playerController">The player's <see cref="PlayerControllerB"/>.</param>
         /// <param name="player">Outputs a <see cref="Player"/>, or <see langword="null"/> if not found.</param>
-        /// <returns><see langword="true"/> if a player is found, <see langword="false"/> otherwise.</returns>
+        /// <returns><see langword="true"/> if a <see cref="Features.Player"/> is found, <see langword="false"/> otherwise.</returns>
         public static bool TryGet(PlayerControllerB playerController, out Player player)
         {
             return Dictionary.TryGetValue(playerController, out player);
         }
 
         /// <summary>
-        /// Gets a player from a player's client id.
+        /// Gets a <see cref="Features.Player"/> from a <see cref="Features.Player"/>'s client id.
         /// </summary>
         /// <param name="clientId">The player's client id.</param>
         /// <returns>A <see cref="Player"/> or <see langword="null"/> if not found.</returns>
@@ -276,11 +276,11 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Tries to get a player from a player's client id.
+        /// Tries to get a <see cref="Features.Player"/> from a <see cref="Features.Player"/>'s client id.
         /// </summary>
         /// <param name="clientId">The player's client id.</param>
         /// <param name="player">Outputs a <see cref="Player"/>, or <see langword="null"/> if not found.</param>
-        /// <returns><see langword="true"/> if a player is found, <see langword="false"/> otherwise.</returns>
+        /// <returns><see langword="true"/> if a <see cref="Features.Player"/> is found, <see langword="false"/> otherwise.</returns>
         public static bool TryGet(ulong clientId, out Player player)
         {
             return (player = Get(clientId)) != null;
