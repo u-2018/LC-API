@@ -36,11 +36,16 @@ namespace LC_API.GameInterfaceAPI.Features
         public static IReadOnlyCollection<Player> ActiveList => Dictionary.Values.Where(p => p.IsActive).ToList();
 
         /// <summary>
+        /// Gets the local <see cref="Player"/>.
+        /// </summary>
+        public static Player LocalPlayer => List.First(p => p.IsLocalPlayer);
+
+        /// <summary>
         /// Gets the encapsulated <see cref="PlayerControllerB"/>.
         /// </summary>
         public PlayerControllerB PlayerController { get; internal set; }
 
-        internal NetworkVariable<ulong> NetworkClientId { get; } = new NetworkVariable<ulong>();
+        internal NetworkVariable<ulong> NetworkClientId { get; } = new NetworkVariable<ulong>(ulong.MaxValue);
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s client id.
@@ -80,7 +85,7 @@ namespace LC_API.GameInterfaceAPI.Features
         public bool IsDead => PlayerController.isPlayerDead;
 
         /// <summary>
-        /// Gets or sets the player's username.
+        /// Gets or sets the <see cref="Player"/>'s username.
         /// </summary>
         public string Username
         {
@@ -176,7 +181,7 @@ namespace LC_API.GameInterfaceAPI.Features
 
             PlayerController.TeleportPlayer(position);
 
-            PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
+            if (IsLocalPlayer) PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
         }
 
         /// <summary>
@@ -225,8 +230,9 @@ namespace LC_API.GameInterfaceAPI.Features
             else
             {
                 PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
-                NetworkClientId.OnValueChanged += clientIdChanged;
             }
+
+            NetworkClientId.OnValueChanged += clientIdChanged;
         }
 
         /// <summary>
@@ -234,11 +240,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public override void OnDestroy()
         {
-            if (NetworkManager.Singleton.IsClient)
-            {
-                NetworkClientId.OnValueChanged -= clientIdChanged;
-            }
-
+            NetworkClientId.OnValueChanged -= clientIdChanged;
             base.OnDestroy();
         }
 
@@ -257,11 +259,13 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <returns>A <see cref="Player"/>.</returns>
         public static Player GetOrAdd(PlayerControllerB playerController)
         {
+            if (playerController == null) return null;
+
             if (Dictionary.TryGetValue(playerController, out Player player)) return player;
 
             foreach (Player p in FindObjectsOfType<Player>())
             {
-                if (p.ClientId == playerController.actualClientId)
+                if (p.NetworkClientId.Value == playerController.actualClientId)
                 {
                     Dictionary.Add(playerController, p);
                     return p;

@@ -2,11 +2,13 @@
 using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
@@ -16,7 +18,9 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Prefix(PlayerControllerB __instance)
         {
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+            {
                 Features.Player.GetOrAdd(__instance).NetworkClientId.Value = __instance.actualClientId;
+            }
         }
 
         private static void Postfix(PlayerControllerB __instance)
@@ -25,8 +29,24 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             {
                 Cache.Player.ConnectedPlayers.Add(__instance.playerSteamId);
 
-                Handlers.Player.OnJoined(new JoinedEventArgs(Features.Player.GetOrAdd(__instance)));
+                __instance.StartCoroutine(JoinedCoroutine(__instance));
             }
+        }
+
+        // Since we have to wait for players' client id to sync to the player instance, we have to constantly check
+        // if the player and its controller were linked yet. Very annoying.
+        private static IEnumerator JoinedCoroutine(PlayerControllerB controller)
+        {
+            Features.Player player = Features.Player.GetOrAdd(controller);
+
+            while (player == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+
+                player = Features.Player.GetOrAdd(controller);
+            }
+
+            Handlers.Player.OnJoined(new JoinedEventArgs(player));
         }
     }
 }
