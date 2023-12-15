@@ -58,6 +58,11 @@ namespace LC_API.GameInterfaceAPI.Features
         public new bool IsHost => PlayerController.isHostPlayerObject;
 
         /// <summary>
+        /// Gets whether or not the <see cref="Player"/> is the current local player.
+        /// </summary>
+        public new bool IsLocalPlayer => PlayerController == StartOfRound.Instance.localPlayerController;
+
+        /// <summary>
         /// Gets whether or not the <see cref="Player"/> has a connected user.
         /// </summary>
         public bool IsActive => IsControlled || IsDead;
@@ -73,6 +78,46 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Due to the way the PlayerController works, this is false if there is not an active user connected to the controller.
         /// </summary>
         public bool IsDead => PlayerController.isPlayerDead;
+
+        /// <summary>
+        /// Gets or sets the player's username.
+        /// </summary>
+        public string Username
+        {
+            get
+            {
+                return PlayerController.playerUsername;
+            }
+            set
+            {
+                PlayerController.playerUsername = value;
+
+                if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+                {
+                    SetPlayerUsernameClientRpc(value);
+                }
+                else
+                {
+                    SetPlayerUsernameServerRpc(value);
+                }
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void SetPlayerUsernameServerRpc(string name, ServerRpcParams @params = default)
+        {
+            if (@params.Receive.SenderClientId == ClientId)
+            {
+                SetPlayerUsernameClientRpc(name);
+            }
+        }
+
+        [ClientRpc]
+        private void SetPlayerUsernameClientRpc(string name)
+        {
+            PlayerController.playerUsername = name;
+            PlayerController.usernameBillboardText.text = name;
+        }
 
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s sprint meter.
