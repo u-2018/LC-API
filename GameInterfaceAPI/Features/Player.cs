@@ -38,6 +38,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets the local <see cref="Player"/>.
         /// </summary>
+        /// TODO: Same as above, I'd like to set this once then never again, an internal `Joined` event listener should work.
         public static Player LocalPlayer => List.First(p => p.IsLocalPlayer);
 
         /// <summary>
