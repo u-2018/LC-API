@@ -30,10 +30,10 @@ namespace LC_API.GameInterfaceAPI.Features
         public static IReadOnlyCollection<Player> List => Dictionary.Values;
 
         /// <summary>
-        /// Gets a list containing only the currently controlled <see cref="Player"/>'s.
+        /// Gets a list containing only the currently active <see cref="Player"/>'s, dead or alive.
         /// </summary>
         /// TODO: `.Where` is bad. Potentially add and remove from this list as needed with a patch.
-        public static IReadOnlyCollection<Player> ActiveList => Dictionary.Values.Where(p => p.IsPlayerControlled).ToList();
+        public static IReadOnlyCollection<Player> ActiveList => Dictionary.Values.Where(p => p.IsActive).ToList();
 
         /// <summary>
         /// Gets the encapsulated <see cref="PlayerControllerB"/>.
@@ -58,10 +58,21 @@ namespace LC_API.GameInterfaceAPI.Features
         public new bool IsHost => PlayerController.isHostPlayerObject;
 
         /// <summary>
+        /// Gets whether or not the <see cref="Player"/> has a connected user.
+        /// </summary>
+        public bool IsActive => IsControlled || IsDead;
+
+        /// <summary>
         /// Gets whether or not the <see cref="Player"/> is currently being controlled.
         /// Lethal Company creates PlayerControllers ahead of time, so all of them always exist.
         /// </summary>
-        public bool IsPlayerControlled => PlayerController.isPlayerControlled;
+        public bool IsControlled => PlayerController.isPlayerControlled;
+
+        /// <summary>
+        /// Gets whether or not the <see cref="Player"/> is currently dead.
+        /// Due to the way the PlayerController works, this is false if there is not an active user connected to the controller.
+        /// </summary>
+        public bool IsDead => PlayerController.isPlayerDead;
 
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s sprint meter.
