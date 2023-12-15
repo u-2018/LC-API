@@ -4,7 +4,6 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>LC_API</AssemblyName>
     <Description>Utilities for plugin devs</Description>
-    <Version>2.1.1</Version>
     <Version>2.3.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
