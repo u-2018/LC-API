@@ -416,3 +416,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+Thunderstore/
