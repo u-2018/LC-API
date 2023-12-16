@@ -89,10 +89,17 @@ namespace LC_API.BundleAPI
                 {
                     byte[] buffer = new byte[bundleStart.Length];
 
+                try
+                {
                     using (FileStream fs = File.Open(path, FileMode.Open))
                     {
                         fs.Read(buffer, 0, buffer.Length);
                     }
+                }
+                catch (IOException ioException)
+                {
+                    Plugin.Log.LogError($"BundleAPI failed to open file \"{path}\": {ioException.Message}\n{ioException.StackTrace}");
+                }
 
                     if (buffer.SequenceEqual(bundleStart))
                     {
