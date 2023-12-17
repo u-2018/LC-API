@@ -14,18 +14,18 @@ using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 {
-    [HarmonyPatch(typeof(GameNetworkManager), nameof(GameNetworkManager.Start) )]
+    [HarmonyPatch(typeof(GameNetworkManager), nameof(GameNetworkManager.Start))]
     class GameNetworkManagerStartPatch
     {
-        private const string NETWORKING_BUNDLE_LOCATION = "assets/lc_api/networkingprefab.prefab";
-
         private static readonly string BUNDLE_PATH = Path.Combine(Paths.PluginPath, "2018-LC_API", "Bundles", "networking");
+
+        private const string PLAYER_NETWORKING_ASSET_LOCATION = "assets/lc_api/playernetworkingprefab.prefab";
 
         private static void Postfix(GameNetworkManager __instance)
         {
             LoadedAssetBundle assets = BundleLoader.LoadAssetBundle(BUNDLE_PATH);
 
-            GameObject obj = assets.GetAsset<GameObject>(NETWORKING_BUNDLE_LOCATION);
+            GameObject obj = assets.GetAsset<GameObject>(PLAYER_NETWORKING_ASSET_LOCATION);
             obj.AddComponent<Features.Player>();
             __instance.GetComponent<NetworkManager>().AddNetworkPrefab(obj);
 
