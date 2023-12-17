@@ -38,8 +38,12 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets the local <see cref="Player"/>.
         /// </summary>
-        /// TODO: Same as above, I'd like to set this once then never again, an internal `Joined` event listener should work.
-        public static Player LocalPlayer => List.First(p => p.IsLocalPlayer);
+        public static Player LocalPlayer { get; internal set; }
+
+        /// <summary>
+        /// Gets the host <see cref="Player"/>.
+        /// </summary>
+        public static Player HostPlayer { get; internal set; }
 
         /// <summary>
         /// Gets the encapsulated <see cref="PlayerControllerB"/>.
@@ -298,6 +302,12 @@ namespace LC_API.GameInterfaceAPI.Features
                 PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
             }
 
+            if (PlayerController != null)
+            {
+                if (IsLocalPlayer) LocalPlayer = this;
+                if (IsHost) HostPlayer = this;
+            }
+
             NetworkClientId.OnValueChanged += clientIdChanged;
         }
 
@@ -373,6 +383,12 @@ namespace LC_API.GameInterfaceAPI.Features
         private void clientIdChanged(ulong oldId, ulong newId)
         {
             PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == newId);
+
+            if (PlayerController != null)
+            {
+                if (IsLocalPlayer) LocalPlayer = this;
+                if (IsHost) HostPlayer = this;
+            }
         }
         #endregion
 

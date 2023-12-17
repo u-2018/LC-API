@@ -12,9 +12,9 @@ Then, get the latest release off of thunderstore
 If you want to use the API in your plugin, add the LC_API.dll as a project reference!
 
 ## Contributing
-If you wish to contribute to this project, you will need a publicized Assembly-CSharp. I recommend using [this publicizer](https://github.com/iRebbok/APublicizer/releases) as it's the one I use to build my project. Place the unzipped contents into your Managed folder, then drag the Assembly-CSharp.dll onto APublicizer.exe and it'll run for you and output an `Assembly-CSharp-Publicized.dll`
+If you wish to contribute to this project, you will need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) to make custom networking properly. Unzip it anywhere on your computer and open the solution properties, go to build events and change the `cd D:\NetcodePatcher` to the location of the netcode patcher on your machine. The folder you have should have `NetcodePatcher.dll` inside of it.
 
-You will also need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) to make custom networking properly. Unzip it anywhere on your computer and open the solution properties, go to build events and change the `cd D:\NetcodePatcher` to the location of the netcode patcher on your machine. The folder you have should have `NetcodePatcher.dll` inside of it.
+Also ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ensure it gets publicized.
 
 Once you have these done, you will be able to properly build the solution.
 
