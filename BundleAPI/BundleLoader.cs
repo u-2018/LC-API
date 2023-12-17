@@ -216,7 +216,7 @@ namespace LC_API.BundleAPI
         /// Loads an entire asset bundle. It is recommended to use this to load asset bundles.
         /// </summary>
         /// <param name="filePath">The file system path of the asset bundle.</param>
-        /// <param name="cache">Whether or not to cache the loaded bundle.</param>
+        /// <param name="cache">Whether or not to cache the loaded bundle. Set to <see langword="false" /> if you cache it yourself.</param>
         /// <returns>A <see cref="Dictionary{TKey, TValue}"/> containing all assets from the bundle mapped to their path in lowercase.</returns>
         public static Dictionary<string, UnityEngine.Object> LoadAssetBundle(string filePath, bool cache = true)
         {

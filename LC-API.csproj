@@ -4,6 +4,7 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>LC_API</AssemblyName>
     <Description>Utilities for plugin devs</Description>
+    <Version>3.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -14,6 +15,12 @@
     <RootNamespace>LC_API</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Thunderstore\**" />
+    <EmbeddedResource Remove="Thunderstore\**" />
+    <None Remove="Thunderstore\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
@@ -56,4 +63,3 @@
     <Exec Command="cd D:\NetcodePatcher&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 </Project>
-    <Version>3.0.0</Version>
