@@ -48,7 +48,7 @@ namespace LC_API.BundleAPI
         /// </summary>
         public static event Action OnLoadedBundles = LoadAssetsCompleted;
 
-        private static Dictionary<string, Dictionary<string, UnityEngine.Object>> loadedAssetBundles = new Dictionary<string, Dictionary<string, UnityEngine.Object>>();
+        private static Dictionary<string, LoadedAssetBundle> loadedAssetBundles = new Dictionary<string, LoadedAssetBundle>();
 
         internal static void Load(bool legacyLoading)
         {
@@ -218,17 +218,12 @@ namespace LC_API.BundleAPI
         /// <param name="filePath">The file system path of the asset bundle.</param>
         /// <param name="cache">Whether or not to cache the loaded bundle. Set to <see langword="false" /> if you cache it yourself.</param>
         /// <returns>A <see cref="Dictionary{TKey, TValue}"/> containing all assets from the bundle mapped to their path in lowercase.</returns>
-        public static Dictionary<string, UnityEngine.Object> LoadAssetBundle(string filePath, bool cache = true)
+        public static LoadedAssetBundle LoadAssetBundle(string filePath, bool cache = true)
         {
-            if (loadedAssetBundles.TryGetValue(filePath, out Dictionary<string, UnityEngine.Object> _assets)) 
+            if (loadedAssetBundles.TryGetValue(filePath, out LoadedAssetBundle _assets)) 
                 return _assets;
 
             Dictionary<string, UnityEngine.Object> assetPairs = new Dictionary<string, UnityEngine.Object>();
-
-            // Create a shallow clone so that anyone who edits the returned dictionary doesn't mess up the cached version.
-            Dictionary<string, UnityEngine.Object> toSave = null;
-            
-            if (cache) toSave = new Dictionary<string, UnityEngine.Object>();
 
             AssetBundle bundle = AssetBundle.LoadFromFile(filePath);
             try
@@ -255,7 +250,6 @@ namespace LC_API.BundleAPI
                     assets.TryAdd(path, loadedAsset);
 
                     assetPairs.Add(path, loadedAsset);
-                    if (cache) toSave.Add(path, loadedAsset);
                 }
             }
             finally
@@ -263,9 +257,9 @@ namespace LC_API.BundleAPI
                 bundle?.Unload(false);
             }
 
-            if (cache) loadedAssetBundles.Add(filePath, toSave);
+            if (cache) loadedAssetBundles.Add(filePath, new LoadedAssetBundle(assetPairs));
 
-            return assetPairs;
+            return new LoadedAssetBundle(assetPairs);
         }
 
         private static void LoadAssetsCompleted()
