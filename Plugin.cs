@@ -9,6 +9,7 @@ using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
 using System;
+using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -85,27 +86,35 @@ namespace LC_API
             Networking.SetupNetworking();
             Events.Patch(harmony);
 
-            CommandHandler.RegisterCommand("test", (string[] args) =>
+            CommandHandler.RegisterCommand("testvalue", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.ScrapValue = int.Parse(args[0]);
+            });
+
+            CommandHandler.RegisterCommand("testname", (string[] args) =>
             {
                 GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.Name = string.Join(" ", args);
             });
 
-            CommandHandler.RegisterCommand("spawn", (string[] args) =>
+            CommandHandler.RegisterCommand("testpos", (string[] args) =>
             {
-                NetworkManager manager = FindObjectOfType<NetworkManager>();
-                if (manager != null)
+                foreach (GameInterfaceAPI.Features.Item item in GameInterfaceAPI.Features.Item.List)
                 {
-                    foreach (NetworkPrefab prefab in manager.NetworkConfig.Prefabs.Prefabs)
-                    {
-                        if (prefab.Prefab.TryGetComponent(out KeyItem boombox))
-                        {
-                            KeyItem spawnedKey = Instantiate(boombox, StartOfRound.Instance.localPlayerController.transform.position, default);
-                            spawnedKey.insertedBattery.charge = 0.2f;
-                            spawnedKey.GetComponent<NetworkObject>().Spawn();
+                    Log.LogInfo($"Setting position of {item.Name} cur: {item.Position}");
+                    item.Position = GameInterfaceAPI.Features.Player.LocalPlayer.Position;
+                    Log.LogInfo($"After: {item.Position}");
+                }
+            });
 
-                            break;
-                        }
-                    }
+            CommandHandler.RegisterCommand("spawnscrap", (string[] args) =>
+            {
+                string name = string.Join(" ", args).ToLower();
+                GameObject go = StartOfRound.Instance.allItemsList.itemsList.FirstOrDefault(i => i.itemName.ToLower().Contains(name))?.spawnPrefab;
+                if (go != null)
+                {
+                    GameObject instantiated = Instantiate(go, GameInterfaceAPI.Features.Player.LocalPlayer.Position, default);
+
+                    instantiated.GetComponent<NetworkObject>().Spawn();
                 }
             });
         }

@@ -46,6 +46,16 @@ namespace LC_API.GameInterfaceAPI.Features
         public ScanNodeProperties ScanNodeProperties { get; set; }
 
         /// <summary>
+        /// Gets whether or not this item is currently being held.
+        /// </summary>
+        public bool IsHeld => GrabbableObject.isHeld;
+
+        /// <summary>
+        /// Gets the <see cref="Player"/> that is currently holding this <see cref="Item"/>. <see langword="null"/> if not held.
+        /// </summary>
+        public Player Holder => IsHeld ? Player.Dictionary.TryGetValue(GrabbableObject.playerHeldBy, out Player p) ? p : null : null;
+
+        /// <summary>
         /// Gets or sets the <see cref="Item"/>'s name.
         /// </summary>
         /// <exception cref="Exception">Thrown when attempting to set item name from the client.</exception>
@@ -99,10 +109,42 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Gets whether or not this item is currently being held.
+        /// Gets or sets the position of this <see cref="Item"/>.
         /// </summary>
-        public bool IsHeld => GrabbableObject.isHeld;
+        /// <exception cref="Exception">Thrown when attempting to set the item's position from the client.</exception>
+        public Vector3 Position
+        {
+            get
+            {
+                return GrabbableObject.transform.position;
+            }
+            set
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set item position on client.");
+                }
 
+                GrabbableObject.startFallingPosition = value;
+                GrabbableObject.targetFloorPosition = value;
+                GrabbableObject.transform.position = value;
+
+                SetItemPositionClientRpc(value);
+            }
+        }
+
+        [ClientRpc]
+        private void SetItemPositionClientRpc(Vector3 pos)
+        {
+            GrabbableObject.startFallingPosition = pos;
+            GrabbableObject.targetFloorPosition = pos;
+            GrabbableObject.transform.position = pos;
+        }
+
+        /// <summary>
+        /// Gets or sets whether this <see cref="Item"/> should be considered scrap.
+        /// </summary>
+        /// <exception cref="Exception">Thrown when attempting to set isScrap from the client.</exception>
         public bool IsScrap
         {
             get
@@ -133,9 +175,42 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Gets the <see cref="Player"/> that is currently holding this <see cref="Item"/>. <see langword="null"/> if not held.
+        /// Gets or sets this <see cref="Item"/>'s scrap value.
         /// </summary>
-        public Player Holder => IsHeld ? Player.Dictionary.TryGetValue(GrabbableObject.playerHeldBy, out Player p) ? p : null : null;
+        /// <exception cref="Exception">Thrown when attempting to set scrap value from the client.</exception>
+        public int ScrapValue
+        {
+            get
+            {
+                return GrabbableObject.scrapValue;
+            }
+            set
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set scrap value on client.");
+                }
+
+                GrabbableObject.SetScrapValue(value);
+
+                SetScrapValueClientRpc(value);
+            }
+        }
+
+        [ClientRpc]
+        private void SetScrapValueClientRpc(int scrapValue)
+        {
+            GrabbableObject.SetScrapValue(scrapValue);
+        }
+
+        /// <summary>
+        /// Start the <see cref="Item"/> falling to the ground.
+        /// </summary>
+        /// <param name="randomizePosition">Whether or not to add some randomness to the position.</param>
+        public void FallToGround(bool randomizePosition = false)
+        {
+            GrabbableObject.FallToGround(randomizePosition);
+        }
 
         private void Awake()
         {
