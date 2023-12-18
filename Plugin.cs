@@ -83,6 +83,11 @@ namespace LC_API
 
             Networking.SetupNetworking();
             Events.Patch(harmony);
+
+            CommandHandler.RegisterCommand("test", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.Name = string.Join(" ", args);
+            });
         }
 
         internal void Start()

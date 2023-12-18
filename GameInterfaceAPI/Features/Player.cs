@@ -143,7 +143,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new Exception("Tried to sprint meter on client.");
+                    throw new Exception("Tried to set sprint meter on client.");
                 }
 
                 PlayerController.sprintMeter = value;
@@ -288,6 +288,19 @@ namespace LC_API.GameInterfaceAPI.Features
             if (health <= 0 && !PlayerController.isPlayerDead && PlayerController.AllowPlayerDeath())
             {
                 PlayerController.KillPlayer(default, true, CauseOfDeath.Unknown, 0);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="Player"/>'s currently held item.
+        /// </summary>
+        public Item HeldItem
+        {
+            get
+            {
+                if (PlayerController.currentlyHeldObjectServer == null) return null;
+
+                return Item.Dictionary[PlayerController.currentlyHeldObjectServer];
             }
         }
 
