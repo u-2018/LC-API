@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
+using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -33,11 +34,16 @@ namespace LC_API.GameInterfaceAPI.Features
         public GrabbableObject GrabbableObject { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="Item"/>'s see item properties.
+        /// Gets the <see cref="Item"/>'s <see cref="Item">item properties</see>.
+        /// These do not network, it is recommended to use the getters/setters on the <see cref="Item"/> itself.
         /// </summary>
-        public global::Item ItemProperties => GrabbableObject?.itemProperties;
+        public global::Item ItemProperties => GrabbableObject.itemProperties;
 
-        private ScanNodeProperties ScanNodeProperties { get; set; }
+        /// <summary>
+        /// Gets the <see cref="Item"/>'s <see cref="ScanNodeProperties"/>.
+        /// These do not network, it is recommended to use the getters/setters on the <see cref="Item"/> itself.
+        /// </summary>
+        public ScanNodeProperties ScanNodeProperties { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Item"/>'s name.
@@ -47,7 +53,7 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             get
             {
-                return GrabbableObject.itemProperties.itemName;
+                return ItemProperties.itemName;
             }
             set
             {
@@ -56,12 +62,15 @@ namespace LC_API.GameInterfaceAPI.Features
                     throw new Exception("Tried to set item name on client.");
                 }
 
-                string current = GrabbableObject.itemProperties.itemName.ToLower();
+                string current = ItemProperties.itemName.ToLower();
 
-                GrabbableObject.itemProperties.itemName = value;
+                CloneProperties();
+
+                ItemProperties.itemName = value;
                 OverrideTooltips(current, value.ToLower());
 
                 ScanNodeProperties.headerText = value;
+
                 SetGrabbableNameClientRpc(value);
             }
         }
@@ -69,8 +78,11 @@ namespace LC_API.GameInterfaceAPI.Features
         [ClientRpc]
         private void SetGrabbableNameClientRpc(string name)
         {
-            string current = GrabbableObject.itemProperties.itemName.ToLower();
-            GrabbableObject.itemProperties.itemName = name;
+            string current = ItemProperties.itemName.ToLower();
+
+            CloneProperties();
+
+            ItemProperties.itemName = name;
             OverrideTooltips(current, name.ToLower());
 
             ScanNodeProperties.headerText = name;
@@ -78,15 +90,12 @@ namespace LC_API.GameInterfaceAPI.Features
 
         private void OverrideTooltips(string oldName, string newName)
         {
-            for (int i = 0; i < GrabbableObject.itemProperties.toolTips.Length; i++)
+            for (int i = 0; i < ItemProperties.toolTips.Length; i++)
             {
-                GrabbableObject.itemProperties.toolTips[i] = GrabbableObject.itemProperties.toolTips[i].ReplaceWithCase(oldName, newName);
+                ItemProperties.toolTips[i] = ItemProperties.toolTips[i].ReplaceWithCase(oldName, newName);
             }
 
-            if (IsHeld && Holder == Player.LocalPlayer)
-            {
-                GrabbableObject.SetControlTipsForItem();
-            }
+            if (IsHeld && Holder == Player.LocalPlayer) GrabbableObject.SetControlTipsForItem();
         }
 
         /// <summary>
@@ -94,10 +103,39 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public bool IsHeld => GrabbableObject.isHeld;
 
+        public bool IsScrap
+        {
+            get
+            {
+                return ItemProperties.isScrap;
+            }
+            set
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set item name on client.");
+                }
+
+                CloneProperties();
+
+                ItemProperties.isScrap = value;
+
+                SetIsScrapClientRpc(value);
+            }
+        }
+
+        [ClientRpc]
+        private void SetIsScrapClientRpc(bool isScrap)
+        {
+            CloneProperties();
+
+            ItemProperties.isScrap = isScrap;
+        }
+
         /// <summary>
         /// Gets the <see cref="Player"/> that is currently holding this <see cref="Item"/>. <see langword="null"/> if not held.
         /// </summary>
-        public Player Holder => Player.Dictionary.TryGetValue(GrabbableObject.playerHeldBy, out Player p) ? p : null;
+        public Player Holder => IsHeld ? Player.Dictionary.TryGetValue(GrabbableObject.playerHeldBy, out Player p) ? p : null : null;
 
         private void Awake()
         {
@@ -105,6 +143,20 @@ namespace LC_API.GameInterfaceAPI.Features
             ScanNodeProperties = GrabbableObject.gameObject.GetComponentInChildren<ScanNodeProperties>();
 
             Dictionary.Add(GrabbableObject, this);
+        }
+
+        // All items have the same properties, so if we change it, we need to clone it.
+        private bool hasNewProps = false;
+        private void CloneProperties()
+        {
+            global::Item newProps = Instantiate(ItemProperties);
+
+            // Don't want to destroy any that aren't custom
+            if (hasNewProps) Destroy(ItemProperties);
+
+            GrabbableObject.itemProperties = newProps;
+
+            hasNewProps = true;
         }
 
         /// <summary>

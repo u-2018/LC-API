@@ -10,6 +10,7 @@ using LC_API.ManualPatches;
 using LC_API.ServerAPI;
 using System;
 using System.Reflection;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace LC_API
@@ -87,6 +88,25 @@ namespace LC_API
             CommandHandler.RegisterCommand("test", (string[] args) =>
             {
                 GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.Name = string.Join(" ", args);
+            });
+
+            CommandHandler.RegisterCommand("spawn", (string[] args) =>
+            {
+                NetworkManager manager = FindObjectOfType<NetworkManager>();
+                if (manager != null)
+                {
+                    foreach (NetworkPrefab prefab in manager.NetworkConfig.Prefabs.Prefabs)
+                    {
+                        if (prefab.Prefab.TryGetComponent(out KeyItem boombox))
+                        {
+                            KeyItem spawnedKey = Instantiate(boombox, StartOfRound.Instance.localPlayerController.transform.position, default);
+                            spawnedKey.insertedBattery.charge = 0.2f;
+                            spawnedKey.GetComponent<NetworkObject>().Spawn();
+
+                            break;
+                        }
+                    }
+                }
             });
         }
 
