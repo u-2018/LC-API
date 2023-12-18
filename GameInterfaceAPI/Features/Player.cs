@@ -20,20 +20,20 @@ namespace LC_API.GameInterfaceAPI.Features
         internal static GameObject PlayerNetworkPrefab { get; set; }
 
         /// <summary>
-        /// Gets a dictionary containing all <see cref="Player"/>'s. Even inactive ones.
+        /// Gets a dictionary containing all <see cref="Player"/>s. Even inactive ones.
         /// </summary>
         public static Dictionary<PlayerControllerB, Player> Dictionary { get; } = new Dictionary<PlayerControllerB, Player>();
 
         /// <summary>
-        /// Gets a list containing all <see cref="Player"/>'s. Even inactive ones.
+        /// Gets a list containing all <see cref="Player"/>s. Even inactive ones.
         /// </summary>
         public static IReadOnlyCollection<Player> List => Dictionary.Values;
 
         /// <summary>
-        /// Gets a list containing only the currently active <see cref="Player"/>'s, dead or alive.
+        /// Gets a list containing only the currently active <see cref="Player"/>s, dead or alive.
         /// </summary>
         /// TODO: `.Where` is bad. Potentially add and remove from this list as needed with a patch.
-        public static IReadOnlyCollection<Player> ActiveList => Dictionary.Values.Where(p => p.IsActive).ToList();
+        public static IReadOnlyCollection<Player> ActiveList => List.Where(p => p.IsActive).ToList();
 
         /// <summary>
         /// Gets the local <see cref="Player"/>.
