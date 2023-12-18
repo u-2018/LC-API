@@ -117,6 +117,11 @@ namespace LC_API
                     instantiated.GetComponent<NetworkObject>().Spawn();
                 }
             });
+
+            CommandHandler.RegisterCommand("givescrap", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer);
+            });
         }
 
         internal void Start()

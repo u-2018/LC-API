@@ -29,6 +29,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
             GameObject playerObj = assets.GetAsset<GameObject>(PLAYER_NETWORKING_ASSET_LOCATION);
             playerObj.AddComponent<Features.Player>();
+            playerObj.AddComponent<Features.Player.PlayerInventory>();
             __instance.GetComponent<NetworkManager>().AddNetworkPrefab(playerObj);
             Features.Player.PlayerNetworkPrefab = playerObj;
 

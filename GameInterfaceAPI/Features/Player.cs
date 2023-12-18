@@ -291,6 +291,8 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
+        public bool IsInFactory => PlayerController.isInsideFactory;
+
         /// <summary>
         /// Gets the <see cref="Player"/>'s currently held item.
         /// </summary>
@@ -304,25 +306,12 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
-        private void Start()
-        {
-            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
-            {
-                Dictionary.Add(PlayerController, this);
-            }
-            else
-            {
-                PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
-            }
+        /// <summary>
+        /// Gets whether or not the <see cref="Player"/> is holding an item.
+        /// </summary>
+        public bool IsHoldingItem => HeldItem != null;
 
-            if (PlayerController != null)
-            {
-                if (IsLocalPlayer) LocalPlayer = this;
-                if (IsHost) HostPlayer = this;
-            }
-
-            NetworkClientId.OnValueChanged += clientIdChanged;
-        }
+        public PlayerInventory Inventory { get; private set; }
 
         /// <summary>
         /// Hurts the <see cref="Player"/>.
@@ -381,6 +370,28 @@ namespace LC_API.GameInterfaceAPI.Features
 
                 PlayerController.KillPlayerClientRpc((int)ClientId, spawnBody, bodyVelocity, (int)causeOfDeath, deathAnimation);
             }
+        }
+
+        private void Start()
+        {
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+            {
+                Dictionary.Add(PlayerController, this);
+            }
+            else
+            {
+                PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
+            }
+
+            if (PlayerController != null)
+            {
+                if (IsLocalPlayer) LocalPlayer = this;
+                if (IsHost) HostPlayer = this;
+            }
+
+            Inventory = GetComponent<PlayerInventory>();
+
+            NetworkClientId.OnValueChanged += clientIdChanged;
         }
 
         /// <summary>
@@ -489,5 +500,92 @@ namespace LC_API.GameInterfaceAPI.Features
             return (player = Get(clientId)) != null;
         }
         #endregion
+
+        public class PlayerInventory : NetworkBehaviour
+        {
+            public Player Player { get; private set; }
+
+            public int GetFirstEmptySlot()
+            {
+                return Player.PlayerController.FirstEmptyItemSlot();
+            }
+
+            public bool TryGetFirstEmptySlot(out int slot)
+            {
+                slot = Player.PlayerController.FirstEmptyItemSlot();
+                return slot != -1;
+            }
+
+            public bool TryAddItem(Item item)
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to add item from client.");
+                }
+
+                if (TryGetFirstEmptySlot(out int slot))
+                {
+                    if (item.IsTwoHanded && Player.IsHoldingItem && Player.HeldItem.IsTwoHanded)
+                    {
+                        return false;
+                    }
+
+                    if (item.IsTwoHanded)
+                    {
+                        SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                    }
+                    else
+                    {
+                        //Player.PlayerController.ItemSlots[slot] = item.GrabbableObject;
+                        
+
+                        //item.GrabbableObject.EnablePhysics(false);
+                        //item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;
+                        //item.GrabbableObject.isHeld = true;
+                        //item.GrabbableObject.hasHitGround = false;
+                        //item.GrabbableObject.isInFactory = Player.IsInFactory;
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            [ClientRpc]
+            private void SetSlotAndItemClientRpc(int slot, ulong itemId)
+            {
+                Item item = Item.List.FirstOrDefault(i => i.NetworkObjectId == itemId);
+
+                if (item != null)
+                {
+                    Player.PlayerController.SwitchToItemSlot(slot, item.GrabbableObject);
+
+                    item.GrabbableObject.EnablePhysics(false);
+                    item.GrabbableObject.isHeld = true;
+                    item.GrabbableObject.hasHitGround = false;
+                    item.GrabbableObject.isInFactory = Player.IsInFactory;
+
+                    Player.PlayerController.twoHanded = item.ItemProperties.twoHanded;
+                    Player.PlayerController.twoHandedAnimation = item.ItemProperties.twoHandedAnimation;
+                    Player.PlayerController.isHoldingObject = true;
+                    Player.PlayerController.carryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
+
+                    if (!Player.IsLocalPlayer)
+                    {
+                        item.GrabbableObject.parentObject = Player.PlayerController.serverItemHolder;
+                    } 
+                    else
+                    {
+                        item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;
+                    }
+                }
+            }
+
+            private void Awake()
+            {
+                Player = GetComponent<Player>();
+            }
+        }
     }
 }

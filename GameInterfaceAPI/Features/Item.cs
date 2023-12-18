@@ -50,6 +50,8 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public bool IsHeld => GrabbableObject.isHeld;
 
+        public bool IsTwoHanded => ItemProperties.twoHanded;
+
         /// <summary>
         /// Gets the <see cref="Player"/> that is currently holding this <see cref="Item"/>. <see langword="null"/> if not held.
         /// </summary>
@@ -210,6 +212,82 @@ namespace LC_API.GameInterfaceAPI.Features
         public void FallToGround(bool randomizePosition = false)
         {
             GrabbableObject.FallToGround(randomizePosition);
+        }
+
+        /// <summary>
+        /// Gives this <see cref="Item"/> to the specific player. Deleting it from another <see cref="Player"/>'s inventory, if necessary.
+        /// </summary>
+        /// <param name="player">The player to give the item to.</param>
+        /// <returns><see langword="true"/> if the player had an open slot to add the item to, <see langword="flase"/> otherwise.</returns>
+        public bool GiveTo(Player player)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new Exception("Tried to give item to player on client.");
+            }
+
+            return player.Inventory.TryAddItem(this);
+        }
+
+        /// <summary>
+        /// Creates and spawns an item in the world.
+        /// </summary>
+        /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
+        /// <param name="position">The position to spawn at.</param>
+        /// <param name="rotation">The rotation to spawn at.</param>
+        /// <returns>A new <see cref="Item"/>, or <see langword="null"/> if the provided item name is not found.</returns>
+        public static Item CreateAndSpawnItem(string itemName, Vector3 position = default, Quaternion rotation = default)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new Exception("Tried to create and spawn item on client.");
+            }
+
+            string name = itemName.ToLower();
+
+            GameObject go = StartOfRound.Instance.allItemsList.itemsList.FirstOrDefault(i => i.itemName.ToLower().Contains(name))?.spawnPrefab;
+            if (go != null)
+            {
+                GameObject instantiated = Instantiate(go, position, rotation);
+
+                instantiated.GetComponent<NetworkObject>().Spawn();
+
+                return instantiated.GetComponent<Item>();
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates an item and gives it to a specific <see cref="Player"/>.
+        /// </summary>
+        /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
+        /// <param name="player">The <see cref="Player"/> to give the <see cref="Item"/> to.</param>
+        /// <returns>A new <see cref="Item"/>, or <see langword="null"/> if the provided item name is not found.</returns>
+        public static Item CreateAndGiveItem(string itemName, Player player)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new Exception("Tried to create and give item on client.");
+            }
+
+            string name = itemName.ToLower();
+
+            GameObject go = StartOfRound.Instance.allItemsList.itemsList.FirstOrDefault(i => i.itemName.ToLower().Contains(name))?.spawnPrefab;
+            if (go != null)
+            {
+                GameObject instantiated = Instantiate(go, Vector3.zero, default);
+
+                instantiated.GetComponent<NetworkObject>().Spawn();
+
+                Item item = instantiated.GetComponent<Item>();
+
+                item.GiveTo(player);
+
+                return item;
+            }
+
+            return null;
         }
 
         private void Awake()
