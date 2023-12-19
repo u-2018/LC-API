@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LC_API.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,7 +61,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the <see cref="Item"/>'s name.
         /// </summary>
-        /// <exception cref="Exception">Thrown when attempting to set item name from the client.</exception>
+        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set item name from the client.</exception>
         public string Name
         {
             get
@@ -71,7 +72,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new Exception("Tried to set item name on client.");
+                    throw new CannotSetOnClientException("Tried to set item name on client.");
                 }
 
                 string current = ItemProperties.itemName.ToLower();
@@ -113,7 +114,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the position of this <see cref="Item"/>.
         /// </summary>
-        /// <exception cref="Exception">Thrown when attempting to set the item's position from the client.</exception>
+        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set the item's position from the client.</exception>
         public Vector3 Position
         {
             get
@@ -124,7 +125,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new Exception("Tried to set item position on client.");
+                    throw new CannotSetOnClientException("Tried to set item position on client.");
                 }
 
                 GrabbableObject.startFallingPosition = value;
@@ -151,21 +152,24 @@ namespace LC_API.GameInterfaceAPI.Features
             }
             set
             {
-                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
-                {
-                    throw new Exception("Tried to set item rotation on client.");
-                }
-
                 GrabbableObject.transform.rotation = value;
-
-                SetItemRotationClientRpc(value);
             }
+        }
+
+        public void SetAndSyncRotation(Quaternion rotation)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new CannotSetOnClientException("Tried to sync item rotation from client.");
+            }
+
+            SetItemRotationClientRpc(rotation);
         }
 
         [ClientRpc]
         private void SetItemRotationClientRpc(Quaternion rotation)
         {
-            GrabbableObject.transform.rotation = rotation;
+            Rotation = rotation;
         }
 
         public Vector3 Scale
@@ -180,10 +184,26 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
+        public void SetAndSyncScale(Vector3 scale)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new CannotSetOnClientException("Tried to sync item scale from client.");
+            }
+
+            SetItemScaleClientRpc(scale);
+        }
+
+        [ClientRpc]
+        private void SetItemScaleClientRpc(Vector3 scale)
+        {
+            Scale = scale;
+        }
+
         /// <summary>
         /// Gets or sets whether this <see cref="Item"/> should be considered scrap.
         /// </summary>
-        /// <exception cref="Exception">Thrown when attempting to set isScrap from the client.</exception>
+        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set isScrap from the client.</exception>
         public bool IsScrap
         {
             get
@@ -194,7 +214,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new Exception("Tried to set item name on client.");
+                    throw new CannotSetOnClientException("Tried to set item name on client.");
                 }
 
                 CloneProperties();
@@ -216,7 +236,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets this <see cref="Item"/>'s scrap value.
         /// </summary>
-        /// <exception cref="Exception">Thrown when attempting to set scrap value from the client.</exception>
+        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set scrap value from the client.</exception>
         public int ScrapValue
         {
             get
@@ -227,7 +247,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new Exception("Tried to set scrap value on client.");
+                    throw new CannotSetOnClientException("Tried to set scrap value on client.");
                 }
 
                 GrabbableObject.SetScrapValue(value);
@@ -251,7 +271,7 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
-                throw new Exception("Tried to remove item from player on client.");
+                throw new CannotSetOnClientException("Tried to remove item from player on client.");
             }
 
             if (!IsHeld) return;
@@ -308,7 +328,7 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
-                throw new Exception("Tried to give item to player on client.");
+                throw new CannotSetOnClientException("Tried to give item to player on client.");
             }
 
             return player.Inventory.TryAddItem(this, switchTo);
@@ -325,7 +345,7 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
-                throw new Exception("Tried to create and spawn item on client.");
+                throw new CannotSetOnClientException("Tried to create and spawn item on client.");
             }
 
             string name = itemName.ToLower();
@@ -354,7 +374,7 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
-                throw new Exception("Tried to create and give item on client.");
+                throw new CannotSetOnClientException("Tried to create and give item on client.");
             }
 
             string name = itemName.ToLower();
