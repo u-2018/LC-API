@@ -17,6 +17,8 @@ namespace LC_API.ServerAPI
         [Obsolete("Use SetServerModdedOnly() instead. This will be removed/private in a future update.")]
         public static bool setModdedOnly; // obsolete for the purposes of getting peoples' IDE's to bitch at them.
 
+        public static int GameVersion { get; internal set; }
+
         /// <summary>
         /// Has the user been placed in modded only servers?
         /// </summary>

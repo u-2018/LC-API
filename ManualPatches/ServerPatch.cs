@@ -196,5 +196,10 @@ namespace LC_API.ManualPatches
             }
             return true;
         }
+
+        internal static void GameNetworkManagerAwake(GameNetworkManager __instance)
+        {
+            if (GameNetworkManager.Instance == null) ModdedServer.GameVersion = __instance.gameVersionNum;
+        }
     }
 }
