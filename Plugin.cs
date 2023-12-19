@@ -122,6 +122,13 @@ namespace LC_API
             {
                 GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer);
             });
+
+            CommandHandler.RegisterCommand("givescrapmanual", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Item item = GameInterfaceAPI.Features.Item.CreateAndSpawnItem(string.Join(" ", args.Skip(1)));
+
+                GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.TryAddItemToSlot(item, 3, bool.Parse(args[0]));
+            });
         }
 
         internal void Start()

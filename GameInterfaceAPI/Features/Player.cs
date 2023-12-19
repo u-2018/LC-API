@@ -1,14 +1,9 @@
-﻿using BepInEx.Configuration;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -311,7 +306,21 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public bool IsHoldingItem => HeldItem != null;
 
+        public bool HasFreeHands => !IsHoldingItem || !HeldItem.IsTwoHanded;
+
         public PlayerInventory Inventory { get; private set; }
+
+        public float CarryWeight
+        {
+            get
+            {
+                return PlayerController.carryWeight;
+            }
+            set
+            {
+                PlayerController.carryWeight = value;
+            }
+        }
 
         /// <summary>
         /// Hurts the <see cref="Player"/>.
@@ -505,6 +514,8 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             public Player Player { get; private set; }
 
+            public Item[] Items => Player.PlayerController.ItemSlots.Select(i => i != null ? Item.Dictionary[i] : null).ToArray();
+
             public int GetFirstEmptySlot()
             {
                 return Player.PlayerController.FirstEmptyItemSlot();
@@ -516,7 +527,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 return slot != -1;
             }
 
-            public bool TryAddItem(Item item)
+            public bool TryAddItem(Item item, bool switchTo = true)
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
@@ -525,10 +536,17 @@ namespace LC_API.GameInterfaceAPI.Features
 
                 if (TryGetFirstEmptySlot(out int slot))
                 {
-                    if (item.IsTwoHanded && Player.IsHoldingItem && Player.HeldItem.IsTwoHanded)
+                    if (item.IsTwoHanded && !Player.HasFreeHands)
                     {
                         return false;
                     }
+
+                    if (item.IsHeld)
+                    {
+                        item.RemoveFromHolder();
+                    }
+
+                    item.NetworkObject.ChangeOwnership(Player.ClientId);
 
                     if (item.IsTwoHanded)
                     {
@@ -536,20 +554,103 @@ namespace LC_API.GameInterfaceAPI.Features
                     }
                     else
                     {
-                        //Player.PlayerController.ItemSlots[slot] = item.GrabbableObject;
-                        
-
-                        //item.GrabbableObject.EnablePhysics(false);
-                        //item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;
-                        //item.GrabbableObject.isHeld = true;
-                        //item.GrabbableObject.hasHitGround = false;
-                        //item.GrabbableObject.isInFactory = Player.IsInFactory;
+                        if (switchTo && Player.HasFreeHands)
+                        {
+                            SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                        }
+                        else
+                        {
+                            if (Player.PlayerController.currentItemSlot == slot)
+                                SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                            else
+                                SetItemInSlotClientRpc(slot, item.NetworkObjectId);
+                        }
                     }
 
                     return true;
                 }
 
                 return false;
+            }
+
+            public bool TryAddItemToSlot(Item item, int slot, bool switchTo = true)
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to add item from client.");
+                }
+
+                if (slot < Player.PlayerController.ItemSlots.Length && Player.PlayerController.ItemSlots[slot] == null)
+                {
+                    if (item.IsTwoHanded && !Player.HasFreeHands)
+                    {
+                        return false;
+                    }
+
+                    if (item.IsHeld)
+                    {
+                        item.RemoveFromHolder();
+                    }
+
+                    item.NetworkObject.ChangeOwnership(Player.ClientId);
+
+                    if (item.IsTwoHanded)
+                    {
+                        SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                    }
+                    else
+                    {
+                        if (switchTo && Player.HasFreeHands)
+                        {
+                            SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                        }
+                        else
+                        {
+                            if (Player.PlayerController.currentItemSlot == slot)
+                                SetSlotAndItemClientRpc(slot, item.NetworkObjectId);
+                            else
+                                SetItemInSlotClientRpc(slot, item.NetworkObjectId);
+                        }
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            [ClientRpc]
+            private void SetItemInSlotClientRpc(int slot, ulong itemId)
+            {
+                Item item = Item.List.FirstOrDefault(i => i.NetworkObjectId == itemId);
+
+                if (item != null)
+                {
+                    if (Player.IsLocalPlayer)
+                    {
+                        HUDManager.Instance.itemSlotIcons[slot].sprite = item.ItemProperties.itemIcon;
+                        HUDManager.Instance.itemSlotIcons[slot].enabled = true;
+                    }
+
+                    item.GrabbableObject.EnablePhysics(false);
+                    item.GrabbableObject.EnableItemMeshes(false);
+                    item.GrabbableObject.playerHeldBy = Player.PlayerController;
+                    item.GrabbableObject.hasHitGround = false;
+                    item.GrabbableObject.isInFactory = Player.IsInFactory;
+
+                    Player.CarryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
+
+                    if (!Player.IsLocalPlayer)
+                    {
+                        item.GrabbableObject.parentObject = Player.PlayerController.serverItemHolder;
+                    }
+                    else
+                    {
+                        item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;
+                    }
+
+                    Player.PlayerController.ItemSlots[slot] = item.GrabbableObject;
+                }
             }
 
             [ClientRpc]
@@ -569,7 +670,7 @@ namespace LC_API.GameInterfaceAPI.Features
                     Player.PlayerController.twoHanded = item.ItemProperties.twoHanded;
                     Player.PlayerController.twoHandedAnimation = item.ItemProperties.twoHandedAnimation;
                     Player.PlayerController.isHoldingObject = true;
-                    Player.PlayerController.carryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
+                    Player.CarryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
 
                     if (!Player.IsLocalPlayer)
                     {
@@ -579,6 +680,65 @@ namespace LC_API.GameInterfaceAPI.Features
                     {
                         item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;
                     }
+                }
+            }
+
+            public void RemoveItem(Item item)
+            {
+                int slot = Array.IndexOf(Player.PlayerController.ItemSlots, item);
+
+                bool currentlyHeldOut = Player.HeldItem == item;
+
+                GrabbableObject grabbable = item.GrabbableObject;
+
+                if (slot != -1)
+                {
+                    if (Player.IsLocalPlayer)
+                    {
+                        HUDManager.Instance.itemSlotIcons[slot].enabled = false;
+
+                        if (item.IsTwoHanded) HUDManager.Instance.holdingTwoHandedItem.enabled = false;
+                    }
+
+                    if (currentlyHeldOut)
+                    {
+                        if (Player.IsLocalPlayer)
+                        {
+                            grabbable.DiscardItemOnClient();
+                        }
+                        else
+                        {
+                            grabbable.DiscardItem();
+                        }
+
+                        Player.PlayerController.currentlyHeldObject = null;
+                        Player.PlayerController.currentlyHeldObjectServer = null;
+                        Player.PlayerController.isHoldingObject = false;
+
+                        if (item.IsTwoHanded)
+                        {
+                            Player.PlayerController.twoHanded = false;
+                            Player.PlayerController.twoHandedAnimation = false;
+                        }
+                    }
+
+                    grabbable.heldByPlayerOnServer = false;
+                    grabbable.parentObject = null;
+                    item.EnablePhysics(false);
+                    item.EnableMeshes(true);
+                    item.Scale = item.GrabbableObject.originalScale;
+
+                    if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+                    {
+                        item.Position = Vector3.zero;
+                    }
+
+                    grabbable.isHeld = false;
+                    grabbable.isPocketed = false;
+
+                    Player.CarryWeight -= Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
+
+                    Player.PlayerController.ItemSlots[slot] = null;
                 }
             }
 

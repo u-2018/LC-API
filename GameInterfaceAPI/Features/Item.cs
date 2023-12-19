@@ -143,6 +143,43 @@ namespace LC_API.GameInterfaceAPI.Features
             GrabbableObject.transform.position = pos;
         }
 
+        public Quaternion Rotation
+        {
+            get
+            {
+                return GrabbableObject.transform.rotation;
+            }
+            set
+            {
+                if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+                {
+                    throw new Exception("Tried to set item rotation on client.");
+                }
+
+                GrabbableObject.transform.rotation = value;
+
+                SetItemRotationClientRpc(value);
+            }
+        }
+
+        [ClientRpc]
+        private void SetItemRotationClientRpc(Quaternion rotation)
+        {
+            GrabbableObject.transform.rotation = rotation;
+        }
+
+        public Vector3 Scale
+        {
+            get
+            {
+                return GrabbableObject.transform.localScale;
+            }
+            set
+            {
+                GrabbableObject.transform.localScale = value;
+            }
+        }
+
         /// <summary>
         /// Gets or sets whether this <see cref="Item"/> should be considered scrap.
         /// </summary>
@@ -206,6 +243,42 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
+        /// Removes the <see cref="Item"/> from its current holder.
+        /// </summary>
+        /// <param name="position">The position to place the object after removing.</param>
+        /// <param name="rotation">The rotation the object should have after removing.</param>
+        public void RemoveFromHolder(Vector3 position = default, Quaternion rotation = default)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new Exception("Tried to remove item from player on client.");
+            }
+
+            if (!IsHeld) return;
+
+            NetworkObject.RemoveOwnership();
+
+            Holder.Inventory.RemoveItem(this);
+
+            RemoveFromHolderClientRpc();
+
+            Position = position;
+            Rotation = rotation;
+        }
+
+        [ClientRpc]
+        private void RemoveFromHolderClientRpc()
+        {
+            if (!IsHeld) return;
+
+            Holder.Inventory.RemoveItem(this);
+        }
+
+        public void EnablePhysics(bool enable) => GrabbableObject.EnablePhysics(enable);
+
+        public void EnableMeshes(bool enable) => GrabbableObject.EnableItemMeshes(enable);
+
+        /// <summary>
         /// Start the <see cref="Item"/> falling to the ground.
         /// </summary>
         /// <param name="randomizePosition">Whether or not to add some randomness to the position.</param>
@@ -214,19 +287,31 @@ namespace LC_API.GameInterfaceAPI.Features
             GrabbableObject.FallToGround(randomizePosition);
         }
 
+        public bool PocketItem()
+        {
+            // We can only pocket items that are currently being held in a player's hand. Two handed
+            // objects cannot be pocketed.
+            if (!IsHeld || Holder.HeldItem != this || IsTwoHanded) return false;
+
+            GrabbableObject.PocketItem();
+
+            return true;
+        }
+
         /// <summary>
         /// Gives this <see cref="Item"/> to the specific player. Deleting it from another <see cref="Player"/>'s inventory, if necessary.
         /// </summary>
         /// <param name="player">The player to give the item to.</param>
+        /// <param name="switchTo">Whether or not to switch to the item. Forced for 2 handed items.</param>
         /// <returns><see langword="true"/> if the player had an open slot to add the item to, <see langword="flase"/> otherwise.</returns>
-        public bool GiveTo(Player player)
+        public bool GiveTo(Player player, bool switchTo = true)
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
                 throw new Exception("Tried to give item to player on client.");
             }
 
-            return player.Inventory.TryAddItem(this);
+            return player.Inventory.TryAddItem(this, switchTo);
         }
 
         /// <summary>
@@ -263,8 +348,9 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
         /// <param name="player">The <see cref="Player"/> to give the <see cref="Item"/> to.</param>
+        /// <param name="switchTo">Whether or not to switch to the item. Forced for 2 handed items.</param>
         /// <returns>A new <see cref="Item"/>, or <see langword="null"/> if the provided item name is not found.</returns>
-        public static Item CreateAndGiveItem(string itemName, Player player)
+        public static Item CreateAndGiveItem(string itemName, Player player, bool switchTo = true)
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
