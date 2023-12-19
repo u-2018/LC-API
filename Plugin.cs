@@ -73,10 +73,15 @@ namespace LC_API
 
             MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
 
+            MethodInfo originalGameManagerAwake = AccessTools.Method(typeof(GameNetworkManager), nameof(GameNetworkManager.Awake));
+
+            MethodInfo patchGameManagerAwake = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.GameNetworkManagerAwake));
+
             harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
             harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
             harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
             harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+            harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
 
             Networking.GetString += CheatDatabase.CDNetGetString;
             Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
