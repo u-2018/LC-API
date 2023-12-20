@@ -287,6 +287,9 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
+        /// <summary>
+        /// Gets whether or not the <see cref="Player"/> is in the factory.
+        /// </summary>
         public bool IsInFactory => PlayerController.isInsideFactory;
 
         /// <summary>
@@ -307,10 +310,19 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public bool IsHoldingItem => HeldItem != null;
 
+        /// <summary>
+        /// Gets whether or not the <see cref="Player"/> has free hands, meaning their currently held item is not two handed.
+        /// </summary>
         public bool HasFreeHands => !IsHoldingItem || !HeldItem.IsTwoHanded;
 
+        /// <summary>
+        /// Gets the <see cref="Player"/>'s <see cref="PlayerInventory"/>.
+        /// </summary>
         public PlayerInventory Inventory { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the <see cref="Player"/>'s carry weight.
+        /// </summary>
         public float CarryWeight
         {
             get
@@ -511,23 +523,49 @@ namespace LC_API.GameInterfaceAPI.Features
         }
         #endregion
 
+        /// <summary>
+        /// Encapsulates a <see cref="Player"/>'s inventory to provide useful tools to it.
+        /// </summary>
         public class PlayerInventory : NetworkBehaviour
         {
+            /// <summary>
+            /// Gets the <see cref="Player"/> that this <see cref="PlayerInventory"/> belongs to.
+            /// </summary>
             public Player Player { get; private set; }
 
+            /// <summary>
+            /// Gets the <see cref="Player"/>'s items in order.
+            /// </summary>
+            /// TODO: I'm not sure how feasible it is to get this to work in any other way, but I hate this.
             public Item[] Items => Player.PlayerController.ItemSlots.Select(i => i != null ? Item.Dictionary[i] : null).ToArray();
 
+            /// <summary>
+            /// Gets the first empty item slot, or -1 if there are none available.
+            /// </summary>
+            /// <returns></returns>
             public int GetFirstEmptySlot()
             {
                 return Player.PlayerController.FirstEmptyItemSlot();
             }
 
+            /// <summary>
+            /// Tries to get the first empty item slot.
+            /// </summary>
+            /// <param name="slot">Outputs the empty item slot.</param>
+            /// <returns><see langword="true"/> if there's an available slot, <see langword="false"/> otherwise.</returns>
             public bool TryGetFirstEmptySlot(out int slot)
             {
                 slot = Player.PlayerController.FirstEmptyItemSlot();
                 return slot != -1;
             }
 
+            /// <summary>
+            /// Tries to add an <see cref="Item"/> to the inventory in the first available slot.
+            /// </summary>
+            /// <param name="item">The item to try to add.</param>
+            /// <param name="switchTo">Whether or not to switch to this item after adding.</param>
+            /// <returns><see langword="true"/> if added <see langword="false"/> otherwise.</returns>
+            /// <exception cref="NoAuthorityException">Thrown when trying to add item from the client.</exception>
             public bool TryAddItem(Item item, bool switchTo = true)
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
@@ -574,6 +612,14 @@ namespace LC_API.GameInterfaceAPI.Features
                 return false;
             }
 
+            /// <summary>
+            /// Tries to add an <see cref="Item"/> to the inventory in a specific slot.
+            /// </summary>
+            /// <param name="item">The item to try to add.</param>
+            /// <param name="slot">The slot to try to add the item to.</param>
+            /// <param name="switchTo">Whether or not to switch to this item after adding.</param>
+            /// <returns><see langword="true"/> if added <see langword="false"/> otherwise.</returns>
+            /// <exception cref="NoAuthorityException">Thrown when trying to add item from the client.</exception>
             public bool TryAddItemToSlot(Item item, int slot, bool switchTo = true)
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
@@ -684,9 +730,13 @@ namespace LC_API.GameInterfaceAPI.Features
                 }
             }
 
+            /// <summary>
+            /// Removes an <see cref="Item"/> from the inventory. This should be called on all clients from a client rpc.
+            /// </summary>
+            /// <param name="item">The <see cref="Item"/> to remove.</param>
             public void RemoveItem(Item item)
             {
-                int slot = Array.IndexOf(Player.PlayerController.ItemSlots, item);
+                int slot = Array.IndexOf(Player.PlayerController.ItemSlots, item.GrabbableObject);
 
                 bool currentlyHeldOut = Player.HeldItem == item;
 

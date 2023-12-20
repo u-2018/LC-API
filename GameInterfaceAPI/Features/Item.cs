@@ -402,7 +402,7 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Creates and spawns an item in the world.
+        /// Creates and spawns an <see cref="Item"/> in the world.
         /// </summary>
         /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
         /// <param name="position">The position to spawn at.</param>
@@ -432,7 +432,7 @@ namespace LC_API.GameInterfaceAPI.Features
         }
 
         /// <summary>
-        /// Creates an item and gives it to a specific <see cref="Player"/>.
+        /// Creates an <see cref="Item"/> and gives it to a specific <see cref="Player"/>.
         /// </summary>
         /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
         /// <param name="player">The <see cref="Player"/> to give the <see cref="Item"/> to.</param>

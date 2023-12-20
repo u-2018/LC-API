@@ -28,3 +28,5 @@ It also lets mod authors make their mods put users in special matchmaking where 
 
 Networking - Easily send data across the network to sync data between clients
 
+# TODO
+- Picking up and dropping item events
