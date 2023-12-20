@@ -3,12 +3,9 @@ using LC_API.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -332,6 +329,37 @@ namespace LC_API.GameInterfaceAPI.Features
             }
 
             return player.Inventory.TryAddItem(this, switchTo);
+        }
+
+        public void InitializeScrap()
+        {
+            InitializeScrap((int)(RoundManager.Instance.AnomalyRandom.Next(ItemProperties.minValue, ItemProperties.maxValue) * RoundManager.Instance.scrapValueMultiplier));
+        }
+
+        public void InitializeScrap(int scrapValue)
+        {
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                throw new CannotSetOnClientException("Tried to initialize scrap on client.");
+            }
+
+            ScrapValue = scrapValue;
+
+            InitializeScrapClientRpc();
+        }
+
+        [ClientRpc]
+        private void InitializeScrapClientRpc()
+        {
+            if (ItemProperties.meshVariants.Length != 0)
+            {
+                GrabbableObject.gameObject.GetComponent<MeshFilter>().mesh = ItemProperties.meshVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.meshVariants.Length)];
+            }
+
+            if (ItemProperties.materialVariants.Length != 0)
+            {
+                GrabbableObject.gameObject.GetComponent<MeshRenderer>().sharedMaterial = ItemProperties.materialVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.materialVariants.Length)];
+            }
         }
 
         /// <summary>

@@ -120,12 +120,14 @@ namespace LC_API
 
             CommandHandler.RegisterCommand("givescrap", (string[] args) =>
             {
-                GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer);
+                GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer).InitializeScrap();
             });
 
             CommandHandler.RegisterCommand("givescrapmanual", (string[] args) =>
             {
                 GameInterfaceAPI.Features.Item item = GameInterfaceAPI.Features.Item.CreateAndSpawnItem(string.Join(" ", args.Skip(1)));
+
+                item.InitializeScrap();
 
                 GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.TryAddItemToSlot(item, 3, bool.Parse(args[0]));
             });
