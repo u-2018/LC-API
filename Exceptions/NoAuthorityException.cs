@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace LC_API.Exceptions
 {
-    internal class CannotSetOnClientException : Exception
+    internal class NoAuthorityException : Exception
     {
-        internal CannotSetOnClientException(string message) : base(message) {}
+        internal NoAuthorityException(string message) : base(message) {}
     }
 }

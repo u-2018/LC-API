@@ -128,7 +128,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s sprint meter.
         /// </summary>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set position from the client.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to set position from the client.</exception>
         public float SprintMeter
         {
             get
@@ -139,7 +139,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to set sprint meter on client.");
+                    throw new NoAuthorityException("Tried to set sprint meter on client.");
                 }
 
                 PlayerController.sprintMeter = value;
@@ -159,7 +159,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Gets or sets the <see cref="Player"/>'s position. 
         /// If you set a <see cref="Features.Player"/>'s position out of bounds, they will be teleported back to a safe location next to the ship or entrance/exit to a dungeon.
         /// </summary>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set position from the client.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to set position from the client.</exception>
         public Vector3 Position
         {
             get
@@ -170,7 +170,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to set position on client.");
+                    throw new NoAuthorityException("Tried to set position on client.");
                 }
 
                 PlayerController.transform.position = value;
@@ -194,7 +194,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s euler angles.
         /// </summary>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to update euler angles from a client that isn't the local client, or the host.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to update euler angles from a client that isn't the local client, or the host.</exception>
         public Vector3 EulerAngles
         {
             get
@@ -205,7 +205,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
                 {
-                    throw new CannotSetOnClientException("Tried to update euler angles from other client.");
+                    throw new NoAuthorityException("Tried to update euler angles from other client.");
                 }
 
                 PlayerController.transform.eulerAngles = value;
@@ -222,7 +222,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Gets or sets the <see cref="Player"/>'s rotation. Quaternions can't gimbal lock, but they are harder to understand.
         /// Use <see cref="Player.EulerAngles"/> if you don't know what you're doing.
         /// </summary>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to update rotation from a client that isn't the local client, or the host.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to update rotation from a client that isn't the local client, or the host.</exception>
         public Quaternion Rotation
         {
             get
@@ -233,7 +233,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
                 {
-                    throw new CannotSetOnClientException("Tried to update rotation from other client.");
+                    throw new NoAuthorityException("Tried to update rotation from other client.");
                 }
 
                 PlayerController.transform.rotation = value;
@@ -250,7 +250,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets or sets the <see cref="Player"/>'s health.
         /// </summary>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to set health from the client.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to set health from the client.</exception>
         public int Health
         {
             get
@@ -261,7 +261,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to set health on client.");
+                    throw new NoAuthorityException("Tried to set health on client.");
                 }
 
                 PlayerController.health = value;
@@ -333,7 +333,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="deathAnimation">Which death animation to use.</param>
         /// <param name="fallDamage">Whether or not this should be considered fall damage.</param>
         /// <param name="hasSFX">Whether or not this damage has sfx.</param>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to hurt a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to hurt a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
         public void Hurt(int damage, CauseOfDeath causeOfDeath = CauseOfDeath.Unknown, Vector3 bodyVelocity = default, bool overrideOneShotProtection = false, int deathAnimation = 0, bool fallDamage = false, bool hasSFX = true)
         {
             if (overrideOneShotProtection && Health - damage <= 0)
@@ -350,7 +350,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.IsServer || NetworkManager.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to kill player from other client.");
+                    throw new NoAuthorityException("Tried to kill player from other client.");
                 }
 
                 PlayerController.DamagePlayerClientRpc(damage, Health - damage);
@@ -364,7 +364,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="spawnBody">Whether or not to spawn a ragdoll.</param>
         /// <param name="causeOfDeath">The cause of death to show on the end screen.</param>
         /// <param name="deathAnimation">Which death animation to use.</param>
-        /// <exception cref="CannotSetOnClientException">Thrown when attempting to kill a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
+        /// <exception cref="NoAuthorityException">Thrown when attempting to kill a <see cref="Player"/> that isn't the local <see cref="Player"/>'s, if not the host.</exception>
         public void Kill(Vector3 bodyVelocity = default, bool spawnBody = true, CauseOfDeath causeOfDeath = CauseOfDeath.Unknown, int deathAnimation = 0)
         {
             if (IsLocalPlayer)
@@ -375,7 +375,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.IsServer || NetworkManager.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to kill player from other client.");
+                    throw new NoAuthorityException("Tried to kill player from other client.");
                 }
 
                 PlayerController.KillPlayerClientRpc((int)ClientId, spawnBody, bodyVelocity, (int)causeOfDeath, deathAnimation);
@@ -532,7 +532,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to add item from client.");
+                    throw new NoAuthorityException("Tried to add item from client.");
                 }
 
                 if (TryGetFirstEmptySlot(out int slot))
@@ -578,7 +578,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
                 {
-                    throw new CannotSetOnClientException("Tried to add item from client.");
+                    throw new NoAuthorityException("Tried to add item from client.");
                 }
 
                 if (slot < Player.PlayerController.ItemSlots.Length && Player.PlayerController.ItemSlots[slot] == null)
