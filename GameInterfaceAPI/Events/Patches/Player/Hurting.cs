@@ -1,12 +1,8 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
@@ -30,7 +26,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             List<CodeInstruction> newInstructions = new List<CodeInstruction>(instructions);
             const int offset = 3;
 
-            int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB), 
+            int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB),
                 nameof(PlayerControllerB.AllowPlayerDeath)))) + offset;
 
             Label notAllowedLabel = generator.DefineLabel();

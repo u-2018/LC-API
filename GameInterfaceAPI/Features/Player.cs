@@ -1,14 +1,9 @@
-﻿using BepInEx.Configuration;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -205,7 +200,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 return PlayerController.transform.eulerAngles;
             }
-            set 
+            set
             {
                 if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
                 {

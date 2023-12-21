@@ -1,14 +1,12 @@
-﻿using BepInEx.Configuration;
-using BepInEx;
+﻿using BepInEx;
+using BepInEx.Configuration;
 using GameNetcodeStuff;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection.Emit;
 using UnityEngine.EventSystems;
 
 namespace LC_API.ClientAPI
