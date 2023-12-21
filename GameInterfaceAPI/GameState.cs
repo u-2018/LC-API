@@ -1,12 +1,6 @@
-﻿using GameNetcodeStuff;
-using LC_API.Data;
+﻿using LC_API.Data;
 using LC_API.Extensions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Permissions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LC_API.GameInterfaceAPI
 {
@@ -21,11 +15,11 @@ namespace LC_API.GameInterfaceAPI
         /// <summary>
         /// Provides the count of living players, as gotten through
         /// </summary>
-        public static int AlivePlayerCount { get ; private set; }
+        public static int AlivePlayerCount { get; private set; }
         /// <summary>
         /// The state the ship is currently in. See <see cref="Data.ShipState"/>.
         /// </summary>
-        public static ShipState ShipState { get ; private set; }
+        public static ShipState ShipState { get; private set; }
 
         /// <summary>
         /// Executes the frame after a player dies (determined by a living player count comparison)

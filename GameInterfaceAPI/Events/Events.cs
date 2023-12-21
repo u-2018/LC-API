@@ -1,10 +1,6 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LC_API.GameInterfaceAPI.Events
 {
@@ -16,7 +12,7 @@ namespace LC_API.GameInterfaceAPI.Events
 
         public delegate void CustomEventHandler();
 
-        internal static void Patch(Harmony harmony) 
+        internal static void Patch(Harmony harmony)
         {
             var method = new StackTrace().GetFrame(1).GetMethod();
             var assembly = method.ReflectedType.Assembly;

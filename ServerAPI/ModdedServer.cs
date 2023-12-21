@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
 
 #pragma warning disable CS0618 // Member is obsolete
 namespace LC_API.ServerAPI

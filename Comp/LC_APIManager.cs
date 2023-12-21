@@ -1,10 +1,5 @@
 ﻿using LC_API.GameInterfaceAPI;
 using LC_API.ServerAPI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace LC_API.Comp
@@ -22,7 +17,7 @@ namespace LC_API.Comp
             GameTips.UpdateInternal();
             if (HUDManager.Instance != null & netTester)
             {
-                if (GameNetworkManager.Instance.localPlayerController  != null)
+                if (GameNetworkManager.Instance.localPlayerController != null)
                 {
                     Networking.Broadcast("testerData", "testerSignature");
                 }
