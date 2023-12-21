@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
 
 #pragma warning disable CS0618 // Member is obsolete
 namespace LC_API.ServerAPI
@@ -16,6 +11,8 @@ namespace LC_API.ServerAPI
         private static bool moddedOnly;
         [Obsolete("Use SetServerModdedOnly() instead. This will be removed/private in a future update.")]
         public static bool setModdedOnly; // obsolete for the purposes of getting peoples' IDE's to bitch at them.
+
+        public static int GameVersion { get; internal set; }
 
         /// <summary>
         /// Has the user been placed in modded only servers?

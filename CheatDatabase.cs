@@ -2,12 +2,7 @@
 using BepInEx.Bootstrap;
 using LC_API.GameInterfaceAPI;
 using LC_API.ServerAPI;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 
 namespace LC_API
 {
@@ -25,7 +20,7 @@ namespace LC_API
 
             foreach (PluginInfo info in PluginsLoaded.Values)
             {
-                switch(info.Metadata.GUID)
+                switch (info.Metadata.GUID)
                 {
                     case "mikes.lethalcompany.mikestweaks":
                     case "mom.llama.enhancer":
@@ -36,7 +31,7 @@ namespace LC_API
                         break;
                 }
             }
-            
+
         }
 
         public static void OtherPlayerCheatDetector()

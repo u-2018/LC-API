@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Mono.Cecil;
-using BepInEx;
-using UnityEngine;
+﻿using LC_API.Comp;
+using LC_API.Data;
+using LC_API.Extensions;
+using LC_API.ServerAPI;
 using Steamworks;
 using Steamworks.Data;
-using HarmonyLib;
-using LC_API.ServerAPI;
-using LC_API.Comp;
-using LC_API.Data;
-using System.Runtime.Remoting.Contexts;
-using UnityEngine.InputSystem;
-using LC_API.Extensions;
+using System;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace LC_API.ManualPatches
 {
@@ -40,14 +34,14 @@ namespace LC_API.ManualPatches
         {
             if (!chatMessage.Contains("NWE") || !chatMessage.Contains("<size=0>"))
                 return true;
-            
+
 
             string[] dataFragments = chatMessage.Split('/');
 
             if (dataFragments.Length < 5)
             {
 
-                if (dataFragments.Length >= 3) 
+                if (dataFragments.Length >= 3)
                 {
                     int parsedplayer;
                     bool success = int.TryParse(dataFragments[4], out parsedplayer);
@@ -184,7 +178,7 @@ namespace LC_API.ManualPatches
                 //Plugin.Log.LogWarning("Success! Received data with no errors.");
             }
             return false;
-            
+
         }
 
         internal static bool ChatCommands(HUDManager __instance, InputAction.CallbackContext context)
@@ -195,6 +189,11 @@ namespace LC_API.ManualPatches
                 return false;
             }
             return true;
+        }
+
+        internal static void GameNetworkManagerAwake(GameNetworkManager __instance)
+        {
+            if (GameNetworkManager.Instance == null) ModdedServer.GameVersion = __instance.gameVersionNum;
         }
     }
 }

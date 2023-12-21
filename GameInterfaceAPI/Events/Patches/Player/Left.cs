@@ -1,11 +1,6 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
@@ -15,7 +10,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Prefix(StartOfRound __instance, int playerObjectNumber, ulong clientId)
         {
             PlayerControllerB player = __instance.allPlayerScripts[playerObjectNumber];
-            if (__instance.ClientPlayerList.ContainsKey(clientId) && 
+            if (__instance.ClientPlayerList.ContainsKey(clientId) &&
                 Cache.Player.ConnectedPlayers.Contains(player.playerSteamId))
             {
                 Cache.Player.ConnectedPlayers.Remove(player.playerSteamId);

@@ -1,5 +1,4 @@
 ﻿using BepInEx;
-using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -43,11 +42,11 @@ namespace LC_API
 
         private void Awake()
         {
-            configOverrideModServer = Config.Bind("General","Force modded server browser",false,"Should the API force you into the modded server browser?");
+            configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
             configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
             configDisableBundleLoader = Config.Bind("General", "Disable BundleLoader", false, "Should the BundleLoader be turned off? Enable this if you are having problems with mods that load assets using a different method from LC_API's BundleLoader.");
             CommandHandler.commandPrefix = Config.Bind("General", "Prefix", "/", "Command prefix");
-            
+
             Log = Logger;
             // Plugin startup logic
             Logger.LogWarning("\n.____    _________           _____  __________ .___  \r\n|    |   \\_   ___ \\         /  _  \\ \\______   \\|   | \r\n|    |   /    \\  \\/        /  /_\\  \\ |     ___/|   | \r\n|    |___\\     \\____      /    |    \\|    |    |   | \r\n|_______ \\\\______  /______\\____|__  /|____|    |___| \r\n        \\/       \\//_____/        \\/                 \r\n                                                     ");
@@ -75,10 +74,15 @@ namespace LC_API
 
             MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
 
+            MethodInfo originalGameManagerAwake = AccessTools.Method(typeof(GameNetworkManager), nameof(GameNetworkManager.Awake));
+
+            MethodInfo patchGameManagerAwake = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.GameNetworkManagerAwake));
+
             harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
             harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
             harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
             harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+            harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
 
             Networking.GetString += CheatDatabase.CDNetGetString;
             Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;

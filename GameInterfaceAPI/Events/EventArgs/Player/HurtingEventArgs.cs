@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
@@ -62,7 +57,7 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         /// <param name="deathAnimation"><inheritdoc cref="DeathAnimation" /></param>
         /// <param name="fallDamage"><inheritdoc cref="FallDamage" /></param>
         /// <param name="force"><inheritdoc cref="Force" /></param>
-        public HurtingEventArgs(Features.Player player, int damage, bool hasSFX, CauseOfDeath causeOfDeath, int deathAnimation, 
+        public HurtingEventArgs(Features.Player player, int damage, bool hasSFX, CauseOfDeath causeOfDeath, int deathAnimation,
             bool fallDamage, Vector3 force)
         {
             Player = player;

@@ -1,11 +1,4 @@
-﻿using GameNetcodeStuff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
+﻿namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
     /// <summary>
     /// Contains all the information after a <see cref="Features.Player"/> joined the server. Including the host.

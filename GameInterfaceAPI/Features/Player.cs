@@ -201,7 +201,7 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 return PlayerController.transform.eulerAngles;
             }
-            set 
+            set
             {
                 if (!(IsLocalPlayer || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
                 {
