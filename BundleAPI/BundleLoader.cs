@@ -1,14 +1,11 @@
-﻿using System;
+﻿using BepInEx;
+using LC_API.Extensions;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using BepInEx;
-using DigitalRuby.ThunderAndLightning;
-using LC_API.Extensions;
-using Steamworks.Data;
 using UnityEngine;
 
 //todo: force all paths to lowercase after privating 'assets' to ensure all paths get normalized when accessing.
@@ -89,17 +86,17 @@ namespace LC_API.BundleAPI
                 {
                     byte[] buffer = new byte[bundleStart.Length];
 
-                try
-                {
-                    using (FileStream fs = File.Open(path, FileMode.Open))
+                    try
                     {
-                        fs.Read(buffer, 0, buffer.Length);
+                        using (FileStream fs = File.Open(path, FileMode.Open))
+                        {
+                            fs.Read(buffer, 0, buffer.Length);
+                        }
                     }
-                }
-                catch (IOException ioException)
-                {
-                    Plugin.Log.LogError($"BundleAPI failed to open file \"{path}\": {ioException.Message}\n{ioException.StackTrace}");
-                }
+                    catch (IOException ioException)
+                    {
+                        Plugin.Log.LogError($"BundleAPI failed to open file \"{path}\": {ioException.Message}\n{ioException.StackTrace}");
+                    }
 
                     if (buffer.SequenceEqual(bundleStart))
                     {
@@ -157,7 +154,7 @@ namespace LC_API.BundleAPI
                     }
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -220,7 +217,7 @@ namespace LC_API.BundleAPI
         /// <returns>A <see cref="Dictionary{TKey, TValue}"/> containing all assets from the bundle mapped to their path in lowercase.</returns>
         public static LoadedAssetBundle LoadAssetBundle(string filePath, bool cache = true)
         {
-            if (loadedAssetBundles.TryGetValue(filePath, out LoadedAssetBundle _assets)) 
+            if (loadedAssetBundles.TryGetValue(filePath, out LoadedAssetBundle _assets))
                 return _assets;
 
             Dictionary<string, UnityEngine.Object> assetPairs = new Dictionary<string, UnityEngine.Object>();
