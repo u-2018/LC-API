@@ -61,7 +61,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <summary>
         /// Gets whether or not the <see cref="Player"/> is the host.
         /// </summary>
-        public new bool IsHost => PlayerController.isHostPlayerObject;
+        public new bool IsHost => PlayerController.gameObject == PlayerController.playersManager.allPlayerObjects[0];
 
         /// <summary>
         /// Gets whether or not the <see cref="Player"/> is the current local player.
