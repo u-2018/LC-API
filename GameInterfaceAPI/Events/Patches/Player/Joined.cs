@@ -32,6 +32,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         // if the player and its controller were linked yet. Very annoying.
         private static IEnumerator JoinedCoroutine(PlayerControllerB controller)
         {
+            yield return new WaitUntil(() => StartOfRound.Instance.localPlayerController != null);
+
             Features.Player player = Features.Player.GetOrAdd(controller);
 
             while (player == null)
@@ -40,6 +42,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
                 player = Features.Player.GetOrAdd(controller);
             }
+
+            if (player.IsLocalPlayer) Features.Player.LocalPlayer = player;
 
             Handlers.Player.OnJoined(new JoinedEventArgs(player));
         }
