@@ -115,14 +115,14 @@ namespace LC_API.ClientAPI
                             Plugin.Log.LogError($"Error handling command: {command}");
                             Plugin.Log.LogError(ex);
                         }
+
+                        manager.localPlayer.isTypingChat = false;
+                        manager.chatTextField.text = "";
+                        EventSystem.current.SetSelectedGameObject(null);
+                        manager.typingIndicator.enabled = false;
+
+                        return true;
                     }
-
-                    manager.localPlayer.isTypingChat = false;
-                    manager.chatTextField.text = "";
-                    EventSystem.current.SetSelectedGameObject(null);
-                    manager.typingIndicator.enabled = false;
-
-                    return true;
                 }
 
                 return false;
