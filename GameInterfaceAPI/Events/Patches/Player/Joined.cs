@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
-    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.SendNewPlayerValuesClientRpc))]
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.ConnectClientToPlayerObject))]
     internal static class Joined
     {
         private static void Prefix(PlayerControllerB __instance)
