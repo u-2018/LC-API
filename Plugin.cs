@@ -135,6 +135,18 @@ namespace LC_API
 
                 GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.TryAddItemToSlot(item, 3, bool.Parse(args[0]));
             });
+
+            CommandHandler.RegisterCommand("removeitem", (string[] args) =>
+            {
+                if (args[0] == "all")
+                {
+                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveAllItems();
+                } 
+                else
+                {
+                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveItem(int.Parse(args[0]));
+                }
+            });
         }
 
         internal void Start()

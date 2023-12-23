@@ -5,6 +5,8 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using LC_API.Exceptions;
+using Steamworks.Ugc;
+using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -540,6 +542,35 @@ namespace LC_API.GameInterfaceAPI.Features
             public Item[] Items => Player.PlayerController.ItemSlots.Select(i => i != null ? Item.Dictionary[i] : null).ToArray();
 
             /// <summary>
+            /// Gets the <see cref="Player"/>'s current item slot.
+            /// </summary>
+            public int CurrentSlot {
+                get
+                {
+                    return Player.PlayerController.currentItemSlot;
+                }
+                set
+                {
+                    if (Player.IsLocalPlayer) SetSlotServerRpc(value);
+                    else if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer) SetSlotClientRpc(value);
+                }
+            }
+
+            [ServerRpc]
+            private void SetSlotServerRpc(int slot, ServerRpcParams serverRpcParams = default)
+            {
+                if (serverRpcParams.Receive.SenderClientId != Player.ClientId) return;
+
+                SetSlotClientRpc(slot);
+            }
+
+            [ClientRpc]
+            private void SetSlotClientRpc(int slot)
+            {
+                Player.PlayerController.SwitchToItemSlot(slot);
+            }
+
+            /// <summary>
             /// Gets the first empty item slot, or -1 if there are none available.
             /// </summary>
             /// <returns></returns>
@@ -731,19 +762,35 @@ namespace LC_API.GameInterfaceAPI.Features
             }
 
             /// <summary>
-            /// Removes an <see cref="Item"/> from the inventory. This should be called on all clients from a client rpc.
+            /// Removes an <see cref="Item"/> from the <see cref="Player"/>'s inventory at the current slot.
             /// </summary>
-            /// <param name="item">The <see cref="Item"/> to remove.</param>
-            public void RemoveItem(Item item)
+            /// <param name="slot"></param>
+            public void RemoveItem(int slot)
             {
-                int slot = Array.IndexOf(Player.PlayerController.ItemSlots, item.GrabbableObject);
+                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer) RemoveItemClientRpc(slot);
+                else RemoveItemServerRpc(slot);
+            }
 
-                bool currentlyHeldOut = Player.HeldItem == item;
+            [ServerRpc(RequireOwnership = false)]
+            private void RemoveItemServerRpc(int slot, ServerRpcParams serverRpcParams = default)
+            {
+                if (serverRpcParams.Receive.SenderClientId != Player.ClientId) return;
 
-                GrabbableObject grabbable = item.GrabbableObject;
+                RemoveItemClientRpc(slot);
+            }
 
+            [ClientRpc]
+            private void RemoveItemClientRpc(int slot)
+            {
                 if (slot != -1)
                 {
+                    bool currentlyHeldOut = slot == Player.Inventory.CurrentSlot;
+                    Item item = Items[slot];
+
+                    if (item == null) return;
+
+                    GrabbableObject grabbable = item.GrabbableObject;
+
                     if (Player.IsLocalPlayer)
                     {
                         HUDManager.Instance.itemSlotIcons[slot].enabled = false;
@@ -790,6 +837,26 @@ namespace LC_API.GameInterfaceAPI.Features
                     Player.CarryWeight -= Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
 
                     Player.PlayerController.ItemSlots[slot] = null;
+                }
+            }
+
+            /// <summary>
+            /// Removes an <see cref="Item"/> from the inventory. This should be called on all clients from a client rpc.
+            /// </summary>
+            /// <param name="item">The <see cref="Item"/> to remove.</param>
+            public void RemoveItem(Item item)
+            {
+                RemoveItem(Array.IndexOf(Player.PlayerController.ItemSlots, item.GrabbableObject));
+            }
+
+            /// <summary>
+            /// Removes all <see cref="Item"/>s from the <see cref="Player"/>'s inventory.
+            /// </summary>
+            public void RemoveAllItems()
+            {
+                for (int i = 0; i < Player.PlayerController.ItemSlots.Length; i++)
+                {
+                    RemoveItem(i);
                 }
             }
 

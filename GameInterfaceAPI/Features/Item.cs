@@ -367,7 +367,8 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public void InitializeScrap()
         {
-            InitializeScrap((int)(RoundManager.Instance.AnomalyRandom.Next(ItemProperties.minValue, ItemProperties.maxValue) * RoundManager.Instance.scrapValueMultiplier));
+            if (RoundManager.Instance.AnomalyRandom != null) InitializeScrap((int)(RoundManager.Instance.AnomalyRandom.Next(ItemProperties.minValue, ItemProperties.maxValue) * RoundManager.Instance.scrapValueMultiplier));
+            else InitializeScrap((int)(UnityEngine.Random.Range(ItemProperties.minValue, ItemProperties.maxValue) * RoundManager.Instance.scrapValueMultiplier));
         }
 
         /// <summary>
@@ -390,14 +391,22 @@ namespace LC_API.GameInterfaceAPI.Features
         [ClientRpc]
         private void InitializeScrapClientRpc()
         {
-            if (ItemProperties.meshVariants.Length != 0)
+            if (GrabbableObject.gameObject.TryGetComponent(out MeshFilter filter) 
+                && ItemProperties.meshVariants != null && ItemProperties.meshVariants.Length != 0)
             {
-                GrabbableObject.gameObject.GetComponent<MeshFilter>().mesh = ItemProperties.meshVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.meshVariants.Length)];
+                if (RoundManager.Instance.ScrapValuesRandom != null)
+                    filter.mesh = ItemProperties.meshVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.meshVariants.Length)];
+                else
+                    filter.mesh = ItemProperties.meshVariants[0];
             }
 
-            if (ItemProperties.materialVariants.Length != 0)
+            if (GrabbableObject.gameObject.TryGetComponent(out MeshRenderer renderer) 
+                && ItemProperties.materialVariants != null && ItemProperties.materialVariants.Length != 0)
             {
-                GrabbableObject.gameObject.GetComponent<MeshRenderer>().sharedMaterial = ItemProperties.materialVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.materialVariants.Length)];
+                if (RoundManager.Instance.ScrapValuesRandom != null)
+                    renderer.sharedMaterial = ItemProperties.materialVariants[RoundManager.Instance.ScrapValuesRandom.Next(ItemProperties.materialVariants.Length)];
+                else
+                    renderer.sharedMaterial = ItemProperties.materialVariants[0];
             }
         }
 
@@ -405,11 +414,12 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Creates and spawns an <see cref="Item"/> in the world.
         /// </summary>
         /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
+        /// <param name="andInitialize">Whether or not to initialize the item after spawning.</param>
         /// <param name="position">The position to spawn at.</param>
         /// <param name="rotation">The rotation to spawn at.</param>
         /// <returns>A new <see cref="Item"/>, or <see langword="null"/> if the provided item name is not found.</returns>
         /// <exception cref="NoAuthorityException">Thrown when trying to spawn an <see cref="Item"/> on the client.</exception>
-        public static Item CreateAndSpawnItem(string itemName, Vector3 position = default, Quaternion rotation = default)
+        public static Item CreateAndSpawnItem(string itemName, bool andInitialize = true, Vector3 position = default, Quaternion rotation = default)
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
@@ -425,7 +435,11 @@ namespace LC_API.GameInterfaceAPI.Features
 
                 instantiated.GetComponent<NetworkObject>().Spawn();
 
-                return instantiated.GetComponent<Item>();
+                Item item = instantiated.GetComponent<Item>();
+
+                if (item.IsScrap && andInitialize) item.InitializeScrap();
+
+                return item;
             }
 
             return null;
@@ -436,10 +450,11 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         /// <param name="itemName">The item's name. Uses a simple Contains check to see if the provided item name is contained in the actual item's name. Case insensitive.</param>
         /// <param name="player">The <see cref="Player"/> to give the <see cref="Item"/> to.</param>
+        /// <param name="andInitialize">Whether or not to initialize this item after spawning.</param>
         /// <param name="switchTo">Whether or not to switch to the item. Forced for 2 handed items.</param>
         /// <returns>A new <see cref="Item"/>, or <see langword="null"/> if the provided item name is not found.</returns>
         /// <exception cref="NoAuthorityException">Thrown when trying to spawn an <see cref="Item"/> on the client.</exception>
-        public static Item CreateAndGiveItem(string itemName, Player player, bool switchTo = true)
+        public static Item CreateAndGiveItem(string itemName, Player player, bool andInitialize = true, bool switchTo = true)
         {
             if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
             {
@@ -457,7 +472,9 @@ namespace LC_API.GameInterfaceAPI.Features
 
                 Item item = instantiated.GetComponent<Item>();
 
-                item.GiveTo(player);
+                if (item.IsScrap && andInitialize) item.InitializeScrap();
+
+                item.GiveTo(player, switchTo);
 
                 return item;
             }

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace LC_API
 {
+    /// <summary>
+    /// Provides a few useful utilities for the API.
+    /// </summary>
     public static class Utils
     {
         // Thanks Elias https://stackoverflow.com/a/11105164
