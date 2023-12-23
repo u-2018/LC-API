@@ -57,8 +57,8 @@
       <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+
+  <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
     <Exec Command="cd D:\NetcodePatcher&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 </Project>
