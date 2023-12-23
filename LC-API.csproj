@@ -59,6 +59,6 @@
   </ItemGroup>
 
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
-    <Exec Command="cd D:\NetcodePatcher&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
+    <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 </Project>
