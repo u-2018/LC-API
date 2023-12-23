@@ -7,7 +7,10 @@ using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
+using System;
+using System.Linq;
 using System.Reflection;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace LC_API
@@ -86,6 +89,64 @@ namespace LC_API
 
             Networking.SetupNetworking();
             Events.Patch(harmony);
+
+            CommandHandler.RegisterCommand("testvalue", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.ScrapValue = int.Parse(args[0]);
+            });
+
+            CommandHandler.RegisterCommand("testname", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.Name = string.Join(" ", args);
+            });
+
+            CommandHandler.RegisterCommand("testpos", (string[] args) =>
+            {
+                foreach (GameInterfaceAPI.Features.Item item in GameInterfaceAPI.Features.Item.List)
+                {
+                    Log.LogInfo($"Setting position of {item.Name} cur: {item.Position}");
+                    item.Position = GameInterfaceAPI.Features.Player.LocalPlayer.Position;
+                    Log.LogInfo($"After: {item.Position}");
+                }
+            });
+
+            CommandHandler.RegisterCommand("spawnscrap", (string[] args) =>
+            {
+                string name = string.Join(" ", args).ToLower();
+                GameObject go = StartOfRound.Instance.allItemsList.itemsList.FirstOrDefault(i => i.itemName.ToLower().Contains(name))?.spawnPrefab;
+                if (go != null)
+                {
+                    GameObject instantiated = Instantiate(go, GameInterfaceAPI.Features.Player.LocalPlayer.Position, default);
+
+                    instantiated.GetComponent<NetworkObject>().Spawn();
+                }
+            });
+
+            CommandHandler.RegisterCommand("givescrap", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer).InitializeScrap();
+            });
+
+            CommandHandler.RegisterCommand("givescrapmanual", (string[] args) =>
+            {
+                GameInterfaceAPI.Features.Item item = GameInterfaceAPI.Features.Item.CreateAndSpawnItem(string.Join(" ", args.Skip(1)));
+
+                item.InitializeScrap();
+
+                GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.TryAddItemToSlot(item, 3, bool.Parse(args[0]));
+            });
+
+            CommandHandler.RegisterCommand("removeitem", (string[] args) =>
+            {
+                if (args[0] == "all")
+                {
+                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveAllItems();
+                } 
+                else
+                {
+                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveItem(int.Parse(args[0]));
+                }
+            });
         }
 
         internal void Start()
