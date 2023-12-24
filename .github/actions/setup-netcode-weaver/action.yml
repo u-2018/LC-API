@@ -1,0 +1,29 @@
+name: Setup NetCode Weaver 
+description: Sets up NetCode Weaver (https://github.com/EvaisaDev/UnityNetcodeWeaver) for patching Lethal Company mods.
+inputs:
+  netcode-weaver-version: 
+    description: NetCode Weaver version to setup
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install required utilities
+      shell: bash
+      run: sudo apt-get install wget unzip
+      
+    - name: Fetch NetCode Weaver release
+      shell: bash
+      run: wget https://github.com/EvaisaDev/UnityNetcodeWeaver/releases/download/${{ inputs.netcode-weaver-version }}/NetcodePatcher-${{ inputs.netcode-weaver-version }}.zip -O ~/NetcodeWeaver.zip
+    
+    - name: Extract NetCode Weaver 
+      shell: bash
+      run: unzip ~/NetcodeWeaver.zip -d ~/NetcodeWeaver
+      
+    - name: create runtimeconfig.json
+      shell: bash
+      run: cat ${{ github.action_path }}/NetcodePatcher.runtimeconfig.json > ~/NetcodeWeaver/NetcodePatcher.runtimeconfig.json
+      
+    - name: Copy reference assemblies from NuGet cache
+      shell: bash
+      run: cp ~/.nuget/packages/lethalapi.gamelibs/*/lib/*.dll ~/NetcodeWeaver/deps/ 
+  
