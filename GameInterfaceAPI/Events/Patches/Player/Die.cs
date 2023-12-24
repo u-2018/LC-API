@@ -88,7 +88,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             newInstructions.InsertRange(newInstructions.Count - 1, new CodeInstruction[]
             {
                 // Die.CallDiedEvent(PlayerControllerB, Vector3, bool, CauseOfDeath, int)
-                new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
+                new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Ldarg_3),
