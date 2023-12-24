@@ -70,7 +70,7 @@
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
-
+  
   <ItemGroup Condition="$(CI) == 'true'">
     <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0"/>
   </ItemGroup>
