@@ -16,7 +16,9 @@ Then, get the latest release off of thunderstore
 If you want to use the API in your plugin, add the LC_API.dll as a project reference!
 
 ## Contributing
-If you wish to contribute to this project, you will need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) to make custom networking properly. Unzip it anywhere on your computer and open the solution properties, go to build events and change the `cd D:\NetcodePatcher` to the location of the netcode patcher on your machine. The folder you have should have `NetcodePatcher.dll` inside of it.
+If you wish to contribute to this project, you will need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) 
+to implement custom networking properly. Follow their instructions to get NetcodeWeaver set-up for patching Lethal Company mods 
+and keep note of the filepath where you chose to install it.
 
 Once you have forked and cloned the repository, you will need to create a file in the solution folder called `LC-API.csproj.user` 
 to set paths to build dependencies. Here's a template for that file's contents:
@@ -41,9 +43,11 @@ to set paths to build dependencies. Here's a template for that file's contents:
 </Project>
 ```
 
-Also ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ensure it gets publicized.
+It is vital that you change the `NETCODE_PATCHER_DIR` property to the location of your local NetcodeWeaver installation.
 
-Once you have these done, you will be able to properly build the solution.
+Ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ensure it gets publicized.
+
+Once you have completed these steps, you will be able to properly build the solution.
 
 # Features
 AssetBundle loading - Put asset bundles in BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
