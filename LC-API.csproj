@@ -14,7 +14,6 @@
     </RestoreAdditionalProjectSources>
     <RootNamespace>LC_API</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <MinVerTagPrefix>v</MinVerTagPrefix>
   </PropertyGroup>
 
   <ItemGroup>
