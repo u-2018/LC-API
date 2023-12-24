@@ -1,0 +1,34 @@
+[config]
+schemaVersion = "0.0.1"
+
+[general]
+repository = "https://thunderstore.io"
+
+[package]
+namespace = "2018"
+name = "LC_API"
+description = "Multipurpose modding API for Lethal Company"
+websiteUrl = "https://github.com/u-2018/LC-API"
+containsNsfwContent = false
+
+[package.dependencies]
+BepInEx-BepInExPack = "5.4.2100"
+
+[build]
+icon = "icons/icon.png"
+readme = "../README.md"
+outdir = "../dist"
+
+[[build.copy]]
+source = "../bin/LC_API.dll"
+target = "LC_API.dll"
+
+[[build.copy]]
+source = "../LICENSE"
+target = "LICENSE"
+
+[publish]
+communities = ["lethal-company"]
+
+[publish.categories]
+lethal-company = ["bepinex", "libraries", "tools"]

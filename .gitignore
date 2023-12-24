@@ -20,8 +20,11 @@
 !.gitattributes
 !.git-blame-ignore-revs
 
-## GitHub specific
-!.github/
+## Assets
+!assets/
+
+## Thunderstore metadata
+!thunderstore.toml
 
 ## Projects
 !LC-API.sln
