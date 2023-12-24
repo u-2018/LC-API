@@ -36,7 +36,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
   
-  <ItemGroup>
+  <ItemGroup Condition="$(CI) != 'true'">
     <Reference Include="Assembly-CSharp" Publicize="true">
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -58,6 +58,10 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(CI) == 'true'">
+    <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0"/>
   </ItemGroup>
 
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
