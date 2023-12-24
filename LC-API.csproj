@@ -75,6 +75,11 @@
     <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0"/>
   </ItemGroup>
 
+  <PropertyGroup Condition="$(CI) == 'true'">
+    <NETCODE_PATCHER_DIR>$(HOME)/NetcodeWeaver</NETCODE_PATCHER_DIR>
+    <PACK_THUNDERSTORE>true</PACK_THUNDERSTORE>
+  </PropertyGroup>
+
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
