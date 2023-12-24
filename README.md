@@ -1,4 +1,8 @@
 # LC-API
+
+[![Latest Version](https://img.shields.io/thunderstore/v/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+[![Total Downloads](https://img.shields.io/thunderstore/dt/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+
 The definitive Lethal Company modding API. Includes some very useful features to make modding life easier.
 
 # Installation
