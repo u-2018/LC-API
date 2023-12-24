@@ -1,0 +1,56 @@
+name: Publish
+
+on:
+  release:
+    types: [prereleased, released]
+
+jobs:
+  publish:
+    name: Publish package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.100"
+
+      - name: Restore solution
+        run: |
+          dotnet restore
+          
+      - name: Setup NetcodeWeaver
+        uses: ./.github/actions/setup-netcode-weaver
+        with:
+          netcode-weaver-version: 2.4.0
+
+      - name: Install Thunderstore CLI
+        run: |
+          dotnet tool install -g tcli
+          
+      - name: Build solution
+        run: |
+          dotnet build
+          
+      - name: Publish to Thunderstore
+        env:
+          TCLI_AUTH_TOKEN: ${{ secrets.THUNDERSTORE_API_TOKEN }}
+        run: |
+          tcli publish --config-path ./assets/thunderstore.toml --file ./dist/*.zip 
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} dist/*.zip
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: dist/*.zip
