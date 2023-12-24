@@ -5,8 +5,8 @@ on:
     types: [prereleased, released]
 
 jobs:
-  publish:
-    name: Publish package
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Sources
@@ -34,23 +34,67 @@ jobs:
         run: |
           dotnet tool install -g tcli
           
-      - name: Build solution
+      - name: Build and pack solution
         run: |
-          dotnet build
+          dotnet pack
+
+      - name: Upload Thunderstore artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: thunderstore-build
+          path: dist/*.zip
+
+      - name: Upload nupkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-build
+          path: bin/*.nupkg
+  
+  upload-release-artifacts:
+    name: Upload Release Artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Upload artifacts to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} dist/*.zip bin/*.nupkg
+      
+  deploy-nuget:
+    name: Deploy to NuGet
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download nupkg artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg-build
+
+      - name: Validate artifact exists
+        run: test -d ./bin
+      
+      - name: Publish to NuGet.org
+        run: |
+          dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
+  
+  deploy-thunderstore:
+    name: Deploy to Thunderstore
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Thunderstore artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: thunderstore-build
+
+      - name: Validate artifact exists
+        run: test -d ./dist
           
       - name: Publish to Thunderstore
         env:
           TCLI_AUTH_TOKEN: ${{ secrets.THUNDERSTORE_API_TOKEN }}
         run: |
-          tcli publish --config-path ./assets/thunderstore.toml --file ./dist/*.zip 
-
-      - name: Upload Release Assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} dist/*.zip
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: dist/*.zip
+          tcli publish --config-path ./assets/thunderstore.toml --file dist/*.zip 
