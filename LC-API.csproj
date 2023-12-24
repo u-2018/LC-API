@@ -88,6 +88,7 @@
       <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
       <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
     </ItemGroup>
+    <Message Importance="high" Text="Successfully weaved NetCode!" />
   </Target>
 
   <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
