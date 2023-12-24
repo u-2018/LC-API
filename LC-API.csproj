@@ -89,4 +89,15 @@
       <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
     </ItemGroup>
   </Target>
+
+  <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
+    <PropertyGroup>
+      <PlainVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</PlainVersion>
+    </PropertyGroup>
+    <Exec Command="tcli build --config-path $(SolutionDir)/assets/thunderstore.toml --package-version $(PlainVersion)" />
+    <ItemGroup>
+      <FilesToRename Include="dist/*-$(PlainVersion).zip" />
+    </ItemGroup>
+    <Move SourceFiles="@(FilesToRename)" DestinationFiles="@(FilesToRename -> Replace($(PlainVersion), $(MinVerVersion)))"/>
+  </Target>
 </Project>
