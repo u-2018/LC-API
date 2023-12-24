@@ -81,6 +81,12 @@
   </PropertyGroup>
 
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
-    <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
+    <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+      <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+      <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
+      <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
+    </ItemGroup>
   </Target>
 </Project>
