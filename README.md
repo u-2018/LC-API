@@ -67,8 +67,6 @@ Networking - Easily send data across the network to sync data between clients
   - etc. though this would all fall under one event probably just `Item.Using` or `Item.Activating`
 - Player begin and end moving events
 - Player crouch and jump events
-- Past tense versions of hurting and dying
-  - These won't be cancellable, but you will be able to use these to do things on death/hurt as hurting and dying can be cancelled by other mods
 - Changing item event
 - Selling items event
   - Probably one for selling many items on the counter which will also call an event for each individual item being sold
