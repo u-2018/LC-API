@@ -8,9 +8,9 @@ using UnityEngine;
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
     [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.KillPlayer))]
-    internal class Dying
+    internal class Die
     {
-        private static DyingEventArgs CallEvent(PlayerControllerB playerController, Vector3 force, bool spawnBody,
+        private static DyingEventArgs CallDyingEvent(PlayerControllerB playerController, Vector3 force, bool spawnBody,
             CauseOfDeath causeOfDeath, int deathAnimation)
         {
             DyingEventArgs ev = new DyingEventArgs(Features.Player.GetOrAdd(playerController), force, spawnBody,
@@ -19,6 +19,15 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             Handlers.Player.OnDying(ev);
 
             return ev;
+        }
+
+        private static void CallDiedEvent(PlayerControllerB playerController, Vector3 force, bool spawnBody,
+            CauseOfDeath causeOfDeath, int deathAnimation)
+        {
+            DiedEventArgs ev = new DiedEventArgs(Features.Player.GetOrAdd(playerController), force, spawnBody,
+                causeOfDeath, deathAnimation);
+
+            Handlers.Player.OnDied(ev);
         }
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
@@ -34,13 +43,13 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
             CodeInstruction[] inst = new CodeInstruction[]
             {
-                // DyingEventArgs ev = Dying.CallEvent(PlayerControllerB, Vector3, bool, CauseOfDeath, int)
+                // DyingEventArgs ev = Die.CallDyingEvent(PlayerControllerB, Vector3, bool, CauseOfDeath, int)
                 new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Ldarg_3),
                 new CodeInstruction(OpCodes.Ldarg, 4),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Dying), nameof(Dying.CallEvent))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Die), nameof(Die.CallDyingEvent))),
                 new CodeInstruction(OpCodes.Dup),
                 // if (!ev.IsAllwed) return
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DyingEventArgs), nameof(DyingEventArgs.IsAllowed))),
@@ -75,6 +84,17 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             newInstructions.InsertRange(index, inst);
 
             newInstructions[index + inst.Length].labels.Add(skipLabel);
+
+            newInstructions.InsertRange(newInstructions.Count - 1, new CodeInstruction[]
+            {
+                // Die.CallDiedEvent(PlayerControllerB, Vector3, bool, CauseOfDeath, int)
+                new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Ldarg_3),
+                new CodeInstruction(OpCodes.Ldarg, 4),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Die), nameof(Die.CallDiedEvent))),
+            });
 
             for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];
         }
