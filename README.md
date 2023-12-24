@@ -1,4 +1,8 @@
 # LC-API
+
+[![Latest Version](https://img.shields.io/thunderstore/v/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+[![Total Downloads](https://img.shields.io/thunderstore/dt/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+
 The definitive Lethal Company modding API. Includes some very useful features to make modding life easier.
 
 # Installation
@@ -12,11 +16,38 @@ Then, get the latest release off of thunderstore
 If you want to use the API in your plugin, add the LC_API.dll as a project reference!
 
 ## Contributing
-If you wish to contribute to this project, you will need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) to make custom networking properly. Unzip it anywhere on your computer and open the solution properties, go to build events and change the `cd D:\NetcodePatcher` to the location of the netcode patcher on your machine. The folder you have should have `NetcodePatcher.dll` inside of it.
+If you wish to contribute to this project, you will need [unity netcode weaver](https://github.com/EvaisaDev/UnityNetcodeWeaver/releases) 
+to implement custom networking properly. Follow their instructions to get NetcodeWeaver set-up for patching Lethal Company mods 
+and keep note of the filepath where you chose to install it.
 
-Also ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ensure it gets publicized.
+Once you have forked and cloned the repository, you will need to create a file in the solution folder called `LC-API.csproj.user` 
+to set paths to build dependencies. Here's a template for that file's contents:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <LETHAL_COMPANY_DIR>F:/SteamLibrary/steamapps/common/Lethal Company</LETHAL_COMPANY_DIR>
+        <TEST_PROFILE_DIR>$(APPDATA)/r2modmanPlus-local/LethalCompany/profiles/Test LC API</TEST_PROFILE_DIR>
+        <NETCODE_PATCHER_DIR>./NetcodeWeaver</NETCODE_PATCHER_DIR>
+    </PropertyGroup>
 
-Once you have these done, you will be able to properly build the solution.
+    <!-- Create your 'Test Profile' using your modman of choice before enabling this. 
+    Enable by setting the Condition attribute to "true". *nix users should switch out `copy` for `cp`. -->
+    <Target Name="CopyToTestProfile" AfterTargets="PostBuildEvent;NetcodeWeave" Condition="true">
+        <MakeDir
+                Directories="$(TEST_PROFILE_DIR)/BepInEx/plugins/2018-LC_API"
+                Condition="Exists('$(TEST_PROFILE_DIR)') And !Exists('$(TEST_PROFILE_DIR)/BepInEx/plugins/2018-LC_API')"
+        />
+        <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(TEST_PROFILE_DIR)/BepInEx/plugins/2018-LC_API/&quot;" />
+    </Target>
+</Project>
+```
+
+It is vital that you change the `NETCODE_PATCHER_DIR` property to the location of your local NetcodeWeaver installation.
+
+Ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ensure it gets publicized.
+
+Once you have completed these steps, you will be able to properly build the solution.
 
 # Features
 AssetBundle loading - Put asset bundles in BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
