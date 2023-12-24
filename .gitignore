@@ -20,6 +20,9 @@
 !.gitattributes
 !.git-blame-ignore-revs
 
+## GitHub specific
+!.github/
+
 ## Assets
 !assets/
 
