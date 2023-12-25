@@ -8,6 +8,8 @@ using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
@@ -68,7 +70,7 @@ namespace LC_API
 
             MethodInfo originalAddChatMsg = AccessTools.Method(typeof(HUDManager), "AddChatMessage");
 
-            MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
+            //MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
 
             MethodInfo originalSubmitChat = AccessTools.Method(typeof(HUDManager), "SubmitChat_performed");
 
@@ -78,17 +80,72 @@ namespace LC_API
 
             MethodInfo patchGameManagerAwake = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.GameNetworkManagerAwake));
 
+            MethodInfo originalStartClient = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartClient));
+            MethodInfo originalStartHost = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartHost));
+
+            MethodInfo registerPatch = AccessTools.Method(typeof(RegisterPatch), nameof(RegisterPatch.Postfix));
+
             harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
-            harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
+            //harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
             harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
             harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
             harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
 
-            Networking.GetString += CheatDatabase.CDNetGetString;
-            Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
+            harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
+            harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
+
+            //Networking.GetString += CheatDatabase.CDNetGetString;
+            //Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
 
             Networking.SetupNetworking();
             Events.Patch(harmony);
+
+            Networking.RegisterNetworkMessages += () =>
+            {
+                Log.LogInfo("EVENT SENT!");
+
+                Networking.RegisterMessage("LC_API_TEST", (Networking.NetworkMessage<TestClass> message) =>
+                {
+                    Log.LogInfo("RECEIVED MESSAGE");
+                    Log.LogInfo(message.Message.value);
+                    Log.LogInfo(message.Message.test);
+                    
+                    foreach(Vector3 vector3 in message.Message.vector3S)
+                    {
+                        Log.LogInfo(vector3.ToString());
+                    }
+
+                    Log.LogInfo("-------------");
+                });
+
+                NetworkManager.Singleton.StartCoroutine(TestSendMessage());
+            };
+        }
+
+        private IEnumerator TestSendMessage()
+        {
+            Log.LogInfo("Testing");
+            yield return new WaitForSeconds(10f);
+            Log.LogInfo("Broadcasting");
+
+            Networking.Broadcast("LC_API_TEST", new TestClass()
+            {
+                value = 69,
+                test = "nice",
+                vector3S = new List<Networking.Vector3S>()
+                {
+                    new Vector3(42, 42, 42),
+                    new Vector3(3.14f, 3.14f, 3.14f)
+                }
+            });
+        }
+
+        [System.Serializable]
+        internal class TestClass
+        {
+            public int value;
+            public string test;
+            public List<Networking.Vector3S> vector3S;
         }
 
         internal void Start()

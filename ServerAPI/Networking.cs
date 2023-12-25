@@ -1,189 +1,166 @@
-﻿using LC_API.Data;
+﻿using HarmonyLib;
+using LC_API.Data;
+using LC_API.GameInterfaceAPI.Events;
+using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
+using LC_API.GameInterfaceAPI.Events.Patches.Player;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
+using Unity.Netcode;
 using UnityEngine;
+using static LC_API.GameInterfaceAPI.Events.Events;
+using static LC_API.ServerAPI.Networking;
 
 namespace LC_API.ServerAPI
 {
-    /// <summary>
-    /// Networking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data. Note that the local player will not receive data that they broadcast.
-    /// <para>The second parameter for each of the events is the signature string.</para>
-    /// </summary>
     public static class Networking
     {
-        /// <summary>
-        /// Delegate for receiving a string value. Second parameter is the signature.
-        /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
-        /// </summary>
-        public static Action<string, string> GetString = (_, _) => { };
-        /// <summary>
-        /// Delegate for receiving a list of string values. Second parameter is the signature.
-        /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
-        /// </summary>
-        public static Action<List<string>, string> GetListString = (_, _) => { };
-        /// <summary>
-        /// Delegate for receiving a int value. Second parameter is the signature.
-        /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
-        /// </summary>
-        public static Action<int, string> GetInt = (_, _) => { };
-        /// <summary>
-        /// Delegate for receiving a float value. Second parameter is the signature.
-        /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
-        /// </summary>
-        public static Action<float, string> GetFloat = (_, _) => { };
-        /// <summary>
-        /// Delegate for receiving a Vector3 value. Second parameter is the signature.
-        /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
-        /// </summary>
-        public static Action<UnityEngine.Vector3, string> GetVector3 = (_, _) => { };
-
-        private static Dictionary<string, string> syncStringVars = new Dictionary<string, string>();
-
-        /// <summary>
-        /// Send data across the network. The signature is an identifier for use when receiving data.
-        /// </summary>
-        public static void Broadcast(string data, string signature)
+        public class NetworkMessage<T> where T : class
         {
-            if (data.Contains("/"))
+            public ulong SenderId { get; }
+
+            public T Message { get; }
+
+            public NetworkMessage(ulong sender, T message)
             {
-                Plugin.Log.LogError("Invalid character in broadcasted string event! ( / )");
-                return;
+                SenderId = sender;
+                Message = message;
             }
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDstring.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
         }
 
-        /// <summary>
-        /// Send data across the network. The signature is an identifier for use when receiving data.
-        /// </summary>
-        public static void Broadcast(List<string> data, string signature)
+
+        public abstract class NetworkMessageHandler { }
+
+        public class NetworkMessageHandler<T> : NetworkMessageHandler where T : class
         {
-            string dataFormatted = "";
-            foreach (var item in data)
+            internal string UniqueName { get; }
+
+            internal Action<NetworkMessage<T>> OnReceived { get; }
+
+            public NetworkMessageHandler(string uniqueName, Action<NetworkMessage<T>> onReceived)
             {
-                if (item.Contains("/"))
+                if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
+                    throw new Exception("T must be serializable.");
+
+                UniqueName = uniqueName;
+                OnReceived = onReceived;
+            }
+
+            public void Send(T obj)
+            {
+                byte[] serialized = obj.ToBytes();
+
+                using (FastBufferWriter writer = new FastBufferWriter(FastBufferWriter.GetWriteSize(serialized), Unity.Collections.Allocator.Temp))
                 {
-                    Plugin.Log.LogError("Invalid character in broadcasted string event! ( / )");
-                    return;
+                    writer.WriteValueSafe(serialized);
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
                 }
-                if (item.Contains("\n"))
+            }
+
+            public void Read(ulong sender, FastBufferReader reader)
+            {
+                byte[] data;
+
+                reader.ReadValueSafe(out data);
+
+                OnReceived.Invoke(new NetworkMessage<T>(sender, data.ToObject<T>()));
+            }
+        }
+
+        [System.Serializable()]
+        public struct Vector3S
+        {
+            public float x;
+            public float y;
+            public float z;
+
+            public Vector3S(float x, float y, float z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            public static implicit operator Vector3(Vector3S vector3S) => vector3S.vector3;
+
+            public static implicit operator Vector3S(Vector3 vector3) => new Vector3S(vector3.x, vector3.y, vector3.z);
+
+
+            [NonSerialized]
+            private Vector3? v3 = null;
+            public Vector3 vector3
+            {
+                get
                 {
-                    Plugin.Log.LogError("Invalid character in broadcasted string event! ( NewLine )");
-                    return;
+                    if (!v3.HasValue) v3 = new Vector3(x, y, z);
+                    return v3.Value;
                 }
-                dataFormatted += item + "\n";
             }
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDlistString.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
         }
 
-        /// <summary>
-        /// Send data across the network. The signature is an identifier for use when receiving data.
-        /// </summary>
-        public static void Broadcast(int data, string signature)
+        internal static Dictionary<string, NetworkMessageHandler> NetworkMessageHandlers { get; } = new Dictionary<string, NetworkMessageHandler>();
+
+        internal static byte[] ToBytes(this object @object)
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDint.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            if (@object == null) return null;
+
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            MemoryStream memoryStream = new MemoryStream();
+
+            binaryFormatter.Serialize(memoryStream, @object);
+
+            return memoryStream.ToArray();
         }
 
-        /// <summary>
-        /// Send data across the network. The signature is an identifier for use when receiving data.
-        /// </summary>
-        public static void Broadcast(float data, string signature)
+        internal static T ToObject<T>(this byte[] bytes) where T : class
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDfloat.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            MemoryStream memoryStream = new MemoryStream();
+
+            memoryStream.Write(bytes, 0, bytes.Length);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
+            return binaryFormatter.Deserialize(memoryStream) as T;
         }
 
-        /// <summary>
-        /// Send data across the network. The signature is an identifier for use when receiving data.
-        /// </summary>
-        public static void Broadcast(UnityEngine.Vector3 data, string signature)
+        public static event CustomEventHandler RegisterNetworkMessages;
+
+        internal static void OnRegisterNetworkMessages() => RegisterNetworkMessages.InvokeSafely();
+
+        public static void RegisterMessage<T>(string uniqueName, Action<NetworkMessage<T>> onReceived) where T : class
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDvector3.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
+                throw new Exception("T must be serializable.");
+
+            if (NetworkMessageHandlers.ContainsKey(uniqueName))
+                throw new Exception($"{uniqueName} already registered");
+
+            NetworkMessageHandler<T> networkMessageHandler = new NetworkMessageHandler<T>(uniqueName, onReceived);
+
+            NetworkMessageHandlers.Add(uniqueName, networkMessageHandler);
+
+            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
         }
 
-        /// <summary>
-        /// Register a Sync Variable. Currently Sync Variables can only store string values.
-        /// </summary>
-        public static void RegisterSyncVariable(string name)
+        public static void UnregisterMessage<T>(string uniqueName) where T : class
         {
-            if (!syncStringVars.ContainsKey(name))
+            if (NetworkMessageHandlers.Remove(uniqueName))
             {
-                syncStringVars.Add(name, "");
-            }
-            else
-            {
-                Plugin.Log.LogError("Cannot register Sync Variable! A Sync Variable has already been registered with name " + name);
+                NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler(uniqueName);
             }
         }
 
-        /// <summary>
-        /// Set the value of a Sync Variable.
-        /// </summary>
-        public static void SetSyncVariable(string name, string value)
+        public static void Broadcast<T>(string uniqueName, T @object) where T : class
         {
-            if (syncStringVars.ContainsKey(name))
+            if (NetworkMessageHandlers.TryGetValue(uniqueName, out NetworkMessageHandler handler))
             {
-                syncStringVars[name] = value;
-                List<string> syncString = new List<string>();
-                syncString.Add(name);
-                syncString.Add(value);
-                Broadcast(syncString, "LCAPI_NET_SYNCVAR_SET");
+                if (handler is NetworkMessageHandler<T> genericHandler)
+                {
+                    genericHandler.Send(@object);
+                }
             }
-            else
-            {
-                Plugin.Log.LogError("Cannot set the value of Sync Variable " + name + " as it is not registered!");
-            }
-        }
-
-        private static void SetSyncVariableB(string name, string value)
-        {
-            if (syncStringVars.ContainsKey(name))
-            {
-                syncStringVars[name] = value;
-            }
-            else
-            {
-                Plugin.Log.LogError("Cannot set the value of Sync Variable " + name + " as it is not registered!");
-            }
-        }
-
-        internal static void LCAPI_NET_SYNCVAR_SET(List<string> list, string arg2)
-        {
-            if (arg2 == "LCAPI_NET_SYNCVAR_SET")
-            {
-                SetSyncVariableB(list[0], list[1]);
-            }
-        }
-
-        /// <summary>
-        /// Get the value of a Sync Variable.
-        /// </summary>
-        public static string GetSyncVariable(string name)
-        {
-            if (syncStringVars.ContainsKey(name))
-            {
-                return syncStringVars[name];
-            }
-            else
-            {
-                Plugin.Log.LogError("Cannot get the value of Sync Variable " + name + " as it is not registered!");
-                return "";
-            }
-        }
-
-        private static void GotString(string data, string signature)
-        {
-        }
-
-        private static void GotInt(int data, string signature)
-        {
-        }
-
-        private static void GotFloat(float data, string signature)
-        {
-        }
-
-        private static void GotVector3(UnityEngine.Vector3 data, string signature)
-        {
         }
 
         internal static void SetupNetworking()
@@ -200,6 +177,13 @@ namespace LC_API.ServerAPI
                     }
                 }
             }
+        }
+    }
+    internal static class RegisterPatch
+    {
+        internal static void Postfix()
+        {
+            OnRegisterNetworkMessages();
         }
     }
 }
