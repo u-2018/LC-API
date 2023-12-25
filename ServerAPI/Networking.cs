@@ -80,30 +80,6 @@ namespace LC_API.ServerAPI
                 T obj = data.ToObject<T>();
 
                 OnReceived.Invoke(sender, obj);
-
-                //// Handles the old, obsolete, versions.
-                //switch (obj)
-                //{
-                //    case string str:
-                //        GetString.InvokeActionSafe(str, UniqueName);
-                //        break;
-
-                //    case List<string> listStr:
-                //        GetListString.InvokeActionSafe(listStr, UniqueName);
-                //        break;
-
-                //    case int i:
-                //        GetInt.InvokeActionSafe(i, UniqueName);
-                //        break;
-
-                //    case float f:
-                //        GetFloat.InvokeActionSafe(f, UniqueName);
-                //        break;
-
-                //    case Vector3S vec3:
-                //        GetVector3.InvokeActionSafe(vec3, UniqueName);
-                //        break;
-                //}
             }
         }
 
@@ -134,9 +110,12 @@ namespace LC_API.ServerAPI
 
         internal static bool StartedNetworking { get; set; } = false;
 
+        /// <summary>
+        /// Provides an event in which registering network messages should happen.
+        /// </summary>
         public static event CustomEventHandler RegisterNetworkMessages;
 
-        public static event CustomEventHandler UnregisterNetworkMessages;
+        internal static event CustomEventHandler UnregisterNetworkMessages;
 
         internal static void OnRegisterNetworkMessages() => RegisterNetworkMessages.InvokeSafely();
 
@@ -291,36 +270,6 @@ namespace LC_API.ServerAPI
                 }
             }
         }
-
-        //#region OBSOLETE STUFF
-        ///// <summary>
-        ///// Delegate for receiving a string value. Second parameter is the unique name.
-        ///// <para/> (that unique name would have been the unique name given to <see cref="Broadcast{T}(string, T)"/>, for example)
-        ///// </summary>
-        //public static Action<string, string> GetString = (_, _) => { };
-        ///// <summary>
-        ///// Delegate for receiving a list of string values. Second parameter is the unique name.
-        ///// <para/> (that unique name would have been the unique name given to <see cref="Broadcast{T}(string, T)"/>, for example)
-        ///// </summary>
-        //public static Action<List<string>, string> GetListString = (_, _) => { };
-        ///// <summary>
-        ///// Delegate for receiving a int value. Second parameter is the unique name.
-        ///// <para/> (that unique name would have been the unique name given to <see cref="Broadcast{T}(string, T)"/>, for example)
-        ///// </summary>
-        //public static Action<int, string> GetInt = (_, _) => { };
-        ///// <summary>
-        ///// Delegate for receiving a float value. Second parameter is the unique name.
-        ///// <para/> (that unique name would have been the unique name given to <see cref="Broadcast{T}(string, T)"/>, for example)
-        ///// </summary>
-        //public static Action<float, string> GetFloat = (_, _) => { };
-        ///// <summary>
-        ///// Delegate for receiving a Vector3 value. Second parameter is the unique name.
-        ///// <para/> (that unique name would have been the unique name given to <see cref="Broadcast{T}(string, T)"/>, for example)
-        ///// </summary>
-        //public static Action<UnityEngine.Vector3, string> GetVector3 = (_, _) => { };
-
-        //private static Dictionary<string, string> syncStringVars = new Dictionary<string, string>();
-        //#endregion
     }
 
     internal static class RegisterPatch
