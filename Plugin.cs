@@ -97,20 +97,20 @@ namespace LC_API
             //Networking.GetString += CheatDatabase.CDNetGetString;
             //Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
 
-            Networking.SetupNetworking();
+            Networking.Init();
             Events.Patch(harmony);
 
             Networking.RegisterNetworkMessages += () =>
             {
                 Log.LogInfo("EVENT SENT!");
 
-                Networking.RegisterMessage("LC_API_TEST", (Networking.NetworkMessage<TestClass> message) =>
+                Networking.RegisterMessage("LC_API_TEST", (ulong sender, TestClass message) =>
                 {
                     Log.LogInfo("RECEIVED MESSAGE");
-                    Log.LogInfo(message.Message.value);
-                    Log.LogInfo(message.Message.test);
+                    Log.LogInfo(message.value);
+                    Log.LogInfo(message.test);
                     
-                    foreach(Vector3 vector3 in message.Message.vector3S)
+                    foreach(Vector3 vector3 in message.vector3S)
                     {
                         Log.LogInfo(vector3.ToString());
                     }
@@ -118,10 +118,10 @@ namespace LC_API
                     Log.LogInfo("-------------");
                 });
 
-                Networking.RegisterMessage("LC_API_TEST_SIMPLE", (Networking.NetworkMessage<string> message) =>
+                Networking.RegisterMessage("LC_API_TEST_SIMPLE", (ulong sender, string message) =>
                 {
                     Log.LogInfo("RECEIVED SIMPLE MESSAGE");
-                    Log.LogInfo(message.Message);
+                    Log.LogInfo(message);
                     Log.LogInfo("-------------");
                 });
 

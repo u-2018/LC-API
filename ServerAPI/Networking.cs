@@ -17,29 +17,20 @@ namespace LC_API.ServerAPI
 {
     public static partial class Networking
     {
-        public class NetworkMessage<T> where T : class
+        public abstract class NetworkMessageHandler 
         {
-            public ulong SenderId { get; }
+            internal abstract string UniqueName { get; }
 
-            public T Message { get; }
-
-            public NetworkMessage(ulong sender, T message)
-            {
-                SenderId = sender;
-                Message = message;
-            }
+            public abstract void Read(ulong sender, FastBufferReader reader);
         }
-
-
-        public abstract class NetworkMessageHandler { }
 
         public class NetworkMessageHandler<T> : NetworkMessageHandler where T : class
         {
-            internal string UniqueName { get; }
+            internal override string UniqueName { get; }
 
-            internal Action<NetworkMessage<T>> OnReceived { get; }
+            internal Action<ulong, T> OnReceived { get; }
 
-            public NetworkMessageHandler(string uniqueName, Action<NetworkMessage<T>> onReceived)
+            public NetworkMessageHandler(string uniqueName, Action<ulong, T> onReceived)
             {
                 if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
                     throw new Exception("T must be serializable.");
@@ -59,13 +50,13 @@ namespace LC_API.ServerAPI
                 }
             }
 
-            public void Read(ulong sender, FastBufferReader reader)
+            public override void Read(ulong sender, FastBufferReader reader)
             {
                 byte[] data;
 
                 reader.ReadValueSafe(out data);
 
-                OnReceived.Invoke(new NetworkMessage<T>(sender, data.ToObject<T>()));
+                OnReceived.Invoke(sender, data.ToObject<T>());
             }
         }
 
@@ -94,11 +85,23 @@ namespace LC_API.ServerAPI
             return binaryFormatter.Deserialize(memoryStream) as T;
         }
 
+        internal static bool StartedNetworking { get; set; } = false;
+
         public static event CustomEventHandler RegisterNetworkMessages;
 
         internal static void OnRegisterNetworkMessages() => RegisterNetworkMessages.InvokeSafely();
 
-        public static void RegisterMessage<T>(string uniqueName, Action<NetworkMessage<T>> onReceived) where T : class
+        internal static void RegisterAllMessages()
+        {
+            foreach (NetworkMessageHandler handler in NetworkMessageHandlers.Values)
+            {
+                NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(handler.UniqueName, handler.Read);
+            }
+
+
+        }
+
+        public static void RegisterMessage<T>(string uniqueName, Action<ulong, T> onReceived) where T : class
         {
             if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
                 throw new Exception("T must be serializable.");
@@ -110,7 +113,8 @@ namespace LC_API.ServerAPI
 
             NetworkMessageHandlers.Add(uniqueName, networkMessageHandler);
 
-            NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
+            if (StartedNetworking)
+                NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
         }
 
         public static void UnregisterMessage<T>(string uniqueName) where T : class
@@ -128,8 +132,22 @@ namespace LC_API.ServerAPI
                 if (handler is NetworkMessageHandler<T> genericHandler)
                 {
                     genericHandler.Send(@object);
+                } 
+                else
+                {
+                    throw new Exception($"Network handler for {uniqueName} was not broadcast with the right type!");
                 }
             }
+        }
+
+        internal static void Init()
+        {
+            RegisterNetworkMessages += () =>
+            {
+                StartedNetworking = true;
+            };
+
+            SetupNetworking();
         }
 
         internal static void SetupNetworking()
