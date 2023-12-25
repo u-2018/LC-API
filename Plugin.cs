@@ -118,6 +118,13 @@ namespace LC_API
                     Log.LogInfo("-------------");
                 });
 
+                Networking.RegisterMessage("LC_API_TEST_SIMPLE", (Networking.NetworkMessage<string> message) =>
+                {
+                    Log.LogInfo("RECEIVED SIMPLE MESSAGE");
+                    Log.LogInfo(message.Message);
+                    Log.LogInfo("-------------");
+                });
+
                 NetworkManager.Singleton.StartCoroutine(TestSendMessage());
             };
         }
@@ -138,6 +145,8 @@ namespace LC_API
                     new Vector3(3.14f, 3.14f, 3.14f)
                 }
             });
+
+            Networking.Broadcast("LC_API_TEST_SIMPLE", "Lol this works, too");
         }
 
         [System.Serializable]

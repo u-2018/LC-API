@@ -15,7 +15,7 @@ using static LC_API.ServerAPI.Networking;
 
 namespace LC_API.ServerAPI
 {
-    public static class Networking
+    public static partial class Networking
     {
         public class NetworkMessage<T> where T : class
         {
@@ -66,37 +66,6 @@ namespace LC_API.ServerAPI
                 reader.ReadValueSafe(out data);
 
                 OnReceived.Invoke(new NetworkMessage<T>(sender, data.ToObject<T>()));
-            }
-        }
-
-        [System.Serializable()]
-        public struct Vector3S
-        {
-            public float x;
-            public float y;
-            public float z;
-
-            public Vector3S(float x, float y, float z)
-            {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-            }
-
-            public static implicit operator Vector3(Vector3S vector3S) => vector3S.vector3;
-
-            public static implicit operator Vector3S(Vector3 vector3) => new Vector3S(vector3.x, vector3.y, vector3.z);
-
-
-            [NonSerialized]
-            private Vector3? v3 = null;
-            public Vector3 vector3
-            {
-                get
-                {
-                    if (!v3.HasValue) v3 = new Vector3(x, y, z);
-                    return v3.Value;
-                }
             }
         }
 
