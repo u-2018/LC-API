@@ -39,26 +39,26 @@ namespace LC_API
             Plugin.Log.LogWarning("Asking all other players for their mod list..");
             GameTips.ShowTip("Mod List:", "Asking all other players for installed mods..");
             GameTips.ShowTip("Mod List:", "Check the logs for more detailed results.\n<size=13>(Note that if someone doesnt show up on the list, they may not have LC_API installed)</size>");
-            Networking.Broadcast(DAT_CD_BROADCAST, SIG_REQ_GUID);
+            Networking.Broadcast(SIG_REQ_GUID, DAT_CD_BROADCAST);
         }
 
-        internal static void CDNetGetString(string data, string signature)
-        {
-            if (data == DAT_CD_BROADCAST && signature == SIG_REQ_GUID)
-            {
-                string mods = "";
-                foreach (PluginInfo info in PluginsLoaded.Values)
-                {
-                    mods += "\n" + info.Metadata.GUID;
-                }
-                Networking.Broadcast(GameNetworkManager.Instance.localPlayerController.playerUsername + " responded with these mods:" + mods, SIG_SEND_MODS);
-            }
+        //internal static void CDNetGetString(ulong senderId)
+        //{
+        //    if (data == DAT_CD_BROADCAST && signature == SIG_REQ_GUID)
+        //    {
+        //        string mods = "";
+        //        foreach (PluginInfo info in PluginsLoaded.Values)
+        //        {
+        //            mods += "\n" + info.Metadata.GUID;
+        //        }
+        //        Networking.Broadcast(GameNetworkManager.Instance.localPlayerController.playerUsername + " responded with these mods:" + mods, SIG_SEND_MODS);
+        //    }
 
-            if (signature == SIG_SEND_MODS)
-            {
-                GameTips.ShowTip("Mod List:", data);
-                Plugin.Log.LogWarning(data);
-            }
-        }
+        //    if (signature == SIG_SEND_MODS)
+        //    {
+        //        GameTips.ShowTip("Mod List:", data);
+        //        Plugin.Log.LogWarning(data);
+        //    }
+        //}
     }
 }

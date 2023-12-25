@@ -134,6 +134,23 @@ namespace LC_API
             };
         }
 
+        [NetworkMessage("TEST_NON_GENERIC")]
+        internal static void Test2(ulong senderId)
+        {
+            Log.LogInfo("GOT TEST MESSAGE NON GENERIC");
+            Log.LogInfo(senderId);
+        }
+
+        [NetworkMessage("TEST_NON_GENERIC_CLASS")]
+        internal class BigTest2 : NetworkMessageHandler
+        {
+            public override void Handler(ulong sender)
+            {
+                Log.LogInfo("GOT TEST MESSAGE 2 NON GENERIC");
+                Log.LogInfo(sender);
+            }
+        }
+
         [NetworkMessage("TEST_THING")]
         internal static void Test(ulong senderId, TestClass thing)
         {
@@ -179,6 +196,9 @@ namespace LC_API
             {
                 value = 45
             });
+
+            Networking.Broadcast("TEST_NON_GENERIC");
+            Networking.Broadcast("TEST_NON_GENERIC_CLASS");
         }
 
         [System.Serializable]

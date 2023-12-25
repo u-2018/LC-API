@@ -16,15 +16,21 @@ using Unity.Netcode;
 using UnityEngine;
 using static LC_API.GameInterfaceAPI.Events.Events;
 using static LC_API.ServerAPI.Networking;
+using static UnityEngine.InputSystem.InputRemoting;
 
 namespace LC_API.ServerAPI
 {
     public static partial class Networking
     {
-
+        /// <summary>
+        /// Allows a method/class to act as a network message.
+        /// </summary>
         [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
         public class NetworkMessage : Attribute
         {
+            /// <summary>
+            /// The name of the message.
+            /// </summary>
             public string UniqueName { get; }
 
             public NetworkMessage(string uniqueName)
@@ -56,14 +62,53 @@ namespace LC_API.ServerAPI
             public abstract void Handler(ulong sender, T message);
         }
 
-        internal abstract class NetworkMessageFinalizer
+        /// <summary>
+        /// For use when decorating a class with the <see cref="NetworkMessage"/> attribute.
+        /// </summary>
+        public abstract class NetworkMessageHandler
+        {
+            /// <summary>
+            /// The message handler.
+            /// </summary>
+            /// <param name="sender">The sender's client id.</param>
+            public abstract void Handler(ulong sender);
+        }
+
+        internal abstract class NetworkMessageFinalizerBase
         {
             internal abstract string UniqueName { get; }
 
             public abstract void Read(ulong sender, FastBufferReader reader);
         }
 
-        internal class NetworkMessageFinalizer<T> : NetworkMessageFinalizer where T : class
+        internal class NetworkMessageFinalizer : NetworkMessageFinalizerBase
+        {
+            internal override string UniqueName { get; }
+
+            internal Action<ulong> OnReceived { get; }
+
+            public NetworkMessageFinalizer(string uniqueName, Action<ulong> onReceived)
+            {
+                UniqueName = uniqueName;
+                OnReceived = onReceived;
+            }
+
+            public void Send()
+            {
+                using (FastBufferWriter writer = new FastBufferWriter(0, Unity.Collections.Allocator.Temp))
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                }
+            }
+
+            public override void Read(ulong sender, FastBufferReader reader)
+            {
+                OnReceived.Invoke(sender);
+            }
+        }
+
+
+        internal class NetworkMessageFinalizer<T> : NetworkMessageFinalizerBase where T : class
         {
             internal override string UniqueName { get; }
 
@@ -101,7 +146,7 @@ namespace LC_API.ServerAPI
             }
         }
 
-        internal static Dictionary<string, NetworkMessageFinalizer> NetworkMessageFinalizers { get; } = new Dictionary<string, NetworkMessageFinalizer>();
+        internal static Dictionary<string, NetworkMessageFinalizerBase> NetworkMessageFinalizers { get; } = new Dictionary<string, NetworkMessageFinalizerBase>();
 
         internal static byte[] ToBytes(this object @object)
         {
@@ -141,20 +186,26 @@ namespace LC_API.ServerAPI
 
         internal static void RegisterAllMessages()
         {
-            foreach (NetworkMessageFinalizer handler in NetworkMessageFinalizers.Values)
+            foreach (NetworkMessageFinalizerBase handler in NetworkMessageFinalizers.Values)
             {
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(handler.UniqueName, handler.Read);
             }
 
             MethodInfo registerInfo = null;
+            MethodInfo registerInfoGeneric = null;
 
             foreach (MethodInfo methodInfo in typeof(Networking).GetMethods())
             {
-                if (methodInfo.Name == nameof(RegisterMessage))
+                if (methodInfo.Name == nameof(RegisterMessage) && methodInfo.IsGenericMethod)
+                {
+                    registerInfoGeneric = methodInfo;
+                } 
+                else if (methodInfo.Name == nameof(RegisterMessage) && !methodInfo.IsGenericMethod)
                 {
                     registerInfo = methodInfo;
-                    break;
                 }
+
+                if (registerInfo != null && registerInfoGeneric != null) break;
             }
 
             foreach (PluginInfo pluginInfo in Chainloader.PluginInfos.Values)
@@ -170,13 +221,23 @@ namespace LC_API.ServerAPI
                             if (type.BaseType.Name == "NetworkMessageHandler`1")
                             {
                                 Type messageType = type.BaseType.GetGenericArguments()[0];
-                                registerInfo
+                                registerInfoGeneric
                                     .MakeGenericMethod(messageType)
                                     .Invoke(null, new object[]
                                     {
                                         networkMessage.UniqueName,
                                         type.GetMethod("Handler").CreateDelegate(typeof(Action<,>)
                                             .MakeGenericType(typeof(ulong), messageType), Activator.CreateInstance(type))
+                                    });
+                            } 
+                            else if (type.BaseType.Name == "NetworkMessageHandler")
+                            {
+                                registerInfo
+                                    .Invoke(null, new object[]
+                                    {
+                                        networkMessage.UniqueName,
+                                        type.GetMethod("Handler").CreateDelegate(typeof(Action<>)
+                                            .MakeGenericType(typeof(ulong)), Activator.CreateInstance(type))
                                     });
                             }
                         } 
@@ -189,15 +250,28 @@ namespace LC_API.ServerAPI
                                 {
                                     if (!method.IsStatic) throw new Exception("Detected NetworkMessage attribute on non-static method. All NetworkMessages on methods must be static.");
 
-                                    Type messageType = method.GetParameters()[1].ParameterType;
-                                    registerInfo
-                                        .MakeGenericMethod(messageType)
-                                        .Invoke(null, new object[] 
-                                        { 
-                                            networkMessage.UniqueName, 
+                                    if (method.GetParameters().Length == 1)
+                                    {
+                                        registerInfo
+                                            .Invoke(null, new object[]
+                                            {
+                                                networkMessage.UniqueName,
+                                                method.CreateDelegate(typeof(Action<>)
+                                                    .MakeGenericType(typeof(ulong)))
+                                            });
+                                    }
+                                    else
+                                    {
+                                        Type messageType = method.GetParameters()[1].ParameterType;
+                                        registerInfoGeneric
+                                            .MakeGenericMethod(messageType)
+                                            .Invoke(null, new object[]
+                                            {
+                                            networkMessage.UniqueName,
                                             method.CreateDelegate(typeof(Action<,>)
                                                 .MakeGenericType(typeof(ulong), messageType))
-                                        });
+                                            });
+                                    }
                                 }
                             }
                         }
@@ -239,6 +313,25 @@ namespace LC_API.ServerAPI
         }
 
         /// <summary>
+        /// Registers a network message with a name and handler.
+        /// </summary>
+        /// <param name="uniqueName">The name of the network message.</param>
+        /// <param name="onReceived">The handler to use for the message.</param>
+        /// <exception cref="Exception">Thrown when the name is already taken.</exception>
+        public static void RegisterMessage(string uniqueName, Action<ulong> onReceived)
+        {
+            if (NetworkMessageFinalizers.ContainsKey(uniqueName))
+                throw new Exception($"{uniqueName} already registered");
+
+            NetworkMessageFinalizer networkMessageHandler = new NetworkMessageFinalizer(uniqueName, onReceived);
+
+            NetworkMessageFinalizers.Add(uniqueName, networkMessageHandler);
+
+            if (StartedNetworking)
+                NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
+        }
+
+        /// <summary>
         /// Unregisters a network message.
         /// </summary>
         /// <param name="uniqueName">The name of the message to unregister.</param>
@@ -259,12 +352,32 @@ namespace LC_API.ServerAPI
         /// <exception cref="Exception">Thrown when the registered message with the name is not of the same type as the network message.</exception>
         public static void Broadcast<T>(string uniqueName, T @object) where T : class
         {
-            if (NetworkMessageFinalizers.TryGetValue(uniqueName, out NetworkMessageFinalizer handler))
+            if (NetworkMessageFinalizers.TryGetValue(uniqueName, out NetworkMessageFinalizerBase handler))
             {
                 if (handler is NetworkMessageFinalizer<T> genericHandler)
                 {
                     genericHandler.Send(@object);
                 } 
+                else
+                {
+                    throw new Exception($"Network handler for {uniqueName} was not broadcast with the right type!");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends a network message that has no body.
+        /// </summary>
+        /// <param name="uniqueName">The name of the network message.</param>
+        /// <exception cref="Exception">Thrown when the registered message with the name is not of the same type as the network message.</exception>
+        public static void Broadcast(string uniqueName)
+        {
+            if (NetworkMessageFinalizers.TryGetValue(uniqueName, out NetworkMessageFinalizerBase handler))
+            {
+                if (handler is NetworkMessageFinalizer finalizer)
+                {
+                    finalizer.Send();
+                }
                 else
                 {
                     throw new Exception($"Network handler for {uniqueName} was not broadcast with the right type!");
