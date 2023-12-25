@@ -7,8 +7,12 @@ using UnityEngine;
 
 namespace LC_API.ServerAPI
 {
+#pragma warning disable
     public static partial class Networking
     {
+        /// <summary>
+        /// Serializes a <see cref="Vector2"/>.
+        /// </summary>
         [Serializable]
         public struct Vector2S
         {
@@ -38,6 +42,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Vector2Int"/>.
+        /// </summary>
         [Serializable]
         public struct Vector2IntS
         {
@@ -67,6 +74,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Vector3"/>.
+        /// </summary>
         [Serializable]
         public struct Vector3S
         {
@@ -98,6 +108,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Vector3Int"/>.
+        /// </summary>
         [Serializable]
         public struct Vector3IntS
         {
@@ -129,6 +142,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Vector4"/>.
+        /// </summary>
         [Serializable]
         public struct Vector4S
         {
@@ -162,6 +178,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Quaternion"/>.
+        /// </summary>
         [Serializable]
         public struct QuaternionS
         {
@@ -195,6 +214,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Color"/>.
+        /// </summary>
         [Serializable]
         public struct ColorS
         {
@@ -228,6 +250,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Color32"/>.
+        /// </summary>
         [Serializable]
         public struct Color32S
         {
@@ -261,6 +286,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Ray"/>.
+        /// </summary>
         [Serializable]
         public struct RayS
         {
@@ -290,6 +318,9 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Serializes a <see cref="Ray2D"/>.
+        /// </summary>
         [Serializable]
         public struct Ray2DS
         {
@@ -319,4 +350,5 @@ namespace LC_API.ServerAPI
             }
         }
     }
+#pragma warning restore
 }

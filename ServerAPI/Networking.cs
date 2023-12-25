@@ -33,8 +33,26 @@ namespace LC_API.ServerAPI
             }
         }
 
+        [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+        public class SyncVar : Attribute
+        {
+            public SyncVar(NetworkVariableReadPermission readPermission = NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission writePermission = NetworkVariableWritePermission.Owner)
+            {
+                
+            }
+        }
+
+        /// <summary>
+        /// For use when decorating a class with the <see cref="NetworkMessage"/> attribute.
+        /// </summary>
+        /// <typeparam name="T">The type of the message. Must be Serializable.</typeparam>
         public abstract class NetworkMessageHandler<T> where T : class
         {
+            /// <summary>
+            /// The message handler.
+            /// </summary>
+            /// <param name="sender">The sender's client id.</param>
+            /// <param name="message">The network message.</param>
             public abstract void Handler(ulong sender, T message);
         }
 
@@ -197,6 +215,13 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Registers a network message with a name and handler.
+        /// </summary>
+        /// <typeparam name="T">The type of the network message.</typeparam>
+        /// <param name="uniqueName">The name of the network message.</param>
+        /// <param name="onReceived">The handler to use for the message.</param>
+        /// <exception cref="Exception">Thrown when T is not serializable, or if the name is already taken.</exception>
         public static void RegisterMessage<T>(string uniqueName, Action<ulong, T> onReceived) where T : class
         {
             if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
@@ -213,6 +238,10 @@ namespace LC_API.ServerAPI
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
         }
 
+        /// <summary>
+        /// Unregisters a network message.
+        /// </summary>
+        /// <param name="uniqueName">The name of the message to unregister.</param>
         public static void UnregisterMessage(string uniqueName)
         {
             if (NetworkMessageFinalizers.Remove(uniqueName))
@@ -221,6 +250,13 @@ namespace LC_API.ServerAPI
             }
         }
 
+        /// <summary>
+        /// Sends a network message.
+        /// </summary>
+        /// <typeparam name="T">The type of the network message.</typeparam>
+        /// <param name="uniqueName">The name of the network message.</param>
+        /// <param name="object">The network message to send.</param>
+        /// <exception cref="Exception">Thrown when the registered message with the name is not of the same type as the network message.</exception>
         public static void Broadcast<T>(string uniqueName, T @object) where T : class
         {
             if (NetworkMessageFinalizers.TryGetValue(uniqueName, out NetworkMessageFinalizer handler))
