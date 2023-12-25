@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
+using static LC_API.ServerAPI.Networking;
 
 namespace LC_API
 {
@@ -82,8 +83,10 @@ namespace LC_API
 
             MethodInfo originalStartClient = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartClient));
             MethodInfo originalStartHost = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartHost));
+            MethodInfo originalShutdown = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.Shutdown));
 
             MethodInfo registerPatch = AccessTools.Method(typeof(RegisterPatch), nameof(RegisterPatch.Postfix));
+            MethodInfo unregisterPatch = AccessTools.Method(typeof(UnregisterPatch), nameof(UnregisterPatch.Postfix));
 
             harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
             //harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
@@ -93,6 +96,8 @@ namespace LC_API
 
             harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
             harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
+
+            harmony.Patch(originalShutdown, null, new HarmonyMethod(unregisterPatch));
 
             //Networking.GetString += CheatDatabase.CDNetGetString;
             //Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
@@ -109,8 +114,8 @@ namespace LC_API
                     Log.LogInfo("RECEIVED MESSAGE");
                     Log.LogInfo(message.value);
                     Log.LogInfo(message.test);
-                    
-                    foreach(Vector3 vector3 in message.vector3S)
+
+                    foreach (Vector3 vector3 in message.vector3S)
                     {
                         Log.LogInfo(vector3.ToString());
                     }
@@ -127,6 +132,23 @@ namespace LC_API
 
                 NetworkManager.Singleton.StartCoroutine(TestSendMessage());
             };
+        }
+
+        [NetworkMessage("TEST_THING")]
+        internal static void Test(ulong senderId, TestClass thing)
+        {
+            Log.LogInfo("GOT TEST MESSAGE");
+            Log.LogInfo(thing.value);
+        }
+
+        [NetworkMessage("TEST_THING2")]
+        internal class BigTest : NetworkMessageHandler<TestClass>
+        {
+            public override void Handler(ulong sender, TestClass message)
+            {
+                Log.LogInfo("GOT TEST MESSAGE 2");
+                Log.LogInfo(message.value);
+            }
         }
 
         private IEnumerator TestSendMessage()
@@ -147,6 +169,16 @@ namespace LC_API
             });
 
             Networking.Broadcast("LC_API_TEST_SIMPLE", "Lol this works, too");
+
+            Networking.Broadcast("TEST_THING", new TestClass()
+            {
+                value = 42
+            });
+
+            Networking.Broadcast("TEST_THING2", new TestClass()
+            {
+                value = 45
+            });
         }
 
         [System.Serializable]
