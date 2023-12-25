@@ -6,6 +6,7 @@ using LC_API.Extensions;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using LC_API.GameInterfaceAPI.Events.Patches.Player;
+using LC_API.GameInterfaceAPI.Features;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -33,9 +34,15 @@ namespace LC_API.ServerAPI
             /// </summary>
             public string UniqueName { get; }
 
-            public NetworkMessage(string uniqueName)
+            /// <summary>
+            /// Whether or not to relay this message back to the sender.
+            /// </summary>
+            public bool RelayToSelf { get; }
+
+            public NetworkMessage(string uniqueName, bool relayToSelf = false)
             {
                 UniqueName = uniqueName;
+                RelayToSelf = relayToSelf;
             }
         }
 
@@ -78,6 +85,8 @@ namespace LC_API.ServerAPI
         {
             internal abstract string UniqueName { get; }
 
+            internal abstract bool RelayToSelf { get; }
+
             public abstract void Read(ulong sender, FastBufferReader reader);
         }
 
@@ -85,11 +94,14 @@ namespace LC_API.ServerAPI
         {
             internal override string UniqueName { get; }
 
+            internal override bool RelayToSelf { get; }
+
             internal Action<ulong> OnReceived { get; }
 
-            public NetworkMessageFinalizer(string uniqueName, Action<ulong> onReceived)
+            public NetworkMessageFinalizer(string uniqueName, bool relayToSelf, Action<ulong> onReceived)
             {
                 UniqueName = uniqueName;
+                RelayToSelf = relayToSelf;
                 OnReceived = onReceived;
             }
 
@@ -103,6 +115,7 @@ namespace LC_API.ServerAPI
 
             public override void Read(ulong sender, FastBufferReader reader)
             {
+                if (!RelayToSelf && Player.LocalPlayer.ClientId == sender) return;
                 OnReceived.Invoke(sender);
             }
         }
@@ -112,14 +125,17 @@ namespace LC_API.ServerAPI
         {
             internal override string UniqueName { get; }
 
+            internal override bool RelayToSelf { get; }
+
             internal Action<ulong, T> OnReceived { get; }
 
-            public NetworkMessageFinalizer(string uniqueName, Action<ulong, T> onReceived)
+            public NetworkMessageFinalizer(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived)
             {
                 if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
                     throw new Exception("T must be serializable.");
 
                 UniqueName = uniqueName;
+                RelayToSelf = relayToSelf;
                 OnReceived = onReceived;
             }
 
@@ -136,6 +152,8 @@ namespace LC_API.ServerAPI
 
             public override void Read(ulong sender, FastBufferReader reader)
             {
+                if (!RelayToSelf && Player.LocalPlayer.ClientId == sender) return;
+
                 byte[] data;
 
                 reader.ReadValueSafe(out data);
@@ -226,6 +244,7 @@ namespace LC_API.ServerAPI
                                     .Invoke(null, new object[]
                                     {
                                         networkMessage.UniqueName,
+                                        networkMessage.RelayToSelf,
                                         type.GetMethod("Handler").CreateDelegate(typeof(Action<,>)
                                             .MakeGenericType(typeof(ulong), messageType), Activator.CreateInstance(type))
                                     });
@@ -236,6 +255,7 @@ namespace LC_API.ServerAPI
                                     .Invoke(null, new object[]
                                     {
                                         networkMessage.UniqueName,
+                                        networkMessage.RelayToSelf,
                                         type.GetMethod("Handler").CreateDelegate(typeof(Action<>)
                                             .MakeGenericType(typeof(ulong)), Activator.CreateInstance(type))
                                     });
@@ -256,6 +276,7 @@ namespace LC_API.ServerAPI
                                             .Invoke(null, new object[]
                                             {
                                                 networkMessage.UniqueName,
+                                                networkMessage.RelayToSelf,
                                                 method.CreateDelegate(typeof(Action<>)
                                                     .MakeGenericType(typeof(ulong)))
                                             });
@@ -267,9 +288,10 @@ namespace LC_API.ServerAPI
                                             .MakeGenericMethod(messageType)
                                             .Invoke(null, new object[]
                                             {
-                                            networkMessage.UniqueName,
-                                            method.CreateDelegate(typeof(Action<,>)
-                                                .MakeGenericType(typeof(ulong), messageType))
+                                                networkMessage.UniqueName,
+                                                networkMessage.RelayToSelf,
+                                                method.CreateDelegate(typeof(Action<,>)
+                                                    .MakeGenericType(typeof(ulong), messageType))
                                             });
                                     }
                                 }
@@ -294,9 +316,10 @@ namespace LC_API.ServerAPI
         /// </summary>
         /// <typeparam name="T">The type of the network message.</typeparam>
         /// <param name="uniqueName">The name of the network message.</param>
+        /// <param name="relayToSelf">Whether or not this message should be relayed to the sender.</param>
         /// <param name="onReceived">The handler to use for the message.</param>
         /// <exception cref="Exception">Thrown when T is not serializable, or if the name is already taken.</exception>
-        public static void RegisterMessage<T>(string uniqueName, Action<ulong, T> onReceived) where T : class
+        public static void RegisterMessage<T>(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived) where T : class
         {
             if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
                 throw new Exception("T must be serializable.");
@@ -304,7 +327,7 @@ namespace LC_API.ServerAPI
             if (NetworkMessageFinalizers.ContainsKey(uniqueName))
                 throw new Exception($"{uniqueName} already registered");
 
-            NetworkMessageFinalizer<T> networkMessageHandler = new NetworkMessageFinalizer<T>(uniqueName, onReceived);
+            NetworkMessageFinalizer<T> networkMessageHandler = new NetworkMessageFinalizer<T>(uniqueName, relayToSelf, onReceived);
 
             NetworkMessageFinalizers.Add(uniqueName, networkMessageHandler);
 
@@ -316,19 +339,22 @@ namespace LC_API.ServerAPI
         /// Registers a network message with a name and handler.
         /// </summary>
         /// <param name="uniqueName">The name of the network message.</param>
+        /// <param name="relayToSelf">Whether or not this message should be relayed to the sender.</param>
         /// <param name="onReceived">The handler to use for the message.</param>
         /// <exception cref="Exception">Thrown when the name is already taken.</exception>
-        public static void RegisterMessage(string uniqueName, Action<ulong> onReceived)
+        public static void RegisterMessage(string uniqueName, bool relayToSelf, Action<ulong> onReceived)
         {
             if (NetworkMessageFinalizers.ContainsKey(uniqueName))
                 throw new Exception($"{uniqueName} already registered");
 
-            NetworkMessageFinalizer networkMessageHandler = new NetworkMessageFinalizer(uniqueName, onReceived);
+            NetworkMessageFinalizer networkMessageHandler = new NetworkMessageFinalizer(uniqueName, relayToSelf, onReceived);
 
             NetworkMessageFinalizers.Add(uniqueName, networkMessageHandler);
 
             if (StartedNetworking)
+            {
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
+            }
         }
 
         /// <summary>

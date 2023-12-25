@@ -1,14 +1,15 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
 using LC_API.GameInterfaceAPI;
+using LC_API.GameInterfaceAPI.Features;
 using LC_API.ServerAPI;
 using System.Collections.Generic;
+using static LC_API.ServerAPI.Networking;
 
 namespace LC_API
 {
     internal static class CheatDatabase
     {
-        const string DAT_CD_BROADCAST = "LC_API_CD_Broadcast";
         const string SIG_REQ_GUID = "LC_API_ReqGUID";
         const string SIG_SEND_MODS = "LC_APISendMods";
 
@@ -39,7 +40,28 @@ namespace LC_API
             Plugin.Log.LogWarning("Asking all other players for their mod list..");
             GameTips.ShowTip("Mod List:", "Asking all other players for installed mods..");
             GameTips.ShowTip("Mod List:", "Check the logs for more detailed results.\n<size=13>(Note that if someone doesnt show up on the list, they may not have LC_API installed)</size>");
-            Networking.Broadcast(SIG_REQ_GUID, DAT_CD_BROADCAST);
+            Networking.Broadcast(SIG_REQ_GUID);
+        }
+
+        [NetworkMessage(SIG_SEND_MODS)]
+        internal static void ReceivedModListHandler(ulong senderId, List<string> mods)
+        {
+            Player player = Player.Get(senderId);
+            string data = $"{player.Username} responded with these mods:\n{string.Join("\n", mods)}";
+            GameTips.ShowTip("Mod List:", data);
+            Plugin.Log.LogWarning(data);
+        }
+
+        [NetworkMessage(SIG_REQ_GUID)]
+        internal static void ReceivedModListHandler(ulong senderId)
+        {
+            List<string> mods = new List<string>();
+            foreach (PluginInfo info in PluginsLoaded.Values)
+            {
+                mods.Add(info.Metadata.GUID);
+            }
+
+            Networking.Broadcast(SIG_SEND_MODS, mods);
         }
 
         //internal static void CDNetGetString(ulong senderId)

@@ -7,14 +7,9 @@ using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.ServerAPI;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
-using static LC_API.ServerAPI.Networking;
 
 namespace LC_API
 {
@@ -104,109 +99,6 @@ namespace LC_API
 
             Networking.Init();
             Events.Patch(harmony);
-
-            Networking.RegisterNetworkMessages += () =>
-            {
-                Log.LogInfo("EVENT SENT!");
-
-                Networking.RegisterMessage("LC_API_TEST", (ulong sender, TestClass message) =>
-                {
-                    Log.LogInfo("RECEIVED MESSAGE");
-                    Log.LogInfo(message.value);
-                    Log.LogInfo(message.test);
-
-                    foreach (Vector3 vector3 in message.vector3S)
-                    {
-                        Log.LogInfo(vector3.ToString());
-                    }
-
-                    Log.LogInfo("-------------");
-                });
-
-                Networking.RegisterMessage("LC_API_TEST_SIMPLE", (ulong sender, string message) =>
-                {
-                    Log.LogInfo("RECEIVED SIMPLE MESSAGE");
-                    Log.LogInfo(message);
-                    Log.LogInfo("-------------");
-                });
-
-                NetworkManager.Singleton.StartCoroutine(TestSendMessage());
-            };
-        }
-
-        [NetworkMessage("TEST_NON_GENERIC")]
-        internal static void Test2(ulong senderId)
-        {
-            Log.LogInfo("GOT TEST MESSAGE NON GENERIC");
-            Log.LogInfo(senderId);
-        }
-
-        [NetworkMessage("TEST_NON_GENERIC_CLASS")]
-        internal class BigTest2 : NetworkMessageHandler
-        {
-            public override void Handler(ulong sender)
-            {
-                Log.LogInfo("GOT TEST MESSAGE 2 NON GENERIC");
-                Log.LogInfo(sender);
-            }
-        }
-
-        [NetworkMessage("TEST_THING")]
-        internal static void Test(ulong senderId, TestClass thing)
-        {
-            Log.LogInfo("GOT TEST MESSAGE");
-            Log.LogInfo(thing.value);
-        }
-
-        [NetworkMessage("TEST_THING2")]
-        internal class BigTest : NetworkMessageHandler<TestClass>
-        {
-            public override void Handler(ulong sender, TestClass message)
-            {
-                Log.LogInfo("GOT TEST MESSAGE 2");
-                Log.LogInfo(message.value);
-            }
-        }
-
-        private IEnumerator TestSendMessage()
-        {
-            Log.LogInfo("Testing");
-            yield return new WaitForSeconds(10f);
-            Log.LogInfo("Broadcasting");
-
-            Networking.Broadcast("LC_API_TEST", new TestClass()
-            {
-                value = 69,
-                test = "nice",
-                vector3S = new List<Networking.Vector3S>()
-                {
-                    new Vector3(42, 42, 42),
-                    new Vector3(3.14f, 3.14f, 3.14f)
-                }
-            });
-
-            Networking.Broadcast("LC_API_TEST_SIMPLE", "Lol this works, too");
-
-            Networking.Broadcast("TEST_THING", new TestClass()
-            {
-                value = 42
-            });
-
-            Networking.Broadcast("TEST_THING2", new TestClass()
-            {
-                value = 45
-            });
-
-            Networking.Broadcast("TEST_NON_GENERIC");
-            Networking.Broadcast("TEST_NON_GENERIC_CLASS");
-        }
-
-        [System.Serializable]
-        internal class TestClass
-        {
-            public int value;
-            public string test;
-            public List<Networking.Vector3S> vector3S;
         }
 
         internal void Start()
