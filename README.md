@@ -59,6 +59,49 @@ It also lets mod authors make their mods put users in special matchmaking where 
 
 Networking - Easily send data across the network to sync data between clients
 
+# Installation
+
+## R2ModMan or Thunderstore Manager (highly recommended)
+
+### R2ModMan
+1. Go to the [thunderstore page](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+2. Click `Install with Mod Manager`
+
+### Thunderstore Manager
+(if the above doesn't work for you, open up the Thunderstore App to do the following)
+1. Click `Get mods`/`Online` (whatever it happens to be called)
+2. Search for LC API
+3. Download it
+
+## Manual
+1. Go to the [thunderstore page](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
+2. Click `Manual Download`
+3. Unzip files
+4. Navigate to `2018-LC_API-VERSION/BepinEx/plugins` and copy the contents
+5. Find your BepinEx installation's plugin folder, by default it would be in steamapps: `steamapps\common\Lethal Company\BepInEx\plugins`
+6. Create a folder titled `2018-LC_API`
+7. Paste the contents into that folder
+
+**DO NOT PLACE THE BUNDLES FOLDER IN THE PREMADE `BepinEx/Bundles` FOLDER!** It must be in the `2018-LC_API` folder.
+
+If you did all of this correctly, it should load properly.
+
+The resulting file structure should look like this:
+```
+BepinEx
+├───Bundles
+├───cache
+├───config
+├───core
+├───patchers
+└───plugins
+        └───2018-LC_API
+        │   LC_API.dll
+        │
+        └───Bundles
+                networking
+```
+
 # TODO
 - Picking up and dropping item events
 - Using item events
