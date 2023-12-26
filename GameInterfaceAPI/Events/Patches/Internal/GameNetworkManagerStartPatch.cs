@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using LC_API.BundleAPI;
+using System;
 using System.IO;
 using Unity.Netcode;
 using UnityEngine;
@@ -18,6 +19,20 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
         private static void Postfix(GameNetworkManager __instance)
         {
+            if (!File.Exists(BUNDLE_PATH))
+            {
+                // People like to manually install and then not put stuff in the right place, guess we'll handle that...
+                string p = Path.Combine(Paths.PluginPath, "Bundles", "networking");
+                if (File.Exists(p))
+                {
+                    File.Move(p, BUNDLE_PATH);
+                }
+                else
+                {
+                    throw new Exception("Networking bundle not found at expected path");
+                }
+            }
+
             LoadedAssetBundle assets = BundleLoader.LoadAssetBundle(BUNDLE_PATH, false);
 
             GameObject playerObj = assets.GetAsset<GameObject>(PLAYER_NETWORKING_ASSET_LOCATION);
