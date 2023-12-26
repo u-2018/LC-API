@@ -38,6 +38,9 @@ namespace LC_API
         private ConfigEntry<bool> configDisableBundleLoader;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+
+        internal static Harmony Harmony;
+
         private void Awake()
         {
             configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
@@ -54,7 +57,7 @@ namespace LC_API
                 ModdedServer.SetServerModdedOnly();
             }
 
-            Harmony harmony = new Harmony("ModAPI");
+            Harmony = new Harmony("ModAPI");
             MethodInfo originalLobbyCreated = AccessTools.Method(typeof(GameNetworkManager), "SteamMatchmaking_OnLobbyCreated");
             MethodInfo originalLobbyJoinable = AccessTools.Method(typeof(GameNetworkManager), "LobbyDataIsJoinable");
 

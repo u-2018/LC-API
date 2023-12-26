@@ -46,15 +46,6 @@ namespace LC_API.ServerAPI
             }
         }
 
-        [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-        public class SyncVar : Attribute
-        {
-            public SyncVar(NetworkVariableReadPermission readPermission = NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission writePermission = NetworkVariableWritePermission.Owner)
-            {
-                
-            }
-        }
-
         /// <summary>
         /// For use when decorating a class with the <see cref="NetworkMessage"/> attribute.
         /// </summary>
