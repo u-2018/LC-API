@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using HarmonyLib;
 using LC_API.BundleAPI;
+using LC_API.Networking;
 using System;
 using System.IO;
 using Unity.Netcode;
@@ -14,8 +15,6 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
         private static readonly string BUNDLE_PATH = Path.Combine(Paths.PluginPath, "2018-LC_API", "Bundles", "networking");
 
         private const string PLAYER_NETWORKING_ASSET_LOCATION = "assets/lc_api/playernetworkingprefab.prefab";
-
-        //private const string ITEM_NETWORKING_ASSET_LOCATION = "assets/lc_api/itemnetworkingprefab.prefab";
 
         private static void Postfix(GameNetworkManager __instance)
         {
@@ -33,26 +32,23 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
                 }
             }
 
+            NetworkManager networkManager = __instance.GetComponent<NetworkManager>();
+
             LoadedAssetBundle assets = BundleLoader.LoadAssetBundle(BUNDLE_PATH, false);
 
             GameObject playerObj = assets.GetAsset<GameObject>(PLAYER_NETWORKING_ASSET_LOCATION);
             playerObj.AddComponent<Features.Player>();
             playerObj.AddComponent<Features.Player.PlayerInventory>();
-            __instance.GetComponent<NetworkManager>().AddNetworkPrefab(playerObj);
+            networkManager.AddNetworkPrefab(playerObj);
             Features.Player.PlayerNetworkPrefab = playerObj;
 
-            foreach (NetworkPrefab prefab in __instance.GetComponent<NetworkManager>().NetworkConfig.Prefabs.Prefabs)
+            foreach (NetworkPrefab prefab in networkManager.NetworkConfig.Prefabs.Prefabs)
             {
                 if (prefab.Prefab.GetComponent<GrabbableObject>() != null)
                 {
                     prefab.Prefab.AddComponent<Features.Item>();
                 }
             }
-
-            //GameObject itemObj = assets.GetAsset<GameObject>(ITEM_NETWORKING_ASSET_LOCATION);
-            //itemObj.AddComponent<Features.Item>();
-            //__instance.GetComponent<NetworkManager>().AddNetworkPrefab(itemObj);
-            //Features.Item.ItemNetworkPrefab = itemObj;
         }
     }
 }

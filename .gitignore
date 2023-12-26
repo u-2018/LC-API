@@ -37,6 +37,7 @@
 !GameInterfaceAPI
 !ManualPatches
 !ServerAPI
+!Networking
 
 ### Source Files
 !**.cs
