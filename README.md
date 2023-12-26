@@ -82,9 +82,25 @@ Networking - Easily send data across the network to sync data between clients
 6. Create a folder titled `2018-LC_API`
 7. Paste the contents into that folder
 
-**DO NOT PLACE THE BUNDLES FOLDER IN THE PREMADE `BepinEx/plugins/Bundles` FOLDER!** It must be in the `2018-LC_API` folder.
+**DO NOT PLACE THE BUNDLES FOLDER IN THE PREMADE `BepinEx/Bundles` FOLDER!** It must be in the `2018-LC_API` folder.
 
 If you did all of this correctly, it should load properly.
+
+The resulting file structure should look like this:
+```
+BepinEx
+├───Bundles
+├───cache
+├───config
+├───core
+├───patchers
+└───plugins
+        └───2018-LC_API
+        │   LC_API.dll
+        │
+        └───Bundles
+                networking
+```
 
 # TODO
 - Picking up and dropping item events
