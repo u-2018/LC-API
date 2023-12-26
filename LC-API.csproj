@@ -5,7 +5,7 @@
     <AssemblyName>LC_API</AssemblyName>
     <Product>Lethal Company API</Product>
     <Description>Utilities for plugin devs</Description>
-    <Version>3.1.0</Version>
+    <Version>3.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
