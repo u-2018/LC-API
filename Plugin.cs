@@ -6,6 +6,7 @@ using LC_API.ClientAPI;
 using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
+using LC_API.Networking;
 using LC_API.ServerAPI;
 using System.Reflection;
 using Unity.Netcode;
@@ -69,8 +70,6 @@ namespace LC_API
 
             MethodInfo originalAddChatMsg = AccessTools.Method(typeof(HUDManager), "AddChatMessage");
 
-            //MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
-
             MethodInfo originalSubmitChat = AccessTools.Method(typeof(HUDManager), "SubmitChat_performed");
 
             MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
@@ -86,22 +85,18 @@ namespace LC_API
             MethodInfo registerPatch = AccessTools.Method(typeof(RegisterPatch), nameof(RegisterPatch.Postfix));
             MethodInfo unregisterPatch = AccessTools.Method(typeof(UnregisterPatch), nameof(UnregisterPatch.Postfix));
 
-            harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
-            //harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
-            harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
-            harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
-            harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
+            Harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
+            Harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
+            Harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+            Harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
 
-            harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
-            harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
+            Harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
+            Harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
 
-            harmony.Patch(originalShutdown, null, new HarmonyMethod(unregisterPatch));
+            Harmony.Patch(originalShutdown, null, new HarmonyMethod(unregisterPatch));
 
-            //Networking.GetString += CheatDatabase.CDNetGetString;
-            //Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
-
-            Networking.Init();
-            Events.Patch(harmony);
+            Network.Init();
+            Events.Patch(Harmony);
         }
 
         internal void Start()
