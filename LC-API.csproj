@@ -88,14 +88,19 @@
   </PropertyGroup>
 
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
-    <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-      <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
-      <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
-      <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
-    </ItemGroup>
+    <CallTarget Condition="$(OS) == 'Windows_NT'" Targets="NetcodeWeaveWindows" />
+    <CallTarget Condition="$(OS) != 'Windows_NT'" Targets="NetcodeWeaveUnix" />
     <Message Importance="high" Text="Successfully weaved NetCode!" />
+  </Target>
+  
+  <Target Name="NetcodeWeaveWindows">
+    <Message Importance="high" Text="windowze brr" />
+    <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
+  </Target>
+  
+  <Target Name="NetcodeWeaveUnix">
+    <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
+    <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 
   <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
