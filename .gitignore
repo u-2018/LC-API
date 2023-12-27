@@ -35,7 +35,11 @@ LC_API.dll
 
 ## Projects
 !LC-API.sln
-!LC-API.csproj
+
+### LC-API
+!LC-API/
+LC-API/[Bb]in/
+LC-API/[Oo]bj/
 
 ### Source Modules
 !BundleAPI
