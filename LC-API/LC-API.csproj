@@ -91,7 +91,7 @@
   </PropertyGroup>
   
   <Target Name="SetPluginVersion" BeforeTargets="AddGeneratedFile" DependsOnTargets="MinVer">
-    <Message Importance="high" Text="$(MinVerVersion)" />
+    <Message Importance="high" Text="MinVer version is $(MinVerVersion)" />
     <PropertyGroup>
       <BepInExPluginVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</BepInExPluginVersion>
     </PropertyGroup>
