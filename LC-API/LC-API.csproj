@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>LC_API</AssemblyName>
     <Product>Lethal Company API</Product>
     <Description>Utilities for plugin devs</Description>
@@ -82,7 +82,7 @@
   </ItemGroup>
   
   <ItemGroup Condition="$(CI) == 'true'">
-    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="45.0.2-alpha.1"/>
+    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="45.0.2-alpha.2"/>
   </ItemGroup>
 
   <PropertyGroup Condition="$(CI) == 'true'">
