@@ -1,4 +1,5 @@
 ﻿using LC_API.GameInterfaceAPI;
+using LC_API.Networking;
 using LC_API.ServerAPI;
 using UnityEngine;
 
@@ -7,7 +8,6 @@ namespace LC_API.Comp
     internal class LC_APIManager : MonoBehaviour
     {
         public static MenuManager MenuManager;
-        public static bool netTester = false;
         private static int playerCount;
         private static bool wanttoCheckMods;
         private static float lobbychecktimer;
@@ -15,13 +15,6 @@ namespace LC_API.Comp
         {
             GameState.GSUpdate();
             GameTips.UpdateInternal();
-            if (HUDManager.Instance != null & netTester)
-            {
-                if (GameNetworkManager.Instance.localPlayerController != null)
-                {
-                    Networking.Broadcast("testerData", "testerSignature");
-                }
-            }
             if (!ModdedServer.setModdedOnly)
             {
                 ModdedServer.OnSceneLoaded();

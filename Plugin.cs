@@ -6,9 +6,8 @@ using LC_API.ClientAPI;
 using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
+using LC_API.Networking;
 using LC_API.ServerAPI;
-using System;
-using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -40,6 +39,9 @@ namespace LC_API
         private ConfigEntry<bool> configDisableBundleLoader;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+
+        internal static Harmony Harmony;
+
         private void Awake()
         {
             configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
@@ -56,7 +58,7 @@ namespace LC_API
                 ModdedServer.SetServerModdedOnly();
             }
 
-            Harmony harmony = new Harmony("ModAPI");
+            Harmony = new Harmony("ModAPI");
             MethodInfo originalLobbyCreated = AccessTools.Method(typeof(GameNetworkManager), "SteamMatchmaking_OnLobbyCreated");
             MethodInfo originalLobbyJoinable = AccessTools.Method(typeof(GameNetworkManager), "LobbyDataIsJoinable");
 
@@ -68,8 +70,6 @@ namespace LC_API
 
             MethodInfo originalAddChatMsg = AccessTools.Method(typeof(HUDManager), "AddChatMessage");
 
-            MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
-
             MethodInfo originalSubmitChat = AccessTools.Method(typeof(HUDManager), "SubmitChat_performed");
 
             MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
@@ -78,17 +78,25 @@ namespace LC_API
 
             MethodInfo patchGameManagerAwake = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.GameNetworkManagerAwake));
 
-            harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
-            harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
-            harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
-            harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
-            harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
+            MethodInfo originalStartClient = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartClient));
+            MethodInfo originalStartHost = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartHost));
+            MethodInfo originalShutdown = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.Shutdown));
 
-            Networking.GetString += CheatDatabase.CDNetGetString;
-            Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
+            MethodInfo registerPatch = AccessTools.Method(typeof(RegisterPatch), nameof(RegisterPatch.Postfix));
+            MethodInfo unregisterPatch = AccessTools.Method(typeof(UnregisterPatch), nameof(UnregisterPatch.Postfix));
 
-            Networking.SetupNetworking();
-            Events.Patch(harmony);
+            Harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
+            Harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
+            Harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+            Harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
+
+            Harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
+            Harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
+
+            Harmony.Patch(originalShutdown, null, new HarmonyMethod(unregisterPatch));
+
+            Network.Init();
+            Events.Patch(Harmony);
         }
 
         internal void Start()
