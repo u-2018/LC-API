@@ -86,7 +86,14 @@
     <NETCODE_PATCHER_DIR>$(HOME)/NetcodeWeaver</NETCODE_PATCHER_DIR>
     <PACK_THUNDERSTORE>true</PACK_THUNDERSTORE>
   </PropertyGroup>
-
+  
+  <Target Name="SetPluginVersion" BeforeTargets="AddGeneratedFile" DependsOnTargets="MinVer">
+    <Message Importance="high" Text="$(MinVerVersion)" />
+    <PropertyGroup>
+      <BepInExPluginVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</BepInExPluginVersion>
+    </PropertyGroup>
+  </Target>
+  
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
     <CallTarget Condition="$(OS) == 'Windows_NT'" Targets="NetcodeWeaveWindows" />
     <CallTarget Condition="$(OS) != 'Windows_NT'" Targets="NetcodeWeaveUnix" />
