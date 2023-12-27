@@ -104,7 +104,6 @@
   </Target>
   
   <Target Name="NetcodeWeaveWindows">
-    <Message Importance="high" Text="windowze brr" />
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
   
@@ -114,6 +113,7 @@
   </Target>
 
   <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
+    <Message Importance="high" Text="MinVer version is $(MinVerVersion)" />
     <PropertyGroup>
       <PlainVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</PlainVersion>
     </PropertyGroup>
