@@ -25,5 +25,5 @@ runs:
       
     - name: Copy reference assemblies from NuGet cache
       shell: bash
-      run: cp ~/.nuget/packages/lethalapi.gamelibs/*/lib/*.dll ~/NetcodeWeaver/deps/ 
+      run: cp ~/.nuget/packages/lethalcompany.gamelibs.steam/*/ref/*/*.dll ~/NetcodeWeaver/deps/ 
   
