@@ -23,6 +23,12 @@
 ## GitHub specific
 !.github/
 
+## Assets
+!assets/
+
+## Thunderstore metadata
+!thunderstore.toml
+
 ## Projects
 !LC-API.sln
 !LC-API.csproj

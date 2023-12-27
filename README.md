@@ -1,5 +1,6 @@
 # LC-API
 
+[![Build](https://github.com/2018/LC_API/actions/workflows/build.yml/badge.svg)](https://github.com/2018/LC_API/actions/workflows/build.yml)
 [![Latest Version](https://img.shields.io/thunderstore/v/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
 [![Total Downloads](https://img.shields.io/thunderstore/dt/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
 

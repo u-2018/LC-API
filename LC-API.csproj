@@ -5,7 +5,6 @@
     <AssemblyName>LC_API</AssemblyName>
     <Product>Lethal Company API</Product>
     <Description>Utilities for plugin devs</Description>
-    <Version>3.2.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RestoreAdditionalProjectSources>
@@ -16,6 +15,25 @@
     <RootNamespace>LC_API</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
+  
+  <!-- NuGet package metadata -->
+  <PropertyGroup>
+    <PackageId>u_2018.LethalCompany.LC-API</PackageId>
+    <Authors>u_2018</Authors>
+    <Company>u_2018</Company>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputPath>bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <!-- prevent referenced assemblies from being copied to the output folder -->
+  <Target Name="ClearReferenceCopyLocalPaths" AfterTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Compile Remove="Thunderstore\**" />
@@ -24,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MinVer" Version="4.3.0" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
@@ -35,7 +54,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
   
-  <ItemGroup>
+  <ItemGroup Condition="$(CI) != 'true'">
     <Reference Include="Assembly-CSharp" Publicize="true">
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -58,8 +77,47 @@
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
+  
+  <ItemGroup Condition="$(CI) == 'true'">
+    <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0"/>
+  </ItemGroup>
 
+  <PropertyGroup Condition="$(CI) == 'true'">
+    <NETCODE_PATCHER_DIR>$(HOME)/NetcodeWeaver</NETCODE_PATCHER_DIR>
+    <PACK_THUNDERSTORE>true</PACK_THUNDERSTORE>
+  </PropertyGroup>
+  
+  <Target Name="SetPluginVersion" BeforeTargets="AddGeneratedFile" DependsOnTargets="MinVer">
+    <Message Importance="high" Text="$(MinVerVersion)" />
+    <PropertyGroup>
+      <BepInExPluginVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</BepInExPluginVersion>
+    </PropertyGroup>
+  </Target>
+  
   <Target Name="NetcodeWeave" AfterTargets="PostBuildEvent">
+    <CallTarget Condition="$(OS) == 'Windows_NT'" Targets="NetcodeWeaveWindows" />
+    <CallTarget Condition="$(OS) != 'Windows_NT'" Targets="NetcodeWeaveUnix" />
+    <Message Importance="high" Text="Successfully weaved NetCode!" />
+  </Target>
+  
+  <Target Name="NetcodeWeaveWindows">
+    <Message Importance="high" Text="windowze brr" />
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
+  </Target>
+  
+  <Target Name="NetcodeWeaveUnix">
+    <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
+    <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
+  </Target>
+
+  <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
+    <PropertyGroup>
+      <PlainVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</PlainVersion>
+    </PropertyGroup>
+    <Exec Command="tcli build --config-path $(SolutionDir)/assets/thunderstore.toml --package-version $(PlainVersion)" />
+    <ItemGroup>
+      <FilesToRename Include="dist/*-$(PlainVersion).zip" />
+    </ItemGroup>
+    <Move SourceFiles="@(FilesToRename)" DestinationFiles="@(FilesToRename -> Replace($(PlainVersion), $(MinVerVersion)))"/>
   </Target>
 </Project>
