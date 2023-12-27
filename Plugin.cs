@@ -6,9 +6,8 @@ using LC_API.ClientAPI;
 using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
+using LC_API.Networking;
 using LC_API.ServerAPI;
-using System;
-using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -40,6 +39,9 @@ namespace LC_API
         private ConfigEntry<bool> configDisableBundleLoader;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+
+        internal static Harmony Harmony;
+
         private void Awake()
         {
             configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
@@ -56,7 +58,7 @@ namespace LC_API
                 ModdedServer.SetServerModdedOnly();
             }
 
-            Harmony harmony = new Harmony("ModAPI");
+            Harmony = new Harmony("ModAPI");
             MethodInfo originalLobbyCreated = AccessTools.Method(typeof(GameNetworkManager), "SteamMatchmaking_OnLobbyCreated");
             MethodInfo originalLobbyJoinable = AccessTools.Method(typeof(GameNetworkManager), "LobbyDataIsJoinable");
 
@@ -68,8 +70,6 @@ namespace LC_API
 
             MethodInfo originalAddChatMsg = AccessTools.Method(typeof(HUDManager), "AddChatMessage");
 
-            MethodInfo patchChatInterpreter = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.ChatInterpreter));
-
             MethodInfo originalSubmitChat = AccessTools.Method(typeof(HUDManager), "SubmitChat_performed");
 
             MethodInfo patchSubmitChat = AccessTools.Method(typeof(CommandHandler.SubmitChatPatch), nameof(CommandHandler.SubmitChatPatch.Transpiler));
@@ -78,75 +78,25 @@ namespace LC_API
 
             MethodInfo patchGameManagerAwake = AccessTools.Method(typeof(ServerPatch), nameof(ServerPatch.GameNetworkManagerAwake));
 
-            harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
-            harmony.Patch(originalAddChatMsg, new HarmonyMethod(patchChatInterpreter));
-            harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
-            harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
-            harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
+            MethodInfo originalStartClient = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartClient));
+            MethodInfo originalStartHost = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.StartHost));
+            MethodInfo originalShutdown = AccessTools.Method(typeof(NetworkManager), nameof(NetworkManager.Shutdown));
 
-            Networking.GetString += CheatDatabase.CDNetGetString;
-            Networking.GetListString += Networking.LCAPI_NET_SYNCVAR_SET;
+            MethodInfo registerPatch = AccessTools.Method(typeof(RegisterPatch), nameof(RegisterPatch.Postfix));
+            MethodInfo unregisterPatch = AccessTools.Method(typeof(UnregisterPatch), nameof(UnregisterPatch.Postfix));
 
-            Networking.SetupNetworking();
-            Events.Patch(harmony);
+            Harmony.Patch(originalMenuAwake, new HarmonyMethod(patchCacheMenuMgr));
+            Harmony.Patch(originalLobbyCreated, new HarmonyMethod(patchLobbyCreate));
+            Harmony.Patch(originalSubmitChat, null, null, new HarmonyMethod(patchSubmitChat));
+            Harmony.Patch(originalGameManagerAwake, new HarmonyMethod(patchGameManagerAwake));
 
-            CommandHandler.RegisterCommand("testvalue", (string[] args) =>
-            {
-                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.ScrapValue = int.Parse(args[0]);
-            });
+            Harmony.Patch(originalStartClient, null, new HarmonyMethod(registerPatch));
+            Harmony.Patch(originalStartHost, null, new HarmonyMethod(registerPatch));
 
-            CommandHandler.RegisterCommand("testname", (string[] args) =>
-            {
-                GameInterfaceAPI.Features.Player.LocalPlayer.HeldItem.Name = string.Join(" ", args);
-            });
+            Harmony.Patch(originalShutdown, null, new HarmonyMethod(unregisterPatch));
 
-            CommandHandler.RegisterCommand("testpos", (string[] args) =>
-            {
-                foreach (GameInterfaceAPI.Features.Item item in GameInterfaceAPI.Features.Item.List)
-                {
-                    Log.LogInfo($"Setting position of {item.Name} cur: {item.Position}");
-                    item.Position = GameInterfaceAPI.Features.Player.LocalPlayer.Position;
-                    Log.LogInfo($"After: {item.Position}");
-                }
-            });
-
-            CommandHandler.RegisterCommand("spawnscrap", (string[] args) =>
-            {
-                string name = string.Join(" ", args).ToLower();
-                GameObject go = StartOfRound.Instance.allItemsList.itemsList.FirstOrDefault(i => i.itemName.ToLower().Contains(name))?.spawnPrefab;
-                if (go != null)
-                {
-                    GameObject instantiated = Instantiate(go, GameInterfaceAPI.Features.Player.LocalPlayer.Position, default);
-
-                    instantiated.GetComponent<NetworkObject>().Spawn();
-                }
-            });
-
-            CommandHandler.RegisterCommand("givescrap", (string[] args) =>
-            {
-                GameInterfaceAPI.Features.Item.CreateAndGiveItem(string.Join(" ", args), GameInterfaceAPI.Features.Player.LocalPlayer).InitializeScrap();
-            });
-
-            CommandHandler.RegisterCommand("givescrapmanual", (string[] args) =>
-            {
-                GameInterfaceAPI.Features.Item item = GameInterfaceAPI.Features.Item.CreateAndSpawnItem(string.Join(" ", args.Skip(1)));
-
-                item.InitializeScrap();
-
-                GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.TryAddItemToSlot(item, 3, bool.Parse(args[0]));
-            });
-
-            CommandHandler.RegisterCommand("removeitem", (string[] args) =>
-            {
-                if (args[0] == "all")
-                {
-                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveAllItems();
-                } 
-                else
-                {
-                    GameInterfaceAPI.Features.Player.LocalPlayer.Inventory.RemoveItem(int.Parse(args[0]));
-                }
-            });
+            Network.Init();
+            Events.Patch(Harmony);
         }
 
         internal void Start()
