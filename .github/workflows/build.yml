@@ -28,9 +28,15 @@ jobs:
           dotnet restore
       
       - name: Setup NetcodeWeaver
-        uses: ./.github/actions/setup-netcode-weaver
+        id: setup-netcode-weaver
+        uses: Lordfirespeed/setup-netcode-weaver@main
         with:
           netcode-weaver-version: 2.4.0
+          deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
+          target-framework: "netstandard2.1"
+      
+      - name: See NetcodeWeaver location
+        run: echo "${{ steps.setup-netcode-weaver.outputs.netcode-weaver-directory }}"
       
       - name: Install Thunderstore CLI
         run: |
@@ -38,7 +44,7 @@ jobs:
       
       - name: Build solution
         run: |
-          dotnet build
+          dotnet build -p:NETCODE_PATCHER_DIR="${{ steps.setup-netcode-weaver.outputs.netcode-weaver-directory }}"
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
