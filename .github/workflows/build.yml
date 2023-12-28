@@ -35,9 +35,6 @@ jobs:
           deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
           target-framework: "netstandard2.1"
       
-      - name: See NetcodeWeaver location
-        run: echo "${{ steps.setup-netcode-weaver.outputs.netcode-weaver-directory }}"
-      
       - name: Install Thunderstore CLI
         run: |
           dotnet tool install -g tcli
