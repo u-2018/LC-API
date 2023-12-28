@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,11 +12,10 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Vector2"/>.
     /// </summary>
-    [Serializable]
     public struct Vector2S
     {
-        public float x;
-        public float y;
+        public float x { get; set; }
+        public float y { get; set; }
 
         public Vector2S(float x, float y)
         {
@@ -28,8 +28,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Vector2S(Vector2 vector2) => new Vector2S(vector2.x, vector2.y);
 
 
-        [NonSerialized]
         private Vector2? v2 = null;
+
+        [JsonIgnore]
         public Vector2 vector2
         {
             get
@@ -43,11 +44,10 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Vector2Int"/>.
     /// </summary>
-    [Serializable]
     public struct Vector2IntS
     {
-        public int x;
-        public int y;
+        public int x { get; set; }
+        public int y { get; set; }
 
         public Vector2IntS(int x, int y)
         {
@@ -60,8 +60,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Vector2IntS(Vector2Int vector2) => new Vector2IntS(vector2.x, vector2.y);
 
 
-        [NonSerialized]
         private Vector2Int? v2 = null;
+
+        [JsonIgnore]
         public Vector2Int vector2
         {
             get
@@ -75,12 +76,11 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Vector3"/>.
     /// </summary>
-    [Serializable]
     public struct Vector3S
     {
-        public float x;
-        public float y;
-        public float z;
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
 
         public Vector3S(float x, float y, float z)
         {
@@ -94,8 +94,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Vector3S(Vector3 vector3) => new Vector3S(vector3.x, vector3.y, vector3.z);
 
 
-        [NonSerialized]
         private Vector3? v3 = null;
+
+        [JsonIgnore]
         public Vector3 vector3
         {
             get
@@ -109,12 +110,11 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Vector3Int"/>.
     /// </summary>
-    [Serializable]
     public struct Vector3IntS
     {
-        public int x;
-        public int y;
-        public int z;
+        public int x { get; set; }
+        public int y { get; set; }
+        public int z { get; set; }
 
         public Vector3IntS(int x, int y, int z)
         {
@@ -128,8 +128,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Vector3IntS(Vector3Int vector3) => new Vector3IntS(vector3.x, vector3.y, vector3.z);
 
 
-        [NonSerialized]
         private Vector3Int? v3 = null;
+
+        [JsonIgnore]
         public Vector3Int vector3
         {
             get
@@ -143,13 +144,12 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Vector4"/>.
     /// </summary>
-    [Serializable]
     public struct Vector4S
     {
-        public float x;
-        public float y;
-        public float z;
-        public float w;
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
+        public float w { get; set; }
 
         public Vector4S(float x, float y, float z, float w)
         {
@@ -164,8 +164,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Vector4S(Vector4 vector4) => new Vector4S(vector4.x, vector4.y, vector4.z, vector4.w);
 
 
-        [NonSerialized]
         private Vector4? v4 = null;
+
+        [JsonIgnore]
         public Vector4 Vector4
         {
             get
@@ -179,13 +180,12 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Quaternion"/>.
     /// </summary>
-    [Serializable]
     public struct QuaternionS
     {
-        public float x;
-        public float y;
-        public float z;
-        public float w;
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
+        public float w { get; set; }
 
         public QuaternionS(float x, float y, float z, float w)
         {
@@ -200,8 +200,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator QuaternionS(Quaternion quaternion) => new QuaternionS(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
 
 
-        [NonSerialized]
         private Quaternion? q = null;
+
+        [JsonIgnore]
         public Quaternion Quaternion
         {
             get
@@ -215,13 +216,12 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Color"/>.
     /// </summary>
-    [Serializable]
     public struct ColorS
     {
-        public float r;
-        public float g;
-        public float b;
-        public float a;
+        public float r { get; set; }
+        public float g { get; set; }
+        public float b { get; set; }
+        public float a { get; set; }
 
         public ColorS(float r, float g, float b, float a)
         {
@@ -236,8 +236,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator ColorS(Color color) => new ColorS(color.r, color.g, color.b, color.a);
 
 
-        [NonSerialized]
         private Color? c = null;
+
+        [JsonIgnore]
         public Color Color
         {
             get
@@ -251,13 +252,12 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Color32"/>.
     /// </summary>
-    [Serializable]
     public struct Color32S
     {
-        public byte r;
-        public byte g;
-        public byte b;
-        public byte a;
+        public byte r { get; set; }
+        public byte g { get; set; }
+        public byte b { get; set; }
+        public byte a { get; set; }
 
         public Color32S(byte r, byte g, byte b, byte a)
         {
@@ -272,8 +272,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Color32S(Color32 color) => new Color32S(color.r, color.g, color.b, color.a);
 
 
-        [NonSerialized]
         private Color32? c = null;
+
+        [JsonIgnore]
         public Color32 Color
         {
             get
@@ -287,11 +288,10 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Ray"/>.
     /// </summary>
-    [Serializable]
     public struct RayS
     {
-        public Vector3S origin;
-        public Vector3S direction;
+        public Vector3S origin { get; set; }
+        public Vector3S direction { get; set; }
 
         public RayS(Vector3 origin, Vector3 direction)
         {
@@ -304,8 +304,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator RayS(Ray ray) => new RayS(ray.origin, ray.direction);
 
 
-        [NonSerialized]
         private Ray? r = null;
+
+        [JsonIgnore]
         public Ray Ray
         {
             get
@@ -319,11 +320,10 @@ namespace LC_API.Networking.Serializers
     /// <summary>
     /// Serializes a <see cref="Ray2D"/>.
     /// </summary>
-    [Serializable]
     public struct Ray2DS
     {
-        public Vector2S origin;
-        public Vector2S direction;
+        public Vector2S origin { get; set; }
+        public Vector2S direction { get; set; }
 
         public Ray2DS(Vector2 origin, Vector2 direction)
         {
@@ -336,8 +336,9 @@ namespace LC_API.Networking.Serializers
         public static implicit operator Ray2DS(Ray2D ray2D) => new Ray2DS(ray2D.origin, ray2D.direction);
 
 
-        [NonSerialized]
         private Ray2D? r = null;
+
+        [JsonIgnore]
         public Ray2D Ray
         {
             get

@@ -7,6 +7,7 @@ using LC_API.GameInterfaceAPI.Events;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using LC_API.GameInterfaceAPI.Events.Patches.Player;
 using LC_API.GameInterfaceAPI.Features;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using Unity.Netcode;
 using UnityEngine;
 using static LC_API.GameInterfaceAPI.Events.Events;
@@ -29,34 +31,12 @@ namespace LC_API.Networking
         {
             if (@object == null) return null;
 
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            MemoryStream memoryStream = new MemoryStream();
-
-            binaryFormatter.Serialize(memoryStream, @object);
-
-            return memoryStream.ToArray();
+            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@object));
         }
 
         internal static T ToObject<T>(this byte[] bytes) where T : class
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            MemoryStream memoryStream = new MemoryStream();
-
-            memoryStream.Write(bytes, 0, bytes.Length);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-
-            return binaryFormatter.Deserialize(memoryStream) as T;
-        }
-
-        internal static object ToObject(this byte[] bytes)
-        {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            MemoryStream memoryStream = new MemoryStream();
-
-            memoryStream.Write(bytes, 0, bytes.Length);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-
-            return binaryFormatter.Deserialize(memoryStream);
+            return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(bytes));
         }
 
         internal static bool StartedNetworking { get; set; } = false;
@@ -191,9 +171,6 @@ namespace LC_API.Networking
         /// <exception cref="Exception">Thrown when T is not serializable, or if the name is already taken.</exception>
         public static void RegisterMessage<T>(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived) where T : class
         {
-            if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
-                throw new Exception("T must be serializable.");
-
             if (NetworkMessageFinalizers.ContainsKey(uniqueName))
                 throw new Exception($"{uniqueName} already registered");
 
@@ -514,9 +491,6 @@ namespace LC_API.Networking
 
         public NetworkMessageFinalizer(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived)
         {
-            if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
-                throw new Exception("T must be serializable.");
-
             UniqueName = uniqueName;
             RelayToSelf = relayToSelf;
             OnReceived = onReceived;
@@ -614,7 +588,6 @@ namespace LC_API.Networking
         }
     }
 
-    [System.Serializable]
     internal class NetworkMessageWrapper
     {
         public string UniqueName { get; set; }
@@ -635,6 +608,8 @@ namespace LC_API.Networking
             Sender = sender;
             Message = message;
         }
+
+        internal NetworkMessageWrapper() { }
     }
 
     internal static class RegisterPatch
