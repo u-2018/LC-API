@@ -29,7 +29,7 @@ jobs:
       
       - name: Setup NetcodeWeaver
         id: setup-netcode-weaver
-        uses: Lordfirespeed/setup-netcode-weaver@a3e04b97c0614cd8c350fca1af246493e7d5efc7
+        uses: Lordfirespeed/setup-netcode-weaver@main
         with:
           netcode-weaver-version: 2.4.0
           deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
