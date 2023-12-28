@@ -89,7 +89,6 @@
   </ItemGroup>
 
   <PropertyGroup Condition="$(CI) == 'true'">
-    <NETCODE_PATCHER_DIR>$(HOME)/NetcodeWeaver</NETCODE_PATCHER_DIR>
     <PACK_THUNDERSTORE>true</PACK_THUNDERSTORE>
   </PropertyGroup>
   
@@ -111,7 +110,6 @@
   </Target>
   
   <Target Name="NetcodeWeaveUnix">
-    <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)" />
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 
