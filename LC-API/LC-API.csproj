@@ -36,12 +36,6 @@
   </Target>
 
   <ItemGroup>
-    <Compile Remove="Thunderstore\**" />
-    <EmbeddedResource Remove="Thunderstore\**" />
-    <None Remove="Thunderstore\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
