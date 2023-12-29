@@ -67,7 +67,7 @@ jobs:
       - name: Upload artifacts to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*.nupkg
+        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*/bin/*.nupkg
       
   deploy-nuget:
     name: Deploy to NuGet
@@ -81,7 +81,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nupkg-build
-          path: ./bin
 
       - name: Validate artifact exists
         run: test -d ./bin
@@ -93,7 +92,7 @@ jobs:
       
       - name: Publish to NuGet.org
         run: |
-          dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push ./*/bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
   
   deploy-thunderstore:
     name: Deploy to Thunderstore
