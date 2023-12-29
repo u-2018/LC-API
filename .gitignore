@@ -29,6 +29,10 @@
 ## Thunderstore metadata
 !thunderstore.toml
 
+## Thunderstore Assets
+!Thunderstore
+LC_API.dll
+
 ## Projects
 !LC-API.sln
 !LC-API.csproj

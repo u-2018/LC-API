@@ -7,30 +7,32 @@ using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
-    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.ConnectClientToPlayerObject))]
+    [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.OnPlayerConnectedClientRpc))]
     internal static class Joined
     {
-        private static void Prefix(PlayerControllerB __instance)
+        private static void Prefix(ulong clientId, int assignedPlayerObjectId)
         {
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
             {
-                Features.Player.GetOrAdd(__instance).NetworkClientId.Value = __instance.actualClientId;
+                PlayerControllerB playerController = StartOfRound.Instance.allPlayerScripts[assignedPlayerObjectId];
+                Features.Player.GetOrAdd(playerController).NetworkClientId.Value = clientId;
             }
         }
 
-        private static void Postfix(PlayerControllerB __instance)
+        private static void Postfix(int assignedPlayerObjectId)
         {
-            if (!Cache.Player.ConnectedPlayers.Contains(__instance.playerSteamId))
+            PlayerControllerB playerController = StartOfRound.Instance.allPlayerScripts[assignedPlayerObjectId];
+            if (!Cache.Player.ConnectedPlayers.Contains(playerController.playerSteamId))
             {
-                Cache.Player.ConnectedPlayers.Add(__instance.playerSteamId);
+                Cache.Player.ConnectedPlayers.Add(playerController.playerSteamId);
 
-                __instance.StartCoroutine(JoinedCoroutine(__instance));
+                playerController.StartCoroutine(JoinedCoroutine(playerController));
             }
         }
 
         // Since we have to wait for players' client id to sync to the player instance, we have to constantly check
         // if the player and its controller were linked yet. Very annoying.
-        private static IEnumerator JoinedCoroutine(PlayerControllerB controller)
+        internal static IEnumerator JoinedCoroutine(PlayerControllerB controller)
         {
             yield return new WaitUntil(() => StartOfRound.Instance.localPlayerController != null);
 
@@ -43,9 +45,31 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 player = Features.Player.GetOrAdd(controller);
             }
 
-            if (player.IsLocalPlayer) Features.Player.LocalPlayer = player;
+            if (player.IsLocalPlayer)
+            {
+                Features.Player.LocalPlayer = player;
+            }
 
             Handlers.Player.OnJoined(new JoinedEventArgs(player));
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.ConnectClientToPlayerObject))]
+    internal static class Joined2
+    {
+        private static void Postfix(PlayerControllerB __instance)
+        {
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+            {
+                Features.Player.GetOrAdd(__instance).NetworkClientId.Value = __instance.actualClientId;
+            }
+
+            if (!Cache.Player.ConnectedPlayers.Contains(__instance.playerSteamId))
+            {
+                Cache.Player.ConnectedPlayers.Add(__instance.playerSteamId);
+
+                __instance.StartCoroutine(Joined.JoinedCoroutine(__instance));
+            }
         }
     }
 }

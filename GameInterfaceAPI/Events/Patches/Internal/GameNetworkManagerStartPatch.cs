@@ -12,7 +12,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
     [HarmonyPatch(typeof(GameNetworkManager), nameof(GameNetworkManager.Start))]
     class GameNetworkManagerStartPatch
     {
-        private static readonly string BUNDLE_PATH = Path.Combine(Paths.PluginPath, "2018-LC_API", "Bundles", "networking");
+        private static readonly string BUNDLE_PATH = Path.Combine(Plugin.Instance.Info.Location.Substring(0, Plugin.Instance.Info.Location.LastIndexOf(Path.DirectorySeparatorChar)), "Bundles", "networking");
 
         private const string PLAYER_NETWORKING_ASSET_LOCATION = "assets/lc_api/playernetworkingprefab.prefab";
 
@@ -20,16 +20,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
         {
             if (!File.Exists(BUNDLE_PATH))
             {
-                // People like to manually install and then not put stuff in the right place, guess we'll handle that...
-                string p = Path.Combine(Paths.PluginPath, "Bundles", "networking");
-                if (File.Exists(p))
-                {
-                    File.Move(p, BUNDLE_PATH);
-                }
-                else
-                {
-                    throw new Exception("Networking bundle not found at expected path");
-                }
+                throw new Exception("Networking bundle not found at expected path.");
             }
 
             NetworkManager networkManager = __instance.GetComponent<NetworkManager>();

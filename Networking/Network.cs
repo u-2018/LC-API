@@ -7,12 +7,15 @@ using LC_API.GameInterfaceAPI.Events;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using LC_API.GameInterfaceAPI.Events.Patches.Player;
 using LC_API.GameInterfaceAPI.Features;
+using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using Unity.Netcode;
 using UnityEngine;
 using static LC_API.GameInterfaceAPI.Events.Events;
@@ -21,29 +24,19 @@ namespace LC_API.Networking
 {
     public static class Network
     {
+        internal const string MESSAGE_RELAY_UNIQUE_NAME = "LC_API_RELAY_MESSAGE";
         internal static Dictionary<string, NetworkMessageFinalizerBase> NetworkMessageFinalizers { get; } = new Dictionary<string, NetworkMessageFinalizerBase>();
 
         internal static byte[] ToBytes(this object @object)
         {
             if (@object == null) return null;
 
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            MemoryStream memoryStream = new MemoryStream();
-
-            binaryFormatter.Serialize(memoryStream, @object);
-
-            return memoryStream.ToArray();
+            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@object));
         }
 
         internal static T ToObject<T>(this byte[] bytes) where T : class
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            MemoryStream memoryStream = new MemoryStream();
-
-            memoryStream.Write(bytes, 0, bytes.Length);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-
-            return binaryFormatter.Deserialize(memoryStream) as T;
+            return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(bytes));
         }
 
         internal static bool StartedNetworking { get; set; } = false;
@@ -178,9 +171,6 @@ namespace LC_API.Networking
         /// <exception cref="Exception">Thrown when T is not serializable, or if the name is already taken.</exception>
         public static void RegisterMessage<T>(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived) where T : class
         {
-            if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
-                throw new Exception("T must be serializable.");
-
             if (NetworkMessageFinalizers.ContainsKey(uniqueName))
                 throw new Exception($"{uniqueName} already registered");
 
@@ -209,9 +199,7 @@ namespace LC_API.Networking
             NetworkMessageFinalizers.Add(uniqueName, networkMessageHandler);
 
             if (StartedNetworking)
-            {
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(uniqueName, networkMessageHandler.Read);
-            }
         }
 
         /// <summary>
@@ -274,12 +262,37 @@ namespace LC_API.Networking
             {
                 StartedNetworking = true;
 
+                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(MESSAGE_RELAY_UNIQUE_NAME,
+                        (ulong senderClientId, FastBufferReader reader) =>
+                    {
+                        reader.ReadValueSafe(out byte[] data);
+
+                        NetworkMessageWrapper wrapped = data.ToObject<NetworkMessageWrapper>();
+
+                        wrapped.Sender = senderClientId;
+
+                        byte[] serialized = wrapped.ToBytes();
+
+                        using (FastBufferWriter writer = new FastBufferWriter(FastBufferWriter.GetWriteSize(serialized), Unity.Collections.Allocator.Temp))
+                        {
+                            writer.WriteValueSafe(serialized);
+
+                            NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(wrapped.UniqueName, writer);
+                        }
+                    });
+                }
+
                 RegisterAllMessages();
             };
 
             UnregisterNetworkMessages += () =>
             {
                 StartedNetworking = false;
+
+                if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+                    NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler(MESSAGE_RELAY_UNIQUE_NAME);
 
                 UnregisterAllMessages();
             };
@@ -379,19 +392,94 @@ namespace LC_API.Networking
 
         public void Send()
         {
-            using (FastBufferWriter writer = new FastBufferWriter(0, Unity.Collections.Allocator.Temp))
+            if (Player.LocalPlayer == null || Player.HostPlayer == null)
             {
-                NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                NetworkManager.Singleton.StartCoroutine(SendLater());
+                return;
+            }
+
+            NetworkMessageWrapper wrapped = new NetworkMessageWrapper(UniqueName, Player.LocalPlayer.ClientId);
+            byte[] serialized = wrapped.ToBytes();
+
+            using (FastBufferWriter writer = new FastBufferWriter(FastBufferWriter.GetWriteSize(serialized), Unity.Collections.Allocator.Temp))
+            {
+                writer.WriteValueSafe(serialized);
+
+                if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                }
+                else
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer);
+                }
             }
         }
 
-        public override void Read(ulong sender, FastBufferReader reader)
+        public override void Read(ulong fakeSender, FastBufferReader reader)
         {
-            if (!RelayToSelf && Player.LocalPlayer.ClientId == sender) return;
-            OnReceived.Invoke(sender);
+            if (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                NetworkManager.Singleton.StartCoroutine(ReadLater(fakeSender, reader));
+                return;
+            }
+
+            byte[] data;
+
+            reader.ReadValueSafe(out data);
+
+            NetworkMessageWrapper wrapped = data.ToObject<NetworkMessageWrapper>();
+
+            if (!RelayToSelf && Player.LocalPlayer.ClientId == wrapped.Sender) return;
+            OnReceived.Invoke(wrapped.Sender);
+        }
+
+        private IEnumerator SendLater()
+        {
+            int timesWaited = 0;
+            while (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+                timesWaited++;
+                
+                if (timesWaited % 20 == 0)
+                {
+                    Plugin.Log.LogWarning($"Waiting to send network message. Waiting on host?: {Player.HostPlayer == null} Waiting on local player?: {Player.LocalPlayer == null}");
+                }
+
+                if (timesWaited >= 100)
+                {
+                    Plugin.Log.LogError("Dropping network message");
+                    yield return null;
+                }
+            }
+
+            Send();
+        }
+
+        private IEnumerator ReadLater(ulong fakeSender, FastBufferReader reader)
+        {
+            int timesWaited = 0;
+            while (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+                timesWaited++;
+
+                if (timesWaited % 20 == 0)
+                {
+                    Plugin.Log.LogWarning($"Waiting to read network message. Waiting on host?: {Player.HostPlayer == null} Waiting on local player?: {Player.LocalPlayer == null}");
+                }
+
+                if (timesWaited >= 100)
+                {
+                    Plugin.Log.LogError("Dropping network message");
+                    yield return null;
+                }
+            }
+
+            Read(fakeSender, reader);
         }
     }
-
 
     internal class NetworkMessageFinalizer<T> : NetworkMessageFinalizerBase where T : class
     {
@@ -403,9 +491,6 @@ namespace LC_API.Networking
 
         public NetworkMessageFinalizer(string uniqueName, bool relayToSelf, Action<ulong, T> onReceived)
         {
-            if (typeof(T).GetCustomAttribute(typeof(System.SerializableAttribute), true) == null)
-                throw new Exception("T must be serializable.");
-
             UniqueName = uniqueName;
             RelayToSelf = relayToSelf;
             OnReceived = onReceived;
@@ -413,27 +498,118 @@ namespace LC_API.Networking
 
         public void Send(T obj)
         {
-            byte[] serialized = obj.ToBytes();
+            if (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                NetworkManager.Singleton.StartCoroutine(SendLater(obj));
+                return;
+            }
+
+            NetworkMessageWrapper wrapped = new NetworkMessageWrapper(UniqueName, Player.LocalPlayer.ClientId, obj.ToBytes());
+            byte[] serialized = wrapped.ToBytes();
 
             using (FastBufferWriter writer = new FastBufferWriter(FastBufferWriter.GetWriteSize(serialized), Unity.Collections.Allocator.Temp))
             {
                 writer.WriteValueSafe(serialized);
-                NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+
+                if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                }
+                else
+                {
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer);
+                }
             }
         }
 
-        public override void Read(ulong sender, FastBufferReader reader)
+        public override void Read(ulong fakeSender, FastBufferReader reader)
         {
-            if (!RelayToSelf && Player.LocalPlayer.ClientId == sender) return;
+            if (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                NetworkManager.Singleton.StartCoroutine(ReadLater(fakeSender, reader));
+                return;
+            }
 
-            byte[] data;
+            reader.ReadValueSafe(out byte[] data);
 
-            reader.ReadValueSafe(out data);
+            NetworkMessageWrapper wrapped = data.ToObject<NetworkMessageWrapper>();
 
-            T obj = data.ToObject<T>();
+            if (!RelayToSelf && Player.LocalPlayer.ClientId == wrapped.Sender) return;
 
-            OnReceived.Invoke(sender, obj);
+            OnReceived.Invoke(wrapped.Sender, wrapped.Message.ToObject<T>());
         }
+
+        private IEnumerator SendLater(T obj)
+        {
+            int timesWaited = 0;
+
+            while (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+
+                timesWaited++;
+
+                if (timesWaited % 20 == 0)
+                {
+                    Plugin.Log.LogWarning($"Waiting to send network message. Waiting on host?: {Player.HostPlayer == null} Waiting on local player?: {Player.LocalPlayer == null}");
+                }
+
+                if (timesWaited >= 100)
+                {
+                    Plugin.Log.LogError("Dropping network message");
+                    yield return null;
+                }
+            }
+
+            Send(obj);
+        }
+
+        private IEnumerator ReadLater(ulong fakeSender, FastBufferReader reader)
+        {
+            int timesWaited = 0;
+            while (Player.LocalPlayer == null || Player.HostPlayer == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+                timesWaited++;
+
+                if (timesWaited % 20 == 0)
+                {
+                    Plugin.Log.LogWarning($"Waiting to read network message. Waiting on host?: {Player.HostPlayer == null} Waiting on local player?: {Player.LocalPlayer == null}");
+                }
+
+                if (timesWaited >= 100)
+                {
+                    Plugin.Log.LogError("Dropping network message");
+                    yield return null;
+                }
+            }
+
+            Read(fakeSender, reader);
+        }
+    }
+
+    internal class NetworkMessageWrapper
+    {
+        public string UniqueName { get; set; }
+
+        public ulong Sender { get; set; }
+
+        public byte[] Message { get; set; }
+
+        internal NetworkMessageWrapper(string uniqueName, ulong sender)
+        {
+            UniqueName = uniqueName;
+            Sender = sender;
+        }
+
+        internal NetworkMessageWrapper(string uniqueName, ulong sender, byte[] message)
+        {
+            UniqueName = uniqueName;
+            Sender = sender;
+            Message = message;
+        }
+
+        internal NetworkMessageWrapper() { }
     }
 
     internal static class RegisterPatch

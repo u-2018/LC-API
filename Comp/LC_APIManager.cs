@@ -1,4 +1,5 @@
 ﻿using LC_API.GameInterfaceAPI;
+using LC_API.GameInterfaceAPI.Features;
 using LC_API.Networking;
 using LC_API.ServerAPI;
 using UnityEngine;
@@ -43,7 +44,7 @@ namespace LC_API.Comp
             {
                 lobbychecktimer += Time.deltaTime;
             }
-            else if (wanttoCheckMods && HUDManager.Instance != null)
+            else if (wanttoCheckMods && HUDManager.Instance != null && Player.HostPlayer != null && Player.LocalPlayer != null)
             {
                 wanttoCheckMods = false;
                 CD();

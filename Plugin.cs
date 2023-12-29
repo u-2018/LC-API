@@ -7,7 +7,10 @@ using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.Networking;
+using LC_API.Networking.Serializers;
 using LC_API.ServerAPI;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -26,6 +29,7 @@ namespace LC_API
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public sealed class Plugin : BaseUnityPlugin
     {
+        internal static Plugin Instance { get; private set; }
         /// <summary>
         /// Runs after the LC API plugin's "Awake" method is finished.
         /// </summary>
@@ -44,6 +48,7 @@ namespace LC_API
 
         private void Awake()
         {
+            Instance = this;
             configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
             configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
             configDisableBundleLoader = Config.Bind("General", "Disable BundleLoader", false, "Should the BundleLoader be turned off? Enable this if you are having problems with mods that load assets using a different method from LC_API's BundleLoader.");
