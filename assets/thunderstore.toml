@@ -24,6 +24,10 @@ source = "../LC-API/bin/LC_API.dll"
 target = "LC_API.dll"
 
 [[build.copy]]
+source = "./bundles"
+target = "BepInEx/plugins/Bundles/"
+
+[[build.copy]]
 source = "../LICENSE"
 target = "LICENSE"
 
