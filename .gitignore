@@ -33,10 +33,10 @@
 !Thunderstore
 LC_API.dll
 
-## Projects
+## Solution
 !LC-API.sln
 
-### LC-API
+### LC-API Project
 !LC-API/
 LC-API/[Bb]in/
 LC-API/[Oo]bj/
