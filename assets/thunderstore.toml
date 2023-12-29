@@ -21,7 +21,15 @@ outdir = "../dist"
 
 [[build.copy]]
 source = "../LC-API/bin/LC_API.dll"
-target = "LC_API.dll"
+target = "BepInEx/plugins/LC_API.dll"
+
+[[build.copy]]
+source = "./bundles"
+target = "BepInEx/plugins/Bundles/"
+
+[[build.copy]]
+source = "../CHANGELOG.md"
+target = "CHANGELOG.md"
 
 [[build.copy]]
 source = "../LICENSE"

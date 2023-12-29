@@ -43,6 +43,13 @@ Ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ens
 
 Once you have completed these steps, you will be able to properly build the solution.
 
+## Making a PR
+Your [pull request](https://github.com/u-2018/LC-API/compare) should target the [dev branch](https://github.com/u-2018/LC-API/tree/dev). This is because the `main` branch is reserved for tested features that are ready for release. Basically if someone were to clone the repo, they should be able to build `main` and use it without any fear of broken things.
+
+The `dev` branch, however, may contain untested features and is used to build release candidates. Before releases, the `dev` branch will be frozen and tested for issues, when it passes its testing then it will be merged into `main` and a release will be made. Pre-releases may come from the `dev` branch for release candidates and testing. These will be generally stable, but may still contain broken features before testing is done.
+
+Pull requests targeting the `main` branch will not be merged in most circumstances. Most merges to `main` will be directly from the frozen `dev` branch after testing.
+
 # Features
 AssetBundle loading - Put asset bundles in BepInEx > Bundles and load them using BundleAPI.BundleLoader.GetLoadedAsset
 
