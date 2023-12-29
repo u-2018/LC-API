@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>LC_API</AssemblyName>
     <Product>Lethal Company API</Product>
     <Description>Utilities for plugin devs</Description>
@@ -42,10 +42,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="4.3.0" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="MinVer" Version="4.3.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" IncludeAssets="compile" />
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
   </ItemGroup>
@@ -60,9 +63,6 @@
     </Reference>
     <Reference Include="Facepunch.Steamworks.Win64">
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\Facepunch.Steamworks.Win64.dll</HintPath>
-    </Reference>
-    <Reference Include="netstandard">
-      <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\netstandard.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(LETHAL_COMPANY_DIR)\Lethal Company_Data\Managed\Newtonsoft.Json.dll</HintPath>
@@ -82,16 +82,15 @@
   </ItemGroup>
   
   <ItemGroup Condition="$(CI) == 'true'">
-    <PackageReference Include="LethalAPI.GameLibs" Version="45.1.0"/>
+    <PackageReference Include="LethalCompany.GameLibs.Steam" Version="45.0.2-alpha.1" />
   </ItemGroup>
 
   <PropertyGroup Condition="$(CI) == 'true'">
-    <NETCODE_PATCHER_DIR>$(HOME)/NetcodeWeaver</NETCODE_PATCHER_DIR>
     <PACK_THUNDERSTORE>true</PACK_THUNDERSTORE>
   </PropertyGroup>
   
   <Target Name="SetPluginVersion" BeforeTargets="AddGeneratedFile" DependsOnTargets="MinVer">
-    <Message Importance="high" Text="$(MinVerVersion)" />
+    <Message Importance="high" Text="MinVer version is $(MinVerVersion)" />
     <PropertyGroup>
       <BepInExPluginVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</BepInExPluginVersion>
     </PropertyGroup>
@@ -104,23 +103,22 @@
   </Target>
   
   <Target Name="NetcodeWeaveWindows">
-    <Message Importance="high" Text="windowze brr" />
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
   
   <Target Name="NetcodeWeaveUnix">
-    <Copy SourceFiles="$(SolutionDir)/.github/actions/setup-netcode-weaver/NetcodePatcher.runtimeconfig.json" DestinationFolder="$(NETCODE_PATCHER_DIR)"/>
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 
   <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
+    <Message Importance="high" Text="MinVer version is $(MinVerVersion)" />
     <PropertyGroup>
       <PlainVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</PlainVersion>
     </PropertyGroup>
-    <Exec Command="tcli build --config-path $(SolutionDir)/assets/thunderstore.toml --package-version $(PlainVersion)" />
+    <Exec Command="tcli build --config-path $(SolutionDir)assets/thunderstore.toml --package-version $(PlainVersion)" />
     <ItemGroup>
-      <FilesToRename Include="dist/*-$(PlainVersion).zip" />
+      <FilesToRename Include="$(SolutionDir)dist/*-$(PlainVersion).zip" />
     </ItemGroup>
-    <Move SourceFiles="@(FilesToRename)" DestinationFiles="@(FilesToRename -> Replace($(PlainVersion), $(MinVerVersion)))"/>
+    <Move SourceFiles="@(FilesToRename)" DestinationFiles="@(FilesToRename -&gt; Replace($(PlainVersion), $(MinVerVersion)))" />
   </Target>
 </Project>

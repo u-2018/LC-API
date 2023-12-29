@@ -20,7 +20,7 @@ readme = "../README.md"
 outdir = "../dist"
 
 [[build.copy]]
-source = "../bin/LC_API.dll"
+source = "../LC-API/bin/LC_API.dll"
 target = "LC_API.dll"
 
 [[build.copy]]
