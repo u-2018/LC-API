@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## Version [3.2.2]
+
+- Remove directory validation when pushing to NuGet (dotnet validates for us)
+- Pack readme, changelog and license into nuget package
+
 ## Version [3.2.1]
 
 - Fix nupkg-build artifact pathing in Publish workflow
