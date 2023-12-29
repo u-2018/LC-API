@@ -5,8 +5,6 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using LC_API.Exceptions;
-using Steamworks.Ugc;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -47,6 +45,17 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Gets the encapsulated <see cref="PlayerControllerB"/>.
         /// </summary>
         public PlayerControllerB PlayerController { get; internal set; }
+
+        /// <summary>
+        /// Gets a <see cref="List{T}"/> of <see cref="Tip"/>s that will show to the player.
+        /// </summary>
+        public List<Tip> TipQueue { get; internal set; } = new List<Tip>();
+
+        internal Tip CurrentTip { get; set; }
+
+        internal int NextTipId = int.MinValue;
+
+        internal ClientRpcParams SendToMeParams { get; set; }
 
         internal NetworkVariable<ulong> NetworkClientId { get; } = new NetworkVariable<ulong>(ulong.MaxValue);
 
@@ -407,6 +416,140 @@ namespace LC_API.GameInterfaceAPI.Features
             PlayerController.usernameBillboardText.text = name;
         }
 
+        /// <summary>
+        /// Queues a <see cref="Tip"/> to show to the <see cref="Player"/>.
+        /// </summary>
+        /// <param name="header">The <see cref="Tip"/>'s header</param>
+        /// <param name="message">The <see cref="Tip"/>'s message.</param>
+        /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
+        /// <param name="priority">The priority of the <see cref="Tip"/>. Higher means will show sooner. Goes to the end of the priority list.</param>
+        public void QueueTip(string header, string message, float duration = 5f, int priority = 0)
+        {
+            if (!IsLocalPlayer)
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new NoAuthorityException("Tried to show tips to other clients from client.");
+                }
+
+                QueueTipClientRpc(header, message, duration, priority, SendToMeParams);
+
+                return;
+            }
+
+            QueueTipInternal(header, message, duration, priority);
+        }
+
+        [ClientRpc]
+        private void QueueTipClientRpc(string header, string message, float duration, int priority, ClientRpcParams clientRpcParams = default)
+        {
+            QueueTipInternal(header, message, duration, priority);
+        }
+
+        internal void QueueTipInternal(string header, string message, float duration, int priority)
+        {
+            Tip tip = new Tip(header, message, duration, priority, NextTipId++);
+
+            if (TipQueue.Count == 0)
+            {
+                TipQueue.Add(tip);
+                return;
+            }
+
+            if (TipQueue[TipQueue.Count - 1].CompareTo(tip) <= 0)
+            {
+                TipQueue.Add(tip);
+                return;
+            }
+
+            if (TipQueue[0].CompareTo(tip) >= 0)
+            {
+                TipQueue.Insert(0, tip);
+                return;
+            }
+
+            int index = TipQueue.BinarySearch(tip);
+
+            if (index < 0) index = ~index;
+
+            TipQueue.Insert(index, tip);
+        }
+
+        /// <summary>
+        /// Shows a <see cref="Tip"/> to the <see cref="Player"/>, bypassing the queue.
+        /// </summary>
+        /// <param name="header">The <see cref="Tip"/>'s header</param>
+        /// <param name="message">The <see cref="Tip"/>'s message.</param>
+        /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
+        public void ShowTip(string header, string message, float duration = 5f)
+        {
+            if (!IsLocalPlayer)
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new NoAuthorityException("Tried to show tips to other clients from client.");
+                }
+
+                ShowTipClientRpc(header, message, duration, SendToMeParams);
+
+                return;
+            }
+
+            ShowTipInternal(header, message, duration);
+        }
+
+        [ClientRpc]
+        private void ShowTipClientRpc(string header, string message, float duration, ClientRpcParams clientRpcParams = default)
+        {
+            ShowTipInternal(header, message, duration);
+        }
+
+        private void ShowTipInternal(string header, string message, float duration)
+        {
+            Tip tip = new Tip(header, message, duration, int.MaxValue, NextTipId++);
+
+            if (CurrentTip != null)
+            {
+                // Ensures the current tip will continue afterwards
+                CurrentTip.TipId = int.MinValue;
+                TipQueue.Insert(0, CurrentTip);
+            }
+
+            CurrentTip = tip;
+
+            HUDManager.Instance.tipsPanelAnimator.speed = 1;
+            HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
+
+            DisplayTip(CurrentTip.Header, CurrentTip.Message);
+        }
+
+        internal static void DisplayTip(string headerText, string bodyText, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
+        {
+            if (!HUDManager.Instance.CanTipDisplay(isWarning, useSave, prefsKey))
+            {
+                return;
+            }
+            if (useSave)
+            {
+                if (HUDManager.Instance.tipsPanelCoroutine != null)
+                {
+                    HUDManager.Instance.StopCoroutine(HUDManager.Instance.tipsPanelCoroutine);
+                }
+                HUDManager.Instance.tipsPanelCoroutine = HUDManager.Instance.StartCoroutine(HUDManager.Instance.TipsPanelTimer(prefsKey));
+            }
+            HUDManager.Instance.tipsPanelHeader.text = headerText;
+            HUDManager.Instance.tipsPanelBody.text = bodyText;
+            if (isWarning)
+            {
+                HUDManager.Instance.tipsPanelAnimator.SetTrigger("TriggerWarning");
+                RoundManager.PlayRandomClip(HUDManager.Instance.UIAudio, HUDManager.Instance.warningSFX, false, 1f, 0);
+                return;
+            }
+            HUDManager.Instance.tipsPanelAnimator.SetTrigger("TriggerHint");
+            RoundManager.PlayRandomClip(HUDManager.Instance.UIAudio, HUDManager.Instance.tipsSFX, false, 1f, 0);
+        }
+
+        #region Unity related things
         private void Start()
         {
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
@@ -422,11 +565,52 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                SendToMeParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ClientId }
+                    }
+                };
             }
 
             Inventory = GetComponent<PlayerInventory>();
 
             NetworkClientId.OnValueChanged += clientIdChanged;
+        }
+
+        private void Update()
+        {
+            if (!IsLocalPlayer) return;
+
+            if (CurrentTip != null)
+            {
+                // Prevent the panel from automatically disappearing after 5 seconds
+                if (HUDManager.Instance.tipsPanelAnimator.speed > 0 &&
+                    HUDManager.Instance.tipsPanelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.9f)
+                {
+                    Plugin.Log.LogInfo("STOP ANIMATOR");
+                    HUDManager.Instance.tipsPanelAnimator.speed = 0;
+                }
+
+                CurrentTip.TimeLeft -= Time.deltaTime;
+
+                if (CurrentTip.TimeLeft <= 0)
+                {
+                    HUDManager.Instance.tipsPanelAnimator.speed = 1;
+                    HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
+                    CurrentTip = null;
+                }
+            }
+
+            if (CurrentTip == null && TipQueue.Count > 0)
+            {
+                CurrentTip = TipQueue[0];
+                TipQueue.RemoveAt(0);
+
+                DisplayTip(CurrentTip.Header, CurrentTip.Message);
+            }
         }
 
         /// <summary>
@@ -437,6 +621,7 @@ namespace LC_API.GameInterfaceAPI.Features
             NetworkClientId.OnValueChanged -= clientIdChanged;
             base.OnDestroy();
         }
+        #endregion
 
         #region Network variable handlers
         private void clientIdChanged(ulong oldId, ulong newId)
@@ -447,6 +632,14 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                SendToMeParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ClientId }
+                    }
+                };
             }
         }
         #endregion
