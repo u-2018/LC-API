@@ -20,7 +20,7 @@ readme = "../README.md"
 outdir = "../dist"
 
 [[build.copy]]
-source = "../LC-API/bin/LC_API.dll"
+source = "../LC-API/bin/netstandard2.1/LC_API.dll"
 target = "BepInEx/plugins/LC_API.dll"
 
 [[build.copy]]
