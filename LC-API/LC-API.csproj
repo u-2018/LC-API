@@ -22,7 +22,6 @@
     <PackageId>LethalCompany.LC-API</PackageId>
     <Authors>2018,steven4547466</Authors>
     <Company>2018</Company>
-    <PackageLicenseExpression>LGPL-2.1-only</PackageLicenseExpression>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
