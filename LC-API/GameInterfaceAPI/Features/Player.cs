@@ -397,6 +397,16 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
+        /// <summary>
+        /// Sets the <see cref="Player"/>'s username locally and doesn't attempt to network it.
+        /// </summary>
+        /// <param name="name">The new name.</param>
+        public void SetPlayerUsernameLocally(string name)
+        {
+            PlayerController.playerUsername = name;
+            PlayerController.usernameBillboardText.text = name;
+        }
+
         private void Start()
         {
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
