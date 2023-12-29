@@ -24,9 +24,19 @@ namespace LC_API.GameInterfaceAPI.Events.Handlers
         public static event CustomEventHandler<HurtingEventArgs> Hurting;
 
         /// <summary>
+        /// Invoked after a <see cref="Features.Player"/> is hurt.
+        /// </summary>
+        public static event CustomEventHandler<HurtEventArgs> Hurt;
+
+        /// <summary>
         /// Invoked before a <see cref="Features.Player"/> dies.
         /// </summary>
         public static event CustomEventHandler<DyingEventArgs> Dying;
+
+        /// <summary>
+        /// Invoked after a <see cref="Features.Player"/> dies.
+        /// </summary>
+        public static event CustomEventHandler<DiedEventArgs> Died;
 
         /// <summary>
         /// Called after a <see cref="Features.Player"/> joined the server, including the host.
@@ -47,9 +57,21 @@ namespace LC_API.GameInterfaceAPI.Events.Handlers
         public static void OnHurting(HurtingEventArgs ev) => Hurting.InvokeSafely(ev);
 
         /// <summary>
+        /// Called after a <see cref="Features.Player"/> is hurt.
+        /// </summary>
+        /// <param name="ev">The <see cref="HurtEventArgs"/> event arguments.</param>
+        public static void OnHurt(HurtEventArgs ev) => Hurt.InvokeSafely(ev);
+
+        /// <summary>
         /// Called before a <see cref="Features.Player"/> dies.
         /// </summary>
         /// <param name="ev">The <see cref="DyingEventArgs"/> event arguments.</param>
         public static void OnDying(DyingEventArgs ev) => Dying.InvokeSafely(ev);
+
+        /// <summary>
+        /// Called after a <see cref="Features.Player"/> dies.
+        /// </summary>
+        /// <param name="ev">The <see cref="DiedEventArgs"/> event arguments.</param>
+        public static void OnDied(DiedEventArgs ev) => Died.InvokeSafely(ev);
     }
 }
