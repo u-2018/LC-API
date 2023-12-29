@@ -51,33 +51,45 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nupkg-build
-          path: bin/*.nupkg
+          path: /*/bin/*.nupkg
   
   upload-release-artifacts:
     name: Upload Release Artifacts
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       
       - name: Upload artifacts to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} dist/*.zip bin/*.nupkg
+        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*.nupkg
       
   deploy-nuget:
     name: Deploy to NuGet
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download nupkg artifact
         uses: actions/download-artifact@v4
         with:
           name: nupkg-build
+          path: ./bin
 
       - name: Validate artifact exists
         run: test -d ./bin
+        
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.100"
       
       - name: Publish to NuGet.org
         run: |
@@ -88,13 +100,26 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download Thunderstore artifact
         uses: actions/download-artifact@v4
         with:
           name: thunderstore-build
+          path: ./dist
 
       - name: Validate artifact exists
         run: test -d ./dist
+
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.100"
+
+      - name: Install Thunderstore CLI
+        run: |
+          dotnet tool install -g tcli
           
       - name: Publish to Thunderstore
         env:
