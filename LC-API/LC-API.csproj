@@ -22,7 +22,15 @@
     <PackageId>LethalCompany.LC-API</PackageId>
     <Authors>2018,steven4547466</Authors>
     <Company>2018</Company>
+    <PackageLicenseExpression>LGPL-2.1-only</PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+    <None Include="../CHANGELOG.md" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <PropertyGroup>
     <OutputPath>bin</OutputPath>
