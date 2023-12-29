@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,103 +53,54 @@ namespace LC_API.Networking
 
         internal static void OnUnregisterNetworkMessages() => UnregisterNetworkMessages.InvokeSafely();
 
+        private static MethodInfo _registerInfo = null;
+        private static MethodInfo _registerInfoGeneric = null;
+
+        internal static MethodInfo RegisterInfo
+        {
+            get
+            {
+                if (_registerInfo == null)
+                {
+                    foreach (MethodInfo methodInfo in typeof(Network).GetMethods())
+                    {
+                        if (methodInfo.Name == nameof(RegisterMessage) && !methodInfo.IsGenericMethod)
+                        {
+                            _registerInfo = methodInfo;
+                            break;
+                        }
+                    }
+                }
+
+                return _registerInfo;
+            }
+        }
+
+        internal static MethodInfo RegisterInfoGeneric
+        {
+            get
+            {
+                if (_registerInfo == null)
+                {
+                    foreach (MethodInfo methodInfo in typeof(Network).GetMethods())
+                    {
+                        if (methodInfo.Name == nameof(RegisterMessage) && methodInfo.IsGenericMethod)
+                        {
+                            _registerInfoGeneric = methodInfo;
+                            break;
+                        }
+                    }
+                }
+
+                return _registerInfoGeneric;
+            }
+        }
+
         internal static void RegisterAllMessages()
         {
             foreach (NetworkMessageFinalizerBase handler in NetworkMessageFinalizers.Values)
             {
                 NetworkManager.Singleton.CustomMessagingManager.RegisterNamedMessageHandler(handler.UniqueName, handler.Read);
-            }
-
-            MethodInfo registerInfo = null;
-            MethodInfo registerInfoGeneric = null;
-
-            foreach (MethodInfo methodInfo in typeof(Network).GetMethods())
-            {
-                if (methodInfo.Name == nameof(RegisterMessage) && methodInfo.IsGenericMethod)
-                {
-                    registerInfoGeneric = methodInfo;
-                } 
-                else if (methodInfo.Name == nameof(RegisterMessage) && !methodInfo.IsGenericMethod)
-                {
-                    registerInfo = methodInfo;
-                }
-
-                if (registerInfo != null && registerInfoGeneric != null) break;
-            }
-
-            foreach (PluginInfo pluginInfo in Chainloader.PluginInfos.Values)
-            {
-                foreach (Type type in pluginInfo.Instance.GetType().Assembly.GetTypes())
-                {
-                    if (type.IsClass)
-                    {
-                        NetworkMessage networkMessage = type.GetCustomAttribute<NetworkMessage>();
-
-                        if (networkMessage != null)
-                        {
-                            if (type.BaseType.Name == "NetworkMessageHandler`1")
-                            {
-                                Type messageType = type.BaseType.GetGenericArguments()[0];
-                                registerInfoGeneric
-                                    .MakeGenericMethod(messageType)
-                                    .Invoke(null, new object[]
-                                    {
-                                        networkMessage.UniqueName,
-                                        networkMessage.RelayToSelf,
-                                        type.GetMethod("Handler").CreateDelegate(typeof(Action<,>)
-                                            .MakeGenericType(typeof(ulong), messageType), Activator.CreateInstance(type))
-                                    });
-                            } 
-                            else if (type.BaseType.Name == "NetworkMessageHandler")
-                            {
-                                registerInfo
-                                    .Invoke(null, new object[]
-                                    {
-                                        networkMessage.UniqueName,
-                                        networkMessage.RelayToSelf,
-                                        type.GetMethod("Handler").CreateDelegate(typeof(Action<>)
-                                            .MakeGenericType(typeof(ulong)), Activator.CreateInstance(type))
-                                    });
-                            }
-                        } 
-                        else
-                        {
-                            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic))
-                            {
-                                networkMessage = method.GetCustomAttribute<NetworkMessage>();
-                                if (networkMessage != null)
-                                {
-                                    if (!method.IsStatic) throw new Exception("Detected NetworkMessage attribute on non-static method. All NetworkMessages on methods must be static.");
-
-                                    if (method.GetParameters().Length == 1)
-                                    {
-                                        registerInfo
-                                            .Invoke(null, new object[]
-                                            {
-                                                networkMessage.UniqueName,
-                                                networkMessage.RelayToSelf,
-                                                method.CreateDelegate(typeof(Action<>)
-                                                    .MakeGenericType(typeof(ulong)))
-                                            });
-                                    }
-                                    else
-                                    {
-                                        Type messageType = method.GetParameters()[1].ParameterType;
-                                        registerInfoGeneric
-                                            .MakeGenericMethod(messageType)
-                                            .Invoke(null, new object[]
-                                            {
-                                                networkMessage.UniqueName,
-                                                networkMessage.RelayToSelf,
-                                                method.CreateDelegate(typeof(Action<,>)
-                                                    .MakeGenericType(typeof(ulong), messageType))
-                                            });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -158,6 +110,124 @@ namespace LC_API.Networking
             foreach (string name in NetworkMessageFinalizers.Keys.ToArray())
             {
                 UnregisterMessage(name);
+            }
+        }
+
+        public static void RegisterAll()
+        {
+            // This cursed line of code comes from Harmony's PatchAll method. Thanks, Harmony
+            var m = new StackTrace().GetFrame(1).GetMethod();
+            var assembly = m.ReflectedType.Assembly;
+            foreach (Type type in AccessTools.GetTypesFromAssembly(assembly))
+            {
+                RegisterAll(type);
+            }
+        }
+
+        public static void RegisterAll(Type type)
+        {
+            if (type.IsClass)
+            {
+                NetworkMessage networkMessage = type.GetCustomAttribute<NetworkMessage>();
+
+                if (networkMessage != null)
+                {
+                    if (type.BaseType.Name == "NetworkMessageHandler`1")
+                    {
+                        Type messageType = type.BaseType.GetGenericArguments()[0];
+                        RegisterInfoGeneric
+                            .MakeGenericMethod(messageType)
+                            .Invoke(null, new object[]
+                            {
+                                        networkMessage.UniqueName,
+                                        networkMessage.RelayToSelf,
+                                        type.GetMethod("Handler").CreateDelegate(typeof(Action<,>)
+                                            .MakeGenericType(typeof(ulong), messageType), Activator.CreateInstance(type))
+                            });
+                    }
+                    else if (type.BaseType.Name == "NetworkMessageHandler")
+                    {
+                        RegisterInfo
+                            .Invoke(null, new object[]
+                            {
+                                        networkMessage.UniqueName,
+                                        networkMessage.RelayToSelf,
+                                        type.GetMethod("Handler").CreateDelegate(typeof(Action<>)
+                                            .MakeGenericType(typeof(ulong)), Activator.CreateInstance(type))
+                            });
+                    }
+                }
+                else
+                {
+                    foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic))
+                    {
+                        networkMessage = method.GetCustomAttribute<NetworkMessage>();
+                        if (networkMessage != null)
+                        {
+                            if (!method.IsStatic) throw new Exception("Detected NetworkMessage attribute on non-static method. All NetworkMessages on methods must be static.");
+
+                            if (method.GetParameters().Length == 1)
+                            {
+                                RegisterInfo
+                                    .Invoke(null, new object[]
+                                    {
+                                                networkMessage.UniqueName,
+                                                networkMessage.RelayToSelf,
+                                                method.CreateDelegate(typeof(Action<>)
+                                                    .MakeGenericType(typeof(ulong)))
+                                    });
+                            }
+                            else
+                            {
+                                Type messageType = method.GetParameters()[1].ParameterType;
+                                RegisterInfoGeneric
+                                    .MakeGenericMethod(messageType)
+                                    .Invoke(null, new object[]
+                                    {
+                                                networkMessage.UniqueName,
+                                                networkMessage.RelayToSelf,
+                                                method.CreateDelegate(typeof(Action<,>)
+                                                    .MakeGenericType(typeof(ulong), messageType))
+                                    });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void UnregisterAll()
+        {
+            // This cursed line of code comes from Harmony's PatchAll method. Thanks, Harmony
+            var m = new StackTrace().GetFrame(1).GetMethod();
+            var assembly = m.ReflectedType.Assembly;
+            foreach (Type type in AccessTools.GetTypesFromAssembly(assembly))
+            {
+                UnregisterAll(type);
+            }
+        }
+        
+        public static void UnregisterAll(Type type)
+        {
+            if (type.IsClass)
+            {
+                NetworkMessage networkMessage = type.GetCustomAttribute<NetworkMessage>();
+
+                if (networkMessage != null)
+                {
+                    UnregisterMessage(networkMessage.UniqueName);
+                }
+                else
+                {
+                    foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic))
+                    {
+                        networkMessage = method.GetCustomAttribute<NetworkMessage>();
+                        if (networkMessage != null)
+                        {
+                            UnregisterMessage(networkMessage.UniqueName);
+                        }
+                    }
+                }
             }
         }
 
@@ -298,6 +368,8 @@ namespace LC_API.Networking
             };
 
             SetupNetworking();
+
+            RegisterAll();
         }
 
         internal static void SetupNetworking()
