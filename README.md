@@ -27,7 +27,7 @@ to set paths to build dependencies. Here's a template for that file's contents:
 
     <!-- Create your 'Test Profile' using your modman of choice before enabling this. 
     Enable by setting the Condition attribute to "true". *nix users should switch out `copy` for `cp`. -->
-    <Target Name="CopyToTestProfile" AfterTargets="PostBuildEvent;NetcodeWeave" Condition="true">
+    <Target Name="CopyToTestProfile" AfterTargets="PostBuildEvent;NetcodeWeave" Condition="false">
         <MakeDir
                 Directories="$(TEST_PROFILE_DIR)/BepInEx/plugins/2018-LC_API"
                 Condition="Exists('$(TEST_PROFILE_DIR)') And !Exists('$(TEST_PROFILE_DIR)/BepInEx/plugins/2018-LC_API')"
