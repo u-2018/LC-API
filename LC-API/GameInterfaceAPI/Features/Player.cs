@@ -99,6 +99,7 @@ namespace LC_API.GameInterfaceAPI.Features
             set
             {
                 PlayerController.playerUsername = value;
+                PlayerController.usernameBillboardText.text = name;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
