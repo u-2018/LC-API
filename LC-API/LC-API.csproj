@@ -18,9 +18,9 @@
   
   <!-- NuGet package metadata -->
   <PropertyGroup>
-    <PackageId>u_2018.LethalCompany.LC-API</PackageId>
-    <Authors>u_2018</Authors>
-    <Company>u_2018</Company>
+    <PackageId>LethalCompany.LC-API</PackageId>
+    <Authors>2018,steven4547466</Authors>
+    <Company>2018</Company>
   </PropertyGroup>
 
   <PropertyGroup>
