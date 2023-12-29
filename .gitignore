@@ -41,20 +41,5 @@ LC_API.dll
 LC-API/[Bb]in/
 LC-API/[Oo]bj/
 
-### Source Modules
-!BundleAPI
-!ClientAPI
-!Comp 
-!Data
-!Exceptions
-!Extensions
-!GameInterfaceAPI
-!ManualPatches
-!ServerAPI
-!Networking
-
-### Source Files
-!**.cs
-
 # Explicit exceptions/ignores
 **.user
