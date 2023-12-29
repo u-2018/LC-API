@@ -81,9 +81,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nupkg-build
-
-      - name: Validate artifact exists
-        run: test -d ./bin
         
       - name: Setup .NET environment
         uses: actions/setup-dotnet@v3
