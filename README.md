@@ -1,6 +1,6 @@
 # LC-API
 
-[![Build](https://github.com/u-2018/LC-API/actions/workflows/build.yml/badge.svg)](https://github.com/u-2018/LC-API/actions/workflows/build.yml)
+[![Build](https://github.com/steven4547466/LC-API/actions/workflows/build.yml/badge.svg)](https://github.com/steven4547466/LC-API/actions/workflows/build.yml)
 [![Latest Version](https://img.shields.io/thunderstore/v/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
 [![Total Downloads](https://img.shields.io/thunderstore/dt/2018/LC_API?logo=thunderstore&logoColor=white)](https://thunderstore.io/c/lethal-company/p/2018/LC_API)
 
@@ -44,7 +44,7 @@ Ensure your Assembly CSharp is set `Publicize="true"` in the .csproj file to ens
 Once you have completed these steps, you will be able to properly build the solution.
 
 ## Making a PR
-Your [pull request](https://github.com/u-2018/LC-API/compare) should target the [dev branch](https://github.com/u-2018/LC-API/tree/dev). This is because the `main` branch is reserved for tested features that are ready for release. Basically if someone were to clone the repo, they should be able to build `main` and use it without any fear of broken things.
+Your [pull request](https://github.com/steven4547466/LC-API/pulls) should target the [dev branch](https://github.com/steven4547466/LC-API/tree/dev). This is because the `main` branch is reserved for tested features that are ready for release. Basically if someone were to clone the repo, they should be able to build `main` and use it without any fear of broken things.
 
 The `dev` branch, however, may contain untested features and is used to build release candidates. Before releases, the `dev` branch will be frozen and tested for issues, when it passes its testing then it will be merged into `main` and a release will be made. Pre-releases may come from the `dev` branch for release candidates and testing. These will be generally stable, but may still contain broken features before testing is done.
 

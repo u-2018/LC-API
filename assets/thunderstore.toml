@@ -8,7 +8,7 @@ repository = "https://thunderstore.io"
 namespace = "2018"
 name = "LC_API"
 description = "Multipurpose modding API for Lethal Company"
-websiteUrl = "https://github.com/u-2018/LC-API"
+websiteUrl = "https://github.com/steven4547466/LC-API"
 containsNsfwContent = false
 
 [package.dependencies]
