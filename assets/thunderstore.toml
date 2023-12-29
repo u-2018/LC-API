@@ -28,6 +28,10 @@ source = "./bundles"
 target = "BepInEx/plugins/Bundles/"
 
 [[build.copy]]
+source = "../CHANGELOG.MD"
+target = "CHANGELOG.MD"
+
+[[build.copy]]
 source = "../LICENSE"
 target = "LICENSE"
 
