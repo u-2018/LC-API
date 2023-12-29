@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `Networking` namespace
   - Provides much better networking that the previous `ServerAPI.Networking` class, which still exists for backwards compatibility.
-  - See the [wiki](https://github.com/u-2018/LC-API/wiki/Networking) for usage instructions.
+  - See the [wiki](https://github.com/steven4547466/LC-API/wiki/Networking) for usage instructions.
 - Added CI/CD github actions.
 - Changed a hard-coded file location to be dynamically based off of where the plugin file is to prevent an issue with manual installation.
 - Significantly revamped project structure.
