@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net472</TargetFrameworks>
     <AssemblyName>LC_API</AssemblyName>
     <Product>Lethal Company API</Product>
     <Description>Utilities for plugin devs</Description>
@@ -25,7 +25,6 @@
 
   <PropertyGroup>
     <OutputPath>bin</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <!-- prevent referenced assemblies from being copied to the output folder -->
@@ -104,7 +103,7 @@
     <Exec Command="cd $(NETCODE_PATCHER_DIR)&#xD;&#xA;dotnet NetcodePatcher.dll $(TargetDir) deps/" />
   </Target>
 
-  <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true'">
+  <Target Name="PackThunderstore" AfterTargets="NetcodeWeave" Condition="$(PACK_THUNDERSTORE) == 'true' and $(TargetFramework) == 'netstandard2.1'">
     <Message Importance="high" Text="MinVer version is $(MinVerVersion)" />
     <PropertyGroup>
       <PlainVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</PlainVersion>
