@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+- ## Version [3.2.3]
+
+- Fixed package references being added as transitive dependencies when using the NuGet package.
+
 ## Version [3.2.2]
 
 - Remove directory validation when pushing to NuGet (dotnet validates for us)
