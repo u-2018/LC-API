@@ -10,6 +10,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
     {
         private static void Postfix(PlayerControllerB __instance)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             if (__instance.IsServer && !Features.Player.TryGet(__instance, out Features.Player _))
             {
                 GameObject go = UnityEngine.Object.Instantiate(Features.Player.PlayerNetworkPrefab);
