@@ -7,10 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- N/A
+
+- ## Version [3.2.3]
+
+- Fixed package references being added as transitive dependencies when using the NuGet package.
+
+## Version [3.2.2]
+
+- Remove directory validation when pushing to NuGet (dotnet validates for us)
+- Pack readme, changelog and license into nuget package
+
+## Version [3.2.1]
+
+- Fix nupkg-build artifact pathing in Publish workflow
+- [Lordfirespeed](https://github.com/Lordfirespeed) sucks. 
+
 ## Version [3.2.0]
 
 - Added `Networking` namespace
-  - Provides much better networking that the previous `ServerAPI.Networking` class, which still exists for backwards compatibility
+  - Provides much better networking that the previous `ServerAPI.Networking` class, which still exists for backwards compatibility.
+  - See the [wiki](https://github.com/steven4547466/LC-API/wiki/Networking) for usage instructions.
+- Added CI/CD github actions.
+- Changed a hard-coded file location to be dynamically based off of where the plugin file is to prevent an issue with manual installation.
+- Significantly revamped project structure.
 
 ## Version [3.1.0]
 
