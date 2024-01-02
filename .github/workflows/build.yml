@@ -27,11 +27,11 @@ jobs:
         run: |
           dotnet restore
       
-      - name: Setup NetcodeWeaver
-        id: setup-netcode-weaver
-        uses: Lordfirespeed/setup-netcode-weaver@v0
+      - name: Setup Netcode Patcher
+        id: setup-netcode-patcher
+        uses: Lordfirespeed/setup-netcode-patcher@v0
         with:
-          netcode-weaver-version: 2.4.0
+          netcode-patcher-version: 2.4.0
           deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
           target-framework: "netstandard2.1"
       
