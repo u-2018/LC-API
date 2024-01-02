@@ -25,11 +25,11 @@ jobs:
         run: |
           dotnet restore
           
-      - name: Setup NetcodeWeaver
-        id: setup-netcode-weaver
-        uses: Lordfirespeed/setup-netcode-weaver@v0
+      - name: Setup Netcode Patcher
+        id: setup-netcode-patcher
+        uses: Lordfirespeed/setup-netcode-patcher@v0
         with:
-          netcode-weaver-version: 2.4.0
+          netcode-patcher-version: 2.4.0
           deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
           target-framework: "netstandard2.1"
 
@@ -39,7 +39,7 @@ jobs:
           
       - name: Build and pack solution
         run: |
-          dotnet pack -p:NETCODE_PATCHER_DIR="${{ steps.setup-netcode-weaver.outputs.netcode-weaver-directory }}"
+          dotnet pack -p:NETCODE_PATCHER_DIR="${{ steps.setup-netcode-patcher.outputs.netcode-patcher-directory }}"
 
       - name: Upload Thunderstore artifact
         uses: actions/upload-artifact@v4
@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nupkg-build
-          path: /*/bin/*.nupkg
+          path: ./*/bin/*.nupkg
   
   upload-release-artifacts:
     name: Upload Release Artifacts
@@ -67,7 +67,7 @@ jobs:
       - name: Upload artifacts to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*.nupkg
+        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*/bin/*.nupkg
       
   deploy-nuget:
     name: Deploy to NuGet
@@ -81,10 +81,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nupkg-build
-          path: ./bin
-
-      - name: Validate artifact exists
-        run: test -d ./bin
         
       - name: Setup .NET environment
         uses: actions/setup-dotnet@v3
@@ -93,7 +89,7 @@ jobs:
       
       - name: Publish to NuGet.org
         run: |
-          dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push ./*/bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
   
   deploy-thunderstore:
     name: Deploy to Thunderstore
