@@ -96,11 +96,10 @@ BepinEx
 ├───core
 ├───patchers
 └───plugins
-        └───2018-LC_API
-        │   LC_API.dll
-        │
-        └───Bundles
-                networking
+    └───2018-LC_API
+        ├───Bundles
+        │   └───networking
+        └───LC_API.dll
 ```
 
 # TODO
