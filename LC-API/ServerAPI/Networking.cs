@@ -10,7 +10,7 @@ namespace LC_API.ServerAPI
     /// Networking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data. Note that the local player will not receive data that they broadcast.
     /// <para>The second parameter for each of the events is the signature string.</para>
     /// </summary>
-    [Obsolete("ServerAPI.Networking is obsolete and will be removed in future versions. Use LC_API.Networking.")]
+    [Obsolete("ServerAPI.Networking is obsolete and will be removed in future versions. Use LC_API.Networking.Network.")]
     public static class Networking
     {
         /// <summary>
