@@ -17,6 +17,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
         {
             Features.Player player = Features.Player.LocalPlayer;
 
+            if (player == null) return true;
+
             Tip tip = new Tip(headerText, bodyText, 5, 0, 0);
 
             if (player.CurrentTip != null)
