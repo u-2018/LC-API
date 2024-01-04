@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+- ## Version [3.2.4]
+
+- Fixed an issue with the `Player.Joined` and `Player.Left` events where they wouldn't work on LAN due to not having a steam ID.
+
 - ## Version [3.2.3]
 
 - Fixed package references being added as transitive dependencies when using the NuGet package.
