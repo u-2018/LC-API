@@ -590,7 +590,6 @@ namespace LC_API.GameInterfaceAPI.Features
                 if (HUDManager.Instance.tipsPanelAnimator.speed > 0 &&
                     HUDManager.Instance.tipsPanelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.9f)
                 {
-                    Plugin.Log.LogInfo("STOP ANIMATOR");
                     HUDManager.Instance.tipsPanelAnimator.speed = 0;
                 }
 
