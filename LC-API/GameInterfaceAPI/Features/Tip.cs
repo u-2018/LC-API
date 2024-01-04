@@ -17,9 +17,15 @@ namespace LC_API.GameInterfaceAPI.Features
 
         public int Priority { get; } = 0;
 
+        public bool IsWarning { get; set; } = false;
+
+        public bool UseSave { get; set; } = false;
+
+        public string PreferenceKey { get; set; } = "LC_Tip1";
+
         internal int TipId { get; set; }
 
-        public Tip(string header, string message, float duration, int priority, int tipId)
+        public Tip(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey, int tipId)
         {
             Header = header;
             Message = message;

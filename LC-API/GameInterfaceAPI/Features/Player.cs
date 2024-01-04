@@ -423,7 +423,10 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="message">The <see cref="Tip"/>'s message.</param>
         /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
         /// <param name="priority">The priority of the <see cref="Tip"/>. Higher means will show sooner. Goes to the end of the priority list.</param>
-        public void QueueTip(string header, string message, float duration = 5f, int priority = 0)
+        /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips. You will need to check the <paramref name="prefsKey"/> yourself before using, though, as it will not check for you.</param>
+        /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
+        public void QueueTip(string header, string message, float duration = 5f, int priority = 0, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
         {
             if (!IsLocalPlayer)
             {
@@ -432,23 +435,23 @@ namespace LC_API.GameInterfaceAPI.Features
                     throw new NoAuthorityException("Tried to show tips to other clients from client.");
                 }
 
-                QueueTipClientRpc(header, message, duration, priority, SendToMeParams);
+                QueueTipClientRpc(header, message, duration, priority, isWarning, useSave, prefsKey, SendToMeParams);
 
                 return;
             }
 
-            QueueTipInternal(header, message, duration, priority);
+            QueueTipInternal(header, message, duration, priority, isWarning, useSave, prefsKey);
         }
 
         [ClientRpc]
-        private void QueueTipClientRpc(string header, string message, float duration, int priority, ClientRpcParams clientRpcParams = default)
+        private void QueueTipClientRpc(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey, ClientRpcParams clientRpcParams = default)
         {
-            QueueTipInternal(header, message, duration, priority);
+            QueueTipInternal(header, message, duration, priority, isWarning, useSave, prefsKey);
         }
 
-        internal void QueueTipInternal(string header, string message, float duration, int priority)
+        internal void QueueTipInternal(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)
         {
-            Tip tip = new Tip(header, message, duration, priority, NextTipId++);
+            Tip tip = new Tip(header, message, duration, priority, isWarning, useSave, prefsKey, NextTipId++);
 
             if (TipQueue.Count == 0)
             {
@@ -481,7 +484,10 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="header">The <see cref="Tip"/>'s header</param>
         /// <param name="message">The <see cref="Tip"/>'s message.</param>
         /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
-        public void ShowTip(string header, string message, float duration = 5f)
+        /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips. You will need to check the <paramref name="prefsKey"/> yourself before using, though, as it will not check for you.</param>
+        /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
+        public void ShowTip(string header, string message, float duration = 5f, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
         {
             if (!IsLocalPlayer)
             {
@@ -490,23 +496,23 @@ namespace LC_API.GameInterfaceAPI.Features
                     throw new NoAuthorityException("Tried to show tips to other clients from client.");
                 }
 
-                ShowTipClientRpc(header, message, duration, SendToMeParams);
+                ShowTipClientRpc(header, message, duration, isWarning, useSave, prefsKey, SendToMeParams);
 
                 return;
             }
 
-            ShowTipInternal(header, message, duration);
+            ShowTipInternal(header, message, duration, isWarning, useSave, prefsKey);
         }
 
         [ClientRpc]
-        private void ShowTipClientRpc(string header, string message, float duration, ClientRpcParams clientRpcParams = default)
+        private void ShowTipClientRpc(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey, ClientRpcParams clientRpcParams = default)
         {
-            ShowTipInternal(header, message, duration);
+            ShowTipInternal(header, message, duration, isWarning, useSave, prefsKey);
         }
 
-        private void ShowTipInternal(string header, string message, float duration)
+        private void ShowTipInternal(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)
         {
-            Tip tip = new Tip(header, message, duration, int.MaxValue, NextTipId++);
+            Tip tip = new Tip(header, message, duration, int.MaxValue, isWarning, useSave, prefsKey, NextTipId++);
 
             if (CurrentTip != null)
             {
@@ -520,7 +526,7 @@ namespace LC_API.GameInterfaceAPI.Features
             HUDManager.Instance.tipsPanelAnimator.speed = 1;
             HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
 
-            DisplayTip(CurrentTip.Header, CurrentTip.Message);
+            DisplayTip(CurrentTip.Header, CurrentTip.Message, isWarning, useSave, prefsKey);
         }
 
         internal static void DisplayTip(string headerText, string bodyText, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
@@ -608,7 +614,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 CurrentTip = TipQueue[0];
                 TipQueue.RemoveAt(0);
 
-                DisplayTip(CurrentTip.Header, CurrentTip.Message);
+                DisplayTip(CurrentTip.Header, CurrentTip.Message, CurrentTip.IsWarning, CurrentTip.UseSave, CurrentTip.PreferenceKey);
             }
         }
 

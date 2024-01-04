@@ -19,7 +19,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
             if (player == null) return true;
 
-            Tip tip = new Tip(headerText, bodyText, 5, 0, 0);
+            Tip tip = new Tip(headerText, bodyText, 5, 0, isWarning, useSave, prefsKey, 0);
 
             if (player.CurrentTip != null)
             {
