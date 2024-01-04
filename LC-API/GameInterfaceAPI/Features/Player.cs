@@ -424,7 +424,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
         /// <param name="priority">The priority of the <see cref="Tip"/>. Higher means will show sooner. Goes to the end of the priority list.</param>
         /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
-        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips. You will need to check the <paramref name="prefsKey"/> yourself before using, though, as it will not check for you.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips.</param>
         /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
         public void QueueTip(string header, string message, float duration = 5f, int priority = 0, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
         {
@@ -485,7 +485,7 @@ namespace LC_API.GameInterfaceAPI.Features
         /// <param name="message">The <see cref="Tip"/>'s message.</param>
         /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
         /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
-        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips. You will need to check the <paramref name="prefsKey"/> yourself before using, though, as it will not check for you.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips.</param>
         /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
         public void ShowTip(string header, string message, float duration = 5f, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
         {
