@@ -514,7 +514,8 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             Tip tip = new Tip(header, message, duration, int.MaxValue, isWarning, useSave, prefsKey, NextTipId++);
 
-            if (CurrentTip != null)
+            // if there is a tip with >= 1.5 seconds left, queue it back up
+            if (CurrentTip != null && CurrentTip.TimeLeft >= 1.5f)
             {
                 // Ensures the current tip will continue afterwards
                 CurrentTip.TipId = int.MinValue;
