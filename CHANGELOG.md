@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- N/A
+- Added `Player.Died` and `Player.Hurt` *past-tense* events.
+- Added new `Player.ShowTip(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)` and `Player.QueueTip(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)`
+  - `Player.ShowTip` bypasses the new tip queue.
+  - Base game tips (or mods that use the `HUDManager.DisplayTip` method) will be treated as max priority tips for compatibility.
+  - Tips now have a configurable duration in which they will stay on the screen.
+  - The host can show tips to anyone, however local clients can only show tips to themselves.
+  - The `int priority` parameter of the `QueueTip` method allows you to set a priority, where higher means it will be shown sooner.
+    - Tips will always go to the end of their equivalent priority "list" meaning tips added after another that have the same priority will be shown after the ones added previously.
+  - When a tip bypasses the queue for any reason, the currently showing tip will continue afterwards with whatever time left it had remaining as long as there were >= 1.5 seconds remaining.
+  - With this, `GameTips` class has been deprecated, but will still work as expected.
+  
 
 - ## Version [3.2.3]
 
