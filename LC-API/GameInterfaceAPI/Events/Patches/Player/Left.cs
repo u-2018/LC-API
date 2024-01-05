@@ -13,9 +13,9 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
             PlayerControllerB player = __instance.allPlayerScripts[playerObjectNumber];
             if (__instance.ClientPlayerList.ContainsKey(clientId) &&
-                Cache.Player.ConnectedPlayers.Contains(player.playerSteamId))
+                Cache.Player.ConnectedPlayers.Contains(player.actualClientId))
             {
-                Cache.Player.ConnectedPlayers.Remove(player.playerSteamId);
+                Cache.Player.ConnectedPlayers.Remove(player.actualClientId);
                 Handlers.Player.OnLeft(new LeftEventArgs(Features.Player.GetOrAdd(player)));
             }
         }
