@@ -197,24 +197,24 @@ namespace LC_API.ServerAPI
 
             LC_API.Networking.Network.RegisterMessage(
                 StringMessageRegistrationName,
-                relayToSelf: false,
-                onReceived: (ulong senderId, Data<string> data) => GetString(data.Value, data.Signature));
+                false,
+                (ulong senderId, Data<string> data) => GetString(data.Value, data.Signature));
             LC_API.Networking.Network.RegisterMessage(
                 ListStringMessageRegistrationName,
-                relayToSelf: false,
-                onReceived: (ulong senderId, Data<string> data) => GetListString(data.Value.Split('\n').ToList(), data.Signature));
+                false,
+                (ulong senderId, Data<string> data) => GetListString(data.Value.Split('\n').ToList(), data.Signature));
             LC_API.Networking.Network.RegisterMessage(
                 IntMessageRegistrationName,
-                relayToSelf: false,
-                onReceived: (ulong senderId, Data<int> data) => GetInt(data.Value, data.Signature));
+                false,
+                (ulong senderId, Data<int> data) => GetInt(data.Value, data.Signature));
             LC_API.Networking.Network.RegisterMessage(
                 FloatMessageRegistrationName,
-                relayToSelf: false,
-                onReceived: (ulong senderId, Data<float> data) => GetFloat(data.Value, data.Signature));
+                false,
+                (ulong senderId, Data<float> data) => GetFloat(data.Value, data.Signature));
             LC_API.Networking.Network.RegisterMessage(
                 Vector3MessageRegistrationName,
-                relayToSelf: false,
-                onReceived: (ulong senderId, Data<Vector3> data) => GetVector3(data.Value, data.Signature));
+                false,
+                (ulong senderId, Data<Vector3> data) => GetVector3(data.Value, data.Signature));
         }
     }
 }
