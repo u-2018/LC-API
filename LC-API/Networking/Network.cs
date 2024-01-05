@@ -391,6 +391,8 @@ namespace LC_API.Networking
             SetupNetworking();
 
             RegisterAll();
+
+            ServerAPI.Networking.InitializeLegacyNetworking();
         }
 
         internal static void SetupNetworking()
