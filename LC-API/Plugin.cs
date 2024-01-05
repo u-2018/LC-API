@@ -41,6 +41,7 @@ namespace LC_API
         private ConfigEntry<bool> configOverrideModServer;
         private ConfigEntry<bool> configLegacyAssetLoading;
         private ConfigEntry<bool> configDisableBundleLoader;
+        internal static ConfigEntry<bool> configVanillaSupport;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 
@@ -52,6 +53,7 @@ namespace LC_API
             configOverrideModServer = Config.Bind("General", "Force modded server browser", false, "Should the API force you into the modded server browser?");
             configLegacyAssetLoading = Config.Bind("General", "Legacy asset bundle loading", false, "Should the BundleLoader use legacy asset loading? Turning this on may help with loading assets from older plugins.");
             configDisableBundleLoader = Config.Bind("General", "Disable BundleLoader", false, "Should the BundleLoader be turned off? Enable this if you are having problems with mods that load assets using a different method from LC_API's BundleLoader.");
+            configVanillaSupport = Config.Bind("Compatibility", "Vanilla Compatibility", false, "Allows you to join vanilla servers, but disables many networking-related things and could cause mods to not work properly.");
             CommandHandler.commandPrefix = Config.Bind("General", "Prefix", "/", "Command prefix");
 
             Log = Logger;
@@ -62,6 +64,8 @@ namespace LC_API
             {
                 ModdedServer.SetServerModdedOnly();
             }
+
+            if (configVanillaSupport.Value) Logger.LogInfo("LC_API is starting with VANILLA SUPPORT ENABLED.");
 
             Harmony = new Harmony("ModAPI");
             MethodInfo originalLobbyCreated = AccessTools.Method(typeof(GameNetworkManager), "SteamMatchmaking_OnLobbyCreated");

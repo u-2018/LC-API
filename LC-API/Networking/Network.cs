@@ -23,6 +23,9 @@ using static LC_API.GameInterfaceAPI.Events.Events;
 
 namespace LC_API.Networking
 {
+    /// <summary>
+    /// Provies an easy to use interface for UnityNetcode custom network messages.
+    /// </summary>
     public static class Network
     {
         internal const string MESSAGE_RELAY_UNIQUE_NAME = "LC_API_RELAY_MESSAGE";
@@ -107,12 +110,15 @@ namespace LC_API.Networking
         internal static void UnregisterAllMessages()
         {
 
-            foreach (string name in NetworkMessageFinalizers.Keys.ToArray())
+            foreach (string name in NetworkMessageFinalizers.Keys)
             {
-                UnregisterMessage(name);
+                UnregisterMessage(name, false);
             }
         }
 
+        /// <summary>
+        /// Registers all network messages contained in your assembly.
+        /// </summary>
         public static void RegisterAll()
         {
             // This cursed line of code comes from Harmony's PatchAll method. Thanks, Harmony
@@ -124,6 +130,10 @@ namespace LC_API.Networking
             }
         }
 
+        /// <summary>
+        /// Registers all network messages contained in the provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to register network messages from.</param>
         public static void RegisterAll(Type type)
         {
             if (type.IsClass)
@@ -196,18 +206,27 @@ namespace LC_API.Networking
             }
         }
 
-        public static void UnregisterAll()
+        /// <summary>
+        /// Unregisters all network messages contained in your assembly.
+        /// </summary>
+        /// <param name="andRemoveHandler">Wheter or not to prevent the handler from being re-registered when a new game is joined.</param>
+        public static void UnregisterAll(bool andRemoveHandler = true)
         {
             // This cursed line of code comes from Harmony's PatchAll method. Thanks, Harmony
             var m = new StackTrace().GetFrame(1).GetMethod();
             var assembly = m.ReflectedType.Assembly;
             foreach (Type type in AccessTools.GetTypesFromAssembly(assembly))
             {
-                UnregisterAll(type);
+                UnregisterAll(type, andRemoveHandler);
             }
         }
-        
-        public static void UnregisterAll(Type type)
+
+        /// <summary>
+        /// Unregisters all network messages contained in the provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to unregister all network messages of.</param>
+        /// <param name="andRemoveHandler">Wheter or not to prevent the handler from being re-registered when a new game is joined.</param>
+        public static void UnregisterAll(Type type, bool andRemoveHandler = true)
         {
             if (type.IsClass)
             {
@@ -215,7 +234,7 @@ namespace LC_API.Networking
 
                 if (networkMessage != null)
                 {
-                    UnregisterMessage(networkMessage.UniqueName);
+                    UnregisterMessage(networkMessage.UniqueName, andRemoveHandler);
                 }
                 else
                 {
@@ -224,7 +243,7 @@ namespace LC_API.Networking
                         networkMessage = method.GetCustomAttribute<NetworkMessage>();
                         if (networkMessage != null)
                         {
-                            UnregisterMessage(networkMessage.UniqueName);
+                            UnregisterMessage(networkMessage.UniqueName, andRemoveHandler);
                         }
                     }
                 }
@@ -276,9 +295,11 @@ namespace LC_API.Networking
         /// Unregisters a network message.
         /// </summary>
         /// <param name="uniqueName">The name of the message to unregister.</param>
-        public static void UnregisterMessage(string uniqueName)
+        /// <param name="andRemoveHandler">Wheter or not to prevent the handler from being re-registered when a new game is joined.</param>
+        public static void UnregisterMessage(string uniqueName, bool andRemoveHandler = true)
         {
-            if (NetworkMessageFinalizers.Remove(uniqueName))
+            if ((!andRemoveHandler && NetworkMessageFinalizers.ContainsKey(uniqueName)) 
+                || (andRemoveHandler && NetworkMessageFinalizers.Remove(uniqueName))) 
             {
                 NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler(uniqueName);
             }
@@ -349,7 +370,7 @@ namespace LC_API.Networking
                         {
                             writer.WriteValueSafe(serialized);
 
-                            NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(wrapped.UniqueName, writer);
+                            NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(wrapped.UniqueName, writer, NetworkDelivery.ReliableFragmentedSequenced);
                         }
                     });
                 }
@@ -370,6 +391,8 @@ namespace LC_API.Networking
             SetupNetworking();
 
             RegisterAll();
+
+            ServerAPI.Networking.InitializeLegacyNetworking();
         }
 
         internal static void SetupNetworking()
@@ -405,11 +428,14 @@ namespace LC_API.Networking
         /// </summary>
         public bool RelayToSelf { get; }
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
         public NetworkMessage(string uniqueName, bool relayToSelf = false)
         {
             UniqueName = uniqueName;
             RelayToSelf = relayToSelf;
         }
+#pragma warning restore
     }
 
     /// <summary>
@@ -479,11 +505,11 @@ namespace LC_API.Networking
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer, NetworkDelivery.ReliableFragmentedSequenced);
                 }
                 else
                 {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer);
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer, NetworkDelivery.ReliableFragmentedSequenced);
                 }
             }
         }
@@ -585,11 +611,11 @@ namespace LC_API.Networking
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer);
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessageToAll(UniqueName, writer, NetworkDelivery.ReliableFragmentedSequenced);
                 }
                 else
                 {
-                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer);
+                    NetworkManager.Singleton.CustomMessagingManager.SendNamedMessage(Network.MESSAGE_RELAY_UNIQUE_NAME, Player.HostPlayer.ClientId, writer, NetworkDelivery.ReliableFragmentedSequenced);
                 }
             }
         }

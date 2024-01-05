@@ -18,6 +18,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
         private static void Postfix(GameNetworkManager __instance)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             if (!File.Exists(BUNDLE_PATH))
             {
                 throw new Exception("Networking bundle not found at expected path.");

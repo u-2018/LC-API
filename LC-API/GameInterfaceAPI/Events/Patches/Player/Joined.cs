@@ -12,6 +12,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     {
         private static void Prefix(ulong clientId, int assignedPlayerObjectId)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
             {
                 PlayerControllerB playerController = StartOfRound.Instance.allPlayerScripts[assignedPlayerObjectId];
@@ -21,6 +23,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
         private static void Postfix(ulong clientId, int assignedPlayerObjectId)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             PlayerControllerB playerController = StartOfRound.Instance.allPlayerScripts[assignedPlayerObjectId];
             if (!Cache.Player.ConnectedPlayers.Contains(clientId))
             {
@@ -59,6 +63,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     {
         private static void Postfix(PlayerControllerB __instance)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
             {
                 Features.Player.GetOrAdd(__instance).NetworkClientId.Value = __instance.actualClientId;

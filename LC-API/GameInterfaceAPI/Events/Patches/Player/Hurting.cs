@@ -13,6 +13,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static HurtingEventArgs CallEvent(PlayerControllerB playerController, int damage, bool hasSFX, CauseOfDeath causeOfDeath,
             int deathAnimation, bool fallDamage, Vector3 force)
         {
+            if (Plugin.configVanillaSupport.Value) return null;
+
             HurtingEventArgs ev = new HurtingEventArgs(Features.Player.GetOrAdd(playerController), damage, hasSFX,
                 causeOfDeath, deathAnimation, fallDamage, force);
 
@@ -29,6 +31,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB),
                 nameof(PlayerControllerB.AllowPlayerDeath)))) + offset;
 
+            Label nullLabel = generator.DefineLabel();
             Label notAllowedLabel = generator.DefineLabel();
             Label skipLabel = generator.DefineLabel();
 
@@ -44,6 +47,11 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Ldarg, 7),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Hurting), nameof(Hurting.CallEvent))),
                 new CodeInstruction(OpCodes.Dup),
+
+                // if (ev is null) -> base game code
+                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
+
                 // if (!ev.IsAllwed) return
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(HurtingEventArgs), nameof(HurtingEventArgs.IsAllowed))),
                 new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
@@ -78,6 +86,9 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 // force = ev.Force
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(HurtingEventArgs), nameof(HurtingEventArgs.Force))),
                 new CodeInstruction(OpCodes.Starg_S, 7),
+                new CodeInstruction(OpCodes.Br, skipLabel),
+                new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
+                new CodeInstruction(OpCodes.Pop),
                 new CodeInstruction(OpCodes.Br, skipLabel),
                 new CodeInstruction(OpCodes.Pop).WithLabels(notAllowedLabel),
                 new CodeInstruction(OpCodes.Ret)
