@@ -6,7 +6,6 @@ using Unity.Netcode;
 using UnityEngine;
 using LC_API.Exceptions;
 using Steamworks.Ugc;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -99,6 +98,9 @@ namespace LC_API.GameInterfaceAPI.Features
             set
             {
                 PlayerController.playerUsername = value;
+                PlayerController.usernameBillboardText.text = value;
+                StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = value;
+                LocalPlayer.PlayerController.quickMenuManager.playerListSlots[ClientId].usernameHeader.text = value;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
@@ -125,6 +127,8 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             PlayerController.playerUsername = name;
             PlayerController.usernameBillboardText.text = name;
+            StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = name;
+            LocalPlayer.PlayerController.quickMenuManager.playerListSlots[ClientId].usernameHeader.text = name;
         }
 
         /// <summary>

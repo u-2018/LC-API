@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- N/A
+- Fixed `Player.Username` not updating on the radar or escape menu.
 
 ## Version [3.3.0]
 
