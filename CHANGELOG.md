@@ -17,9 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Tips will always go to the end of their equivalent priority "list" meaning tips added after another that have the same priority will be shown after the ones added previously.
   - When a tip bypasses the queue for any reason, the currently showing tip will continue afterwards with whatever time left it had remaining as long as there were >= 1.5 seconds remaining.
   - With this, `GameTips` class has been deprecated, but will still work as expected.
-  
+- Fixed `Player.Username` not updating on the radar or escape menu.  
 
-- ## Version [3.2.3]
+## Version [3.3.0]
+
+- Fixed an issue where the old networking (`ServerAPI.Networking`) would not work properly.
+- Fixed issues with the build workflow.
+- Fixed the file structure in the README for manual installation.
+- Fixed an issue where network messages wouldn't properly be re-registered when rejoining.
+- Added a "Vanilla Support" config option that will disable installing the network bundle so you can play on vanilla servers.
+  - The `Player` and `Item` classes will be completely disabled and this will probably break mods! Please just consider everyone in your game having LC API.
+
+## Version [3.2.4]
+
+- Fixed an issue with the `Player.Joined` and `Player.Left` events where they wouldn't work on LAN due to not having a steam ID.
+
+## Version [3.2.3]
 
 - Fixed package references being added as transitive dependencies when using the NuGet package.
 

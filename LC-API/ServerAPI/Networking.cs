@@ -1,6 +1,6 @@
-﻿using LC_API.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -10,9 +10,17 @@ namespace LC_API.ServerAPI
     /// Networking solution to broadcast and receive data over the server. Use the delegates GetString, GetInt, GetFloat, and GetVector3 for receiving data. Note that the local player will not receive data that they broadcast.
     /// <para>The second parameter for each of the events is the signature string.</para>
     /// </summary>
-    [Obsolete("ServerAPI.Networking is obsolete and will be removed in future versions. Use LC_API.Networking.")]
+    [Obsolete("ServerAPI.Networking is obsolete and will be removed in future versions. Use LC_API.Networking.Network.")]
     public static class Networking
     {
+        private const string StringMessageRegistrationName = "LCAPI_NET_LEGACY_STRING";
+        private const string ListStringMessageRegistrationName = "LCAPI_NET_LEGACY_LISTSTRING";
+        private const string IntMessageRegistrationName = "LCAPI_NET_LEGACY_INT";
+        private const string FloatMessageRegistrationName = "LCAPI_NET_LEGACY_FLOAT";
+        private const string Vector3MessageRegistrationName = "LCAPI_NET_LEGACY_VECTOR3";
+
+        private const string SyncVarMessageRegistrationName = "LCAPI_NET_LEGACY_SYNCVAR_SET";
+
         /// <summary>
         /// Delegate for receiving a string value. Second parameter is the signature.
         /// <para/> (that signature would have been the signature given to <see cref="Broadcast(string, string)"/>, for example)
@@ -51,7 +59,7 @@ namespace LC_API.ServerAPI
                 Plugin.Log.LogError("Invalid character in broadcasted string event! ( / )");
                 return;
             }
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDstring.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            LC_API.Networking.Network.Broadcast(StringMessageRegistrationName, new Data<string>(signature: signature, value: data));
         }
 
         /// <summary>
@@ -74,7 +82,7 @@ namespace LC_API.ServerAPI
                 }
                 dataFormatted += item + "\n";
             }
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDlistString.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            LC_API.Networking.Network.Broadcast(ListStringMessageRegistrationName, new Data<string>(signature: signature, value: dataFormatted));
         }
 
         /// <summary>
@@ -82,7 +90,7 @@ namespace LC_API.ServerAPI
         /// </summary>
         public static void Broadcast(int data, string signature)
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDint.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            LC_API.Networking.Network.Broadcast(IntMessageRegistrationName, new Data<int>(signature: signature, value: data));
         }
 
         /// <summary>
@@ -90,15 +98,15 @@ namespace LC_API.ServerAPI
         /// </summary>
         public static void Broadcast(float data, string signature)
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDfloat.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            LC_API.Networking.Network.Broadcast(FloatMessageRegistrationName, new Data<float>(signature: signature, value: data));
         }
 
         /// <summary>
         /// Send data across the network. The signature is an identifier for use when receiving data.
         /// </summary>
-        public static void Broadcast(UnityEngine.Vector3 data, string signature)
+        public static void Broadcast(Vector3 data, string signature)
         {
-            HUDManager.Instance.AddTextToChatOnServer("<size=0>NWE/" + data + "/" + signature + "/" + NetworkBroadcastDataType.BDvector3.ToString() + "/" + GameNetworkManager.Instance.localPlayerController.playerClientId + "/" + "</size>");
+            LC_API.Networking.Network.Broadcast(Vector3MessageRegistrationName, new Data<Vector3>(signature: signature, value: data));
         }
 
         /// <summary>
@@ -127,7 +135,7 @@ namespace LC_API.ServerAPI
                 List<string> syncString = new List<string>();
                 syncString.Add(name);
                 syncString.Add(value);
-                Broadcast(syncString, "LCAPI_NET_SYNCVAR_SET");
+                Broadcast(syncString, SyncVarMessageRegistrationName);
             }
             else
             {
@@ -149,7 +157,7 @@ namespace LC_API.ServerAPI
 
         internal static void LCAPI_NET_SYNCVAR_SET(List<string> list, string arg2)
         {
-            if (arg2 == "LCAPI_NET_SYNCVAR_SET")
+            if (arg2 == SyncVarMessageRegistrationName)
             {
                 SetSyncVariableB(list[0], list[1]);
             }
@@ -171,36 +179,42 @@ namespace LC_API.ServerAPI
             }
         }
 
-        private static void GotString(string data, string signature)
+        private sealed class Data<T>
         {
-        }
+            public readonly string Signature;
+            public readonly T Value;
 
-        private static void GotInt(int data, string signature)
-        {
-        }
-
-        private static void GotFloat(float data, string signature)
-        {
-        }
-
-        private static void GotVector3(UnityEngine.Vector3 data, string signature)
-        {
-        }
-
-        internal static void SetupNetworking()
-        {
-            foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
+            public Data(string signature, T value)
             {
-                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-                foreach (var method in methods)
-                {
-                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
-                    if (attributes.Length > 0)
-                    {
-                        method.Invoke(null, null);
-                    }
-                }
+                Signature = signature;
+                Value = value;
             }
+        }
+
+        internal static void InitializeLegacyNetworking()
+        {
+            GetListString += LCAPI_NET_SYNCVAR_SET;
+
+            LC_API.Networking.Network.RegisterMessage(
+                StringMessageRegistrationName,
+                false,
+                (ulong senderId, Data<string> data) => GetString(data.Value, data.Signature));
+            LC_API.Networking.Network.RegisterMessage(
+                ListStringMessageRegistrationName,
+                false,
+                (ulong senderId, Data<string> data) => GetListString(data.Value.Split('\n').ToList(), data.Signature));
+            LC_API.Networking.Network.RegisterMessage(
+                IntMessageRegistrationName,
+                false,
+                (ulong senderId, Data<int> data) => GetInt(data.Value, data.Signature));
+            LC_API.Networking.Network.RegisterMessage(
+                FloatMessageRegistrationName,
+                false,
+                (ulong senderId, Data<float> data) => GetFloat(data.Value, data.Signature));
+            LC_API.Networking.Network.RegisterMessage(
+                Vector3MessageRegistrationName,
+                false,
+                (ulong senderId, Data<Vector3> data) => GetVector3(data.Value, data.Signature));
         }
     }
 }

@@ -21,14 +21,14 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             }
         }
 
-        private static void Postfix(int assignedPlayerObjectId)
+        private static void Postfix(ulong clientId, int assignedPlayerObjectId)
         {
             if (Plugin.configVanillaSupport.Value) return;
 
             PlayerControllerB playerController = StartOfRound.Instance.allPlayerScripts[assignedPlayerObjectId];
-            if (!Cache.Player.ConnectedPlayers.Contains(playerController.playerSteamId))
+            if (!Cache.Player.ConnectedPlayers.Contains(clientId))
             {
-                Cache.Player.ConnectedPlayers.Add(playerController.playerSteamId);
+                Cache.Player.ConnectedPlayers.Add(clientId);
 
                 playerController.StartCoroutine(JoinedCoroutine(playerController));
             }
@@ -70,9 +70,9 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 Features.Player.GetOrAdd(__instance).NetworkClientId.Value = __instance.actualClientId;
             }
 
-            if (!Cache.Player.ConnectedPlayers.Contains(__instance.playerSteamId))
+            if (!Cache.Player.ConnectedPlayers.Contains(__instance.actualClientId))
             {
-                Cache.Player.ConnectedPlayers.Add(__instance.playerSteamId);
+                Cache.Player.ConnectedPlayers.Add(__instance.actualClientId);
 
                 __instance.StartCoroutine(Joined.JoinedCoroutine(__instance));
             }
