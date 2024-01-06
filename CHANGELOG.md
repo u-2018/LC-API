@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The `int priority` parameter of the `QueueTip` method allows you to set a priority, where higher means it will be shown sooner.
     - Tips will always go to the end of their equivalent priority "list" meaning tips added after another that have the same priority will be shown after the ones added previously.
   - When a tip bypasses the queue for any reason, the currently showing tip will continue afterwards with whatever time left it had remaining as long as there were >= 1.5 seconds remaining.
+    - This is the only "breaking" change as it will also affect tips shown by other plugins using other methods, which usually won't requeue the current tip. This will be monitored in case it needs to be removed.
   - With this, `GameTips` class has been deprecated, but will still work as expected.
 - Fixed `Player.Username` not updating on the radar or escape menu.  
 
