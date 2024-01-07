@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - This is the only "breaking" change as it will also affect tips shown by other plugins using other methods, which usually won't requeue the current tip. This will be monitored in case it needs to be removed.
   - With this, `GameTips` class has been deprecated, but will still work as expected.
 - Fixed `Player.Username` not updating on the radar or escape menu.  
+- Added `Player.PlayerObjectId` which returns the player's specified player object index in places like `allPlayerScripts`.
+
+## Version [3.3.0]
+
+- Fixed an issue where the old networking (`ServerAPI.Networking`) would not work properly.
+- Fixed issues with the build workflow.
+- Fixed the file structure in the README for manual installation.
+- Fixed an issue where network messages wouldn't properly be re-registered when rejoining.
+- Added a "Vanilla Support" config option that will disable installing the network bundle so you can play on vanilla servers.
+  - The `Player` and `Item` classes will be completely disabled and this will probably break mods! Please just consider everyone in your game having LC API.
 
 ## Version [3.3.0]
 

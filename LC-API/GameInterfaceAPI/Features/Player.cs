@@ -65,6 +65,11 @@ namespace LC_API.GameInterfaceAPI.Features
         public ulong ClientId => PlayerController.actualClientId;
 
         /// <summary>
+        /// Gets the <see cref="Player"/>'s player object id. This should be used when accessing allPlayerScripts, or any other array that's index correlates to a player.
+        /// </summary>
+        public int PlayerObjectId => StartOfRound.Instance.ClientPlayerList[ClientId];
+
+        /// <summary>
         /// Gets the <see cref="Player"/>'s steam id.
         /// </summary>
         public ulong SteamId => PlayerController.playerSteamId;
@@ -110,7 +115,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 PlayerController.playerUsername = value;
                 PlayerController.usernameBillboardText.text = value;
                 StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = value;
-                LocalPlayer.PlayerController.quickMenuManager.playerListSlots[ClientId].usernameHeader.text = value;
+                LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = value;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
@@ -138,7 +143,7 @@ namespace LC_API.GameInterfaceAPI.Features
             PlayerController.playerUsername = name;
             PlayerController.usernameBillboardText.text = name;
             StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = name;
-            LocalPlayer.PlayerController.quickMenuManager.playerListSlots[ClientId].usernameHeader.text = name;
+            LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = name;
         }
 
         /// <summary>
