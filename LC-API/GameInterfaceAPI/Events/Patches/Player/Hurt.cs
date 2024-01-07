@@ -1,6 +1,7 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
@@ -15,10 +16,14 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         {
             if (Plugin.configVanillaSupport.Value) return null;
 
-            HurtingEventArgs ev = new HurtingEventArgs(Features.Player.GetOrAdd(playerController), damage, hasSFX,
+            Features.Player player = Features.Player.GetOrAdd(playerController);
+
+            HurtingEventArgs ev = new HurtingEventArgs(player, damage, hasSFX,
                 causeOfDeath, deathAnimation, fallDamage, force);
 
             Handlers.Player.OnHurting(ev);
+
+            player.CallHurtingOnOtherClients(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
 
             return ev;
         }
@@ -26,10 +31,14 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static HurtEventArgs CallHurtEvent(PlayerControllerB playerController, int damage, bool hasSFX, CauseOfDeath causeOfDeath,
             int deathAnimation, bool fallDamage, Vector3 force)
         {
-            HurtEventArgs ev = new HurtEventArgs(Features.Player.GetOrAdd(playerController), damage, hasSFX,
+            Features.Player player = Features.Player.GetOrAdd(playerController);
+
+            HurtEventArgs ev = new HurtEventArgs(player, damage, hasSFX,
                 causeOfDeath, deathAnimation, fallDamage, force);
 
             Handlers.Player.OnHurt(ev);
+
+            player.CallHurtOnOtherClients(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
 
             return ev;
         }
@@ -37,17 +46,19 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             List<CodeInstruction> newInstructions = new List<CodeInstruction>(instructions);
-            const int offset = 3;
 
-            int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB),
-                nameof(PlayerControllerB.AllowPlayerDeath)))) + offset;
-
-            Label nullLabel = generator.DefineLabel();
-            Label notAllowedLabel = generator.DefineLabel();
-            Label skipLabel = generator.DefineLabel();
-
-            CodeInstruction[] inst = new CodeInstruction[]
             {
+                const int offset = 3;
+
+                int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB),
+                    nameof(PlayerControllerB.AllowPlayerDeath)))) + offset;
+
+                Label nullLabel = generator.DefineLabel();
+                Label notAllowedLabel = generator.DefineLabel();
+                Label skipLabel = generator.DefineLabel();
+
+                CodeInstruction[] inst = new CodeInstruction[]
+                {
                 // HurtingEventArgs ev = Hurt.CallHurtingEvent(PlayerControllerB, int, bool, CauseOfDeath, int, bool, Vector3)
                 new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
                 new CodeInstruction(OpCodes.Ldarg_1),
@@ -63,7 +74,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Dup),
                 new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
 
-                // if (!ev.IsAllwed) return
+                // if (!ev.IsAllowed) return
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(HurtingEventArgs), nameof(HurtingEventArgs.IsAllowed))),
                 new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
 
@@ -103,20 +114,22 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Br, skipLabel),
                 new CodeInstruction(OpCodes.Pop).WithLabels(notAllowedLabel),
                 new CodeInstruction(OpCodes.Ret)
-            };
+                };
 
-            newInstructions.InsertRange(index, inst);
+                newInstructions.InsertRange(index, inst);
 
-            newInstructions[index + inst.Length].labels.Add(skipLabel);
+                newInstructions[index + inst.Length].labels.Add(skipLabel);
+            }
 
-            const int offset2 = 1;
+            {
+                const int offset = 1;
 
-            index = newInstructions.FindLastIndex(i => i.opcode == OpCodes.Stfld
-                && i.OperandIs(AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.health)))) + offset2;
+                int index = newInstructions.FindLastIndex(i => i.opcode == OpCodes.Stfld
+                    && i.OperandIs(AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.health)))) + offset;
 
-            newInstructions.InsertRange(index, new CodeInstruction[]
-            { 
-                // HurtEventArgs ev = Hurt.CallHurtEvent(PlayerControllerB, int, bool, CauseOfDeath, int, bool, Vector3)
+                newInstructions.InsertRange(index, new CodeInstruction[]
+                {
+                    // HurtEventArgs ev = Hurt.CallHurtEvent(PlayerControllerB, int, bool, CauseOfDeath, int, bool, Vector3)
                 new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldarg_2),
@@ -151,7 +164,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 // force = ev.Force
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(HurtingEventArgs), nameof(HurtingEventArgs.Force))),
                 new CodeInstruction(OpCodes.Starg_S, 7),
-            });
+                });
+            }
 
             for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];
         }

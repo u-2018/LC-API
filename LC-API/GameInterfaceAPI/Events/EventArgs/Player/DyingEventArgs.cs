@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using LC_API.Exceptions;
+using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
@@ -33,9 +34,9 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         public int DeathAnimation { get; set; }
 
         /// <summary>
-        /// Gets or sets whether this damage is allowed to occur.
+        /// Gets or sets whether this death is allowed to occur.
         /// </summary>
-        public bool IsAllowed { get; set; } = true;
+        public bool IsAllowed { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DyingEventArgs"/> class.

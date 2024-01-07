@@ -482,6 +482,7 @@ namespace LC_API.GameInterfaceAPI.Features
             return null;
         }
 
+        #region Unity related things
         private void Awake()
         {
             GrabbableObject = GetComponent<GrabbableObject>();
@@ -513,5 +514,21 @@ namespace LC_API.GameInterfaceAPI.Features
 
             base.OnDestroy();
         }
+        #endregion
+
+        #region Item getters
+        public static Item Get(GrabbableObject grabbableObject)
+        {
+            if (Dictionary.TryGetValue(grabbableObject, out Item item))
+                return item;
+
+            return null;
+        }
+
+        public static bool TryGet(GrabbableObject grabbableObject, out Item item)
+        {
+            return Dictionary.TryGetValue(grabbableObject, out item);
+        }
+        #endregion
     }
 }

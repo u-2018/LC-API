@@ -50,7 +50,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Dup),
                 new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
 
-                // if (!ev.IsAllwed) return
+                // if (!ev.IsAllowed) return
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DyingEventArgs), nameof(DyingEventArgs.IsAllowed))),
                 new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
 
@@ -88,6 +88,24 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             newInstructions[index + inst.Length].labels.Add(skipLabel);
 
             for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.KillPlayerClientRpc))]
+    internal class Died
+    {
+        private static void Prefix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
+            int causeOfDeath, int deathAnimation)
+        {
+            Handlers.Player.OnDying(new DyingEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
+                spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
+        }
+
+        private static void Postfix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity, 
+            int causeOfDeath, int deathAnimation)
+        {
+            Handlers.Player.OnDied(new DiedEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
+                spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
         }
     }
 }

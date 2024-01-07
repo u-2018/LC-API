@@ -104,6 +104,9 @@ BepinEx
 
 # TODO
 - Picking up and dropping item events
+  - Including `Player.StartGrabbingItem`, `Player.GrabbingItem`, `Player.GrabbedItem`, `Player.DroppingItem`, and `Player.DroppedItem`
+    - The present-tense versions are cancellable, `StartGrabbingItem`, `GrabbingItem` and `DroppingItem`.
+    - `StartGrabbingItem` exists for items that take time to pickup.
 - Using item events
   - For shovels, that's hitting
   - For boomboxes, that's activating music

@@ -106,7 +106,19 @@ namespace LC_API
 
             Network.Init();
             Events.Patch(Harmony);
+
+            GameInterfaceAPI.Events.Handlers.Player.StartGrabbingItem += (GameInterfaceAPI.Events.EventArgs.Player.StartGrabbingItemEventArgs ev) =>
+            {
+                Log.LogInfo("PLAYER STARTED GRABBING ITEM");
+            };
+
+            ClientAPI.CommandHandler.RegisterCommand("test", (string[] args) =>
+            {
+                test = !test;
+            });
         }
+
+        private static bool test = false;
 
         internal void Start()
         {
