@@ -1,10 +1,10 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
-using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Text;
+using Unity.Netcode;
+using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 {
@@ -111,6 +111,62 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 newInstructions.InsertRange(index, inst);
 
                 newInstructions[index + inst.Length].labels.Add(skipLabel);
+            }
+
+            for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.GrabObjectClientRpc))]
+    internal class GrabbedItem
+    {
+        internal static void CallEvent(PlayerControllerB player)
+        {
+            Handlers.Player.OnGrabbedItem(new GrabbedItemEventArgs(Features.Player.GetOrAdd(player),
+                Features.Item.Get(player.currentlyHeldObjectServer)));
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            List<CodeInstruction> newInstructions = new List<CodeInstruction>(instructions);
+
+            {
+                const int offset = 1;
+
+                int index = newInstructions.FindLastIndex(i => i.opcode == OpCodes.Callvirt &&
+                    i.OperandIs(AccessTools.Method(typeof(AudioSource),
+                        nameof(AudioSource.PlayOneShot), new[] { typeof(AudioClip), typeof(float) }))) + offset;
+
+                CodeInstruction[] inst = new CodeInstruction[]
+                {
+                    // GrabbedItem.CallEvent(PlayerControllerB)
+                    new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(GrabbedItem), nameof(GrabbedItem.CallEvent))),
+                };
+
+                newInstructions.InsertRange(index, inst);
+            }
+
+            {
+                const int offset = 1;
+
+                int index = newInstructions.FindIndex(i => i.opcode == OpCodes.Call &&
+                    i.OperandIs(AccessTools.PropertyGetter(typeof(NetworkBehaviour), nameof(NetworkBehaviour.IsOwner)))) + offset;
+
+                Label skipToLabel = generator.DefineLabel();
+
+                newInstructions[index].operand = skipToLabel;
+
+                CodeInstruction[] inst = new CodeInstruction[]
+                {
+                    new CodeInstruction(OpCodes.Br, newInstructions[newInstructions.Count - 1].labels[0]),
+
+                    // GrabbedItem.CallEvent(PlayerControllerB)
+                    new CodeInstruction(OpCodes.Ldarg_0).WithLabels(skipToLabel),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(GrabbedItem), nameof(GrabbedItem.CallEvent))),
+                };
+
+                newInstructions.InsertRange(newInstructions.Count - 1, inst);
             }
 
             for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];

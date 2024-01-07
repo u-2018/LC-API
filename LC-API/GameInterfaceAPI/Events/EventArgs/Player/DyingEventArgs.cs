@@ -1,5 +1,4 @@
-﻿using LC_API.Exceptions;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {

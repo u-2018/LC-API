@@ -1,7 +1,5 @@
-﻿using BepInEx;
-using HarmonyLib;
+﻿using HarmonyLib;
 using LC_API.BundleAPI;
-using LC_API.Networking;
 using System;
 using System.IO;
 using Unity.Netcode;

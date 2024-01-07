@@ -1,11 +1,8 @@
-﻿using GameNetcodeStuff;
-using LC_API.Exceptions;
-using System;
+﻿using LC_API.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -391,7 +388,7 @@ namespace LC_API.GameInterfaceAPI.Features
         [ClientRpc]
         private void InitializeScrapClientRpc()
         {
-            if (GrabbableObject.gameObject.TryGetComponent(out MeshFilter filter) 
+            if (GrabbableObject.gameObject.TryGetComponent(out MeshFilter filter)
                 && ItemProperties.meshVariants != null && ItemProperties.meshVariants.Length != 0)
             {
                 if (RoundManager.Instance.ScrapValuesRandom != null)
@@ -400,7 +397,7 @@ namespace LC_API.GameInterfaceAPI.Features
                     filter.mesh = ItemProperties.meshVariants[0];
             }
 
-            if (GrabbableObject.gameObject.TryGetComponent(out MeshRenderer renderer) 
+            if (GrabbableObject.gameObject.TryGetComponent(out MeshRenderer renderer)
                 && ItemProperties.materialVariants != null && ItemProperties.materialVariants.Length != 0)
             {
                 if (RoundManager.Instance.ScrapValuesRandom != null)

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
+﻿namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
     public class StartGrabbingItemEventArgs : System.EventArgs
     {

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Added `Player.Died` and `Player.Hurt` *past-tense* events.
+- Added `Player.StartGrabbingItem` and `Player.GrabbingItem` and `Player.GrabbedItem` events.
 - Added new `Player.ShowTip(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)` and `Player.QueueTip(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)`
   - `Player.ShowTip` bypasses the new tip queue.
   - Base game tips (or mods that use the `HUDManager.DisplayTip` method) will be treated as max priority tips for compatibility.

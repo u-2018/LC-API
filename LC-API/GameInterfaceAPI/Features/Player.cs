@@ -1,10 +1,10 @@
 ﻿using GameNetcodeStuff;
+using LC_API.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using LC_API.Exceptions;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -744,6 +744,58 @@ namespace LC_API.GameInterfaceAPI.Features
         }
         #endregion
 
+        #region Event stuff
+        internal void CallHurtingOnOtherClients(int damage, bool hasSFX, CauseOfDeath causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            CallHurtingOnOtherClientsServerRpc(damage, hasSFX, (int)causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallHurtingOnOtherClientsServerRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force, ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallHurtingOnOtherClientsClientRpc(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ClientRpc]
+        private void CallHurtingOnOtherClientsClientRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnHurting(new Events.EventArgs.Player.HurtingEventArgs(this, damage, hasSFX,
+                (CauseOfDeath)causeOfDeath, deathAnimation, fallDamage, force));
+        }
+
+        internal void CallHurtOnOtherClients(int damage, bool hasSFX, CauseOfDeath causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            CallHurtOnOtherClientsServerRpc(damage, hasSFX, (int)causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallHurtOnOtherClientsServerRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force, ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallHurtOnOtherClientsClientRpc(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ClientRpc]
+        private void CallHurtOnOtherClientsClientRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnHurt(new Events.EventArgs.Player.HurtEventArgs(this, damage, hasSFX,
+                (CauseOfDeath)causeOfDeath, deathAnimation, fallDamage, force));
+        }
+        #endregion
+
         /// <summary>
         /// Encapsulates a <see cref="Player"/>'s inventory to provide useful tools to it.
         /// </summary>
@@ -763,7 +815,8 @@ namespace LC_API.GameInterfaceAPI.Features
             /// <summary>
             /// Gets the <see cref="Player"/>'s current item slot.
             /// </summary>
-            public int CurrentSlot {
+            public int CurrentSlot
+            {
                 get
                 {
                     return Player.PlayerController.currentItemSlot;
@@ -775,7 +828,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 }
             }
 
-            [ServerRpc]
+            [ServerRpc(RequireOwnership = false)]
             private void SetSlotServerRpc(int slot, ServerRpcParams serverRpcParams = default)
             {
                 if (serverRpcParams.Receive.SenderClientId != Player.ClientId) return;
@@ -972,7 +1025,7 @@ namespace LC_API.GameInterfaceAPI.Features
                     if (!Player.IsLocalPlayer)
                     {
                         item.GrabbableObject.parentObject = Player.PlayerController.serverItemHolder;
-                    } 
+                    }
                     else
                     {
                         item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;

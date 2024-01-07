@@ -1,21 +1,12 @@
-﻿using BepInEx;
-using BepInEx.Bootstrap;
-using HarmonyLib;
-using LC_API.Data;
-using LC_API.Extensions;
+﻿using HarmonyLib;
 using LC_API.GameInterfaceAPI.Events;
-using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
-using LC_API.GameInterfaceAPI.Events.Patches.Player;
 using LC_API.GameInterfaceAPI.Features;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using Unity.Netcode;
 using UnityEngine;
@@ -298,8 +289,8 @@ namespace LC_API.Networking
         /// <param name="andRemoveHandler">Wheter or not to prevent the handler from being re-registered when a new game is joined.</param>
         public static void UnregisterMessage(string uniqueName, bool andRemoveHandler = true)
         {
-            if ((!andRemoveHandler && NetworkMessageFinalizers.ContainsKey(uniqueName)) 
-                || (andRemoveHandler && NetworkMessageFinalizers.Remove(uniqueName))) 
+            if ((!andRemoveHandler && NetworkMessageFinalizers.ContainsKey(uniqueName))
+                || (andRemoveHandler && NetworkMessageFinalizers.Remove(uniqueName)))
             {
                 NetworkManager.Singleton.CustomMessagingManager.UnregisterNamedMessageHandler(uniqueName);
             }
@@ -319,7 +310,7 @@ namespace LC_API.Networking
                 if (handler is NetworkMessageFinalizer<T> genericHandler)
                 {
                     genericHandler.Send(@object);
-                } 
+                }
                 else
                 {
                     throw new Exception($"Network handler for {uniqueName} was not broadcast with the right type!");
@@ -539,7 +530,7 @@ namespace LC_API.Networking
             {
                 yield return new WaitForSeconds(0.1f);
                 timesWaited++;
-                
+
                 if (timesWaited % 20 == 0)
                 {
                     Plugin.Log.LogWarning($"Waiting to send network message. Waiting on host?: {Player.HostPlayer == null} Waiting on local player?: {Player.LocalPlayer == null}");

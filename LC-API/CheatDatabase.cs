@@ -1,9 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
-using LC_API.GameInterfaceAPI;
 using LC_API.GameInterfaceAPI.Features;
 using LC_API.Networking;
-using LC_API.ServerAPI;
 using System.Collections.Generic;
 
 namespace LC_API

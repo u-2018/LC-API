@@ -49,6 +49,11 @@ namespace LC_API.GameInterfaceAPI.Events.Handlers
         public static event CustomEventHandler<GrabbingItemEventArgs> GrabbingItem;
 
         /// <summary>
+        /// Invoked after a <see cref="Features.Player"/> completes a grab on an item.
+        /// </summary>
+        public static event CustomEventHandler<GrabbedItemEventArgs> GrabbedItem;
+
+        /// <summary>
         /// Called after a <see cref="Features.Player"/> joined the server, including the host.
         /// </summary>
         /// <param name="ev">The <see cref="JoinedEventArgs"/> event arguments.</param>
@@ -87,13 +92,19 @@ namespace LC_API.GameInterfaceAPI.Events.Handlers
         /// <summary>
         /// Called before a <see cref="Features.Player"/> starts grabbing an item.
         /// </summary>
-        /// <param name="ev">The <see cref="StartGrabbingItem"/> event arguments.</param>
+        /// <param name="ev">The <see cref="StartGrabbingItemEventArgs"/> event arguments.</param>
         public static void OnStartGrabbingItem(StartGrabbingItemEventArgs ev) => StartGrabbingItem.InvokeSafely(ev);
 
         /// <summary>
         /// Called before a <see cref="Features.Player"/> completes a grab on an item.
         /// </summary>
-        /// <param name="ev">The <see cref="GrabbingItem"/> event arguments.</param>
+        /// <param name="ev">The <see cref="GrabbingItemEventArgs"/> event arguments.</param>
         public static void OnGrabbingItem(GrabbingItemEventArgs ev) => GrabbingItem.InvokeSafely(ev);
+
+        /// <summary>
+        /// Called after a <see cref="Features.Player"/> completes a grab on an item.
+        /// </summary>
+        /// <param name="ev">The <see cref="GrabbedItemEventArgs"/> event arguments.</param>
+        public static void OnGrabbedItem(GrabbedItemEventArgs ev) => GrabbedItem.InvokeSafely(ev);
     }
 }

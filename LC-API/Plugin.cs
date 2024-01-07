@@ -7,10 +7,7 @@ using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
 using LC_API.ManualPatches;
 using LC_API.Networking;
-using LC_API.Networking.Serializers;
 using LC_API.ServerAPI;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -106,19 +103,7 @@ namespace LC_API
 
             Network.Init();
             Events.Patch(Harmony);
-
-            GameInterfaceAPI.Events.Handlers.Player.StartGrabbingItem += (GameInterfaceAPI.Events.EventArgs.Player.StartGrabbingItemEventArgs ev) =>
-            {
-                Log.LogInfo("PLAYER STARTED GRABBING ITEM");
-            };
-
-            ClientAPI.CommandHandler.RegisterCommand("test", (string[] args) =>
-            {
-                test = !test;
-            });
         }
-
-        private static bool test = false;
 
         internal void Start()
         {

@@ -97,11 +97,16 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Prefix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
             int causeOfDeath, int deathAnimation)
         {
-            Handlers.Player.OnDying(new DyingEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
+            Features.Player player = Features.Player.GetOrAdd(__instance);
+
+            // The local player Dying event has already been fired
+            if (player.IsLocalPlayer) return;
+
+            Handlers.Player.OnDying(new DyingEventArgs(player, bodyVelocity,
                 spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
         }
 
-        private static void Postfix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity, 
+        private static void Postfix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
             int causeOfDeath, int deathAnimation)
         {
             Handlers.Player.OnDied(new DiedEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
