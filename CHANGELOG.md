@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Fixed `Player.Username` not updating on the radar or escape menu.
 - Added `Player.PlayerObjectId` which returns the player's specified player object index in places like `allPlayerScripts`.
+
+## Version [3.3.1]
+- Fixed `Player.Username` not updating on the radar or escape menu.
+- Fixed `Player.ActiveList` not resetting.
+- Fixed `Player.Dictionary` not resetting.
 
 ## Version [3.3.0]
 
