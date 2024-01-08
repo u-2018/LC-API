@@ -123,3 +123,5 @@ BepinEx
   - Dying
   - Attacking (when the enemy attacks a player)
   - There may be ones specific to some kind of enemy as well
+- `Player.EnteringFacility` and `Player.LeavingFacility`
+  - With a bool for using fire escape

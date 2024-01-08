@@ -794,6 +794,32 @@ namespace LC_API.GameInterfaceAPI.Features
             Events.Handlers.Player.OnHurt(new Events.EventArgs.Player.HurtEventArgs(this, damage, hasSFX,
                 (CauseOfDeath)causeOfDeath, deathAnimation, fallDamage, force));
         }
+
+        internal void CallDroppingItemOnOtherClients(Item item, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, NetworkObject parentObjectTo, bool matchRotationOfParent, bool droppedInShip)
+        {
+            Plugin.Log.LogInfo(item == null);
+            CallDroppingItemOnOtherClientsServerRpc(item.NetworkObjectId, placeObject, targetPosition, floorYRotation, parentObjectTo != null, parentObjectTo != null ? parentObjectTo.NetworkObjectId : 0, matchRotationOfParent, droppedInShip);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallDroppingItemOnOtherClientsServerRpc(ulong itemNetworkId, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, bool hasParent, ulong parentObjectToId, bool matchRotationOfParent, bool droppedInShip, 
+            ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallDroppingItemOnOtherClientsClientRpc(itemNetworkId, placeObject, targetPosition, floorYRotation, hasParent, parentObjectToId, matchRotationOfParent, droppedInShip);
+        }
+
+        [ClientRpc]
+        private void CallDroppingItemOnOtherClientsClientRpc(ulong itemNetworkId, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, bool hasParent, ulong parentObjectToId, bool matchRotationOfParent, bool droppedInShip)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnDroppingItem(new Events.EventArgs.Player.DroppingItemEventArgs(this, Item.Get(itemNetworkId), placeObject, targetPosition, floorYRotation, hasParent ? NetworkManager.Singleton.SpawnManager.SpawnedObjects[parentObjectToId] : null, matchRotationOfParent, droppedInShip));
+        }
         #endregion
 
         /// <summary>

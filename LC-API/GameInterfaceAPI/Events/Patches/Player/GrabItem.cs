@@ -16,7 +16,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             if (Plugin.configVanillaSupport.Value) return null;
 
             StartGrabbingItemEventArgs ev = new StartGrabbingItemEventArgs(Features.Player.GetOrAdd(playerController),
-                Features.Item.Get(grabbableObject));
+                Features.Item.GetOrAdd(grabbableObject));
 
             Handlers.Player.OnStartGrabbingItem(ev);
 
@@ -28,7 +28,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             if (Plugin.configVanillaSupport.Value) return null;
 
             GrabbingItemEventArgs ev = new GrabbingItemEventArgs(Features.Player.GetOrAdd(playerController),
-                Features.Item.Get(grabbableObject));
+                Features.Item.GetOrAdd(grabbableObject));
 
             Handlers.Player.OnGrabbingItem(ev);
 
@@ -123,7 +123,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         internal static void CallEvent(PlayerControllerB player)
         {
             Handlers.Player.OnGrabbedItem(new GrabbedItemEventArgs(Features.Player.GetOrAdd(player),
-                Features.Item.Get(player.currentlyHeldObjectServer)));
+                Features.Item.GetOrAdd(player.currentlyHeldObjectServer)));
         }
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)

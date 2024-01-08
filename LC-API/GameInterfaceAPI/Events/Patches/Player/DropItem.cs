@@ -13,15 +13,22 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.DiscardHeldObject))]
     internal class DroppingItem
     {
-        internal static DroppingItemEventArgs CallEvent(PlayerControllerB player, bool placeObject, Vector3 targetPosition, 
+        internal static DroppingItemEventArgs CallEvent(PlayerControllerB playerController, bool placeObject, Vector3 targetPosition, 
             int floorYRotation, NetworkObject parentObjectTo, bool matchRotationOfParent, bool droppedInShip)
         {
             if (Plugin.configVanillaSupport.Value) return null;
 
-            DroppingItemEventArgs ev = new DroppingItemEventArgs(Features.Player.GetOrAdd(player),
-                Features.Item.Get(player.currentlyHeldObjectServer), placeObject, targetPosition, floorYRotation, parentObjectTo, matchRotationOfParent, droppedInShip);
+            Features.Player player = Features.Player.GetOrAdd(playerController);
+
+            Plugin.Log.LogInfo(playerController.currentlyHeldObjectServer == null);
+
+            Features.Item item = Features.Item.GetOrAdd(playerController.currentlyHeldObjectServer);
+
+            DroppingItemEventArgs ev = new DroppingItemEventArgs(player, item, placeObject, targetPosition, floorYRotation, parentObjectTo, matchRotationOfParent, droppedInShip);
 
             Handlers.Player.OnDroppingItem(ev);
+
+            player.CallDroppingItemOnOtherClients(item, placeObject, targetPosition, floorYRotation, parentObjectTo, matchRotationOfParent, droppedInShip);
 
             return ev;
         }

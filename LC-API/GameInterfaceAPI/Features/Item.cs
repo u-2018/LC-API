@@ -514,6 +514,14 @@ namespace LC_API.GameInterfaceAPI.Features
         #endregion
 
         #region Item getters
+        public static Item GetOrAdd(GrabbableObject grabbableObject)
+        {
+            if (Dictionary.TryGetValue(grabbableObject, out Item item))
+                return item;
+
+            return grabbableObject.gameObject.AddComponent<Item>(); ;
+        }
+
         public static Item Get(GrabbableObject grabbableObject)
         {
             if (Dictionary.TryGetValue(grabbableObject, out Item item))
@@ -525,6 +533,18 @@ namespace LC_API.GameInterfaceAPI.Features
         public static bool TryGet(GrabbableObject grabbableObject, out Item item)
         {
             return Dictionary.TryGetValue(grabbableObject, out item);
+        }
+
+        public static Item Get(ulong netId)
+        {
+            return List.FirstOrDefault(i => i.NetworkObjectId == netId);
+        }
+
+        public static bool TryGet(ulong netId, out Item item)
+        {
+            item = Get(netId);
+
+            return item != null;
         }
         #endregion
     }
