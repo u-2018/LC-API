@@ -6,7 +6,6 @@ using Unity.Netcode;
 using UnityEngine;
 using LC_API.Exceptions;
 using Steamworks.Ugc;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -18,12 +17,12 @@ namespace LC_API.GameInterfaceAPI.Features
         internal static GameObject PlayerNetworkPrefab { get; set; }
 
         /// <summary>
-        /// Gets a dictionary containing all <see cref="Player"/>s. Even inactive ones.
+        /// Gets a dictionary containing all <see cref="Player"/>s. Even inactive ones. When on a client, this may not contain all inactive players as they will not yet have been linked to a player controller.
         /// </summary>
         public static Dictionary<PlayerControllerB, Player> Dictionary { get; } = new Dictionary<PlayerControllerB, Player>();
 
         /// <summary>
-        /// Gets a list containing all <see cref="Player"/>s. Even inactive ones.
+        /// Gets a list containing all <see cref="Player"/>s. Even inactive ones. When on a client, this may not contain all inactive players as they will not yet have been linked to a player controller.
         /// </summary>
         public static IReadOnlyCollection<Player> List => Dictionary.Values;
 
@@ -54,6 +53,11 @@ namespace LC_API.GameInterfaceAPI.Features
         /// Gets the <see cref="Player"/>'s client id.
         /// </summary>
         public ulong ClientId => PlayerController.actualClientId;
+
+        /// <summary>
+        /// Gets the <see cref="Player"/>'s player object id. This should be used when accessing allPlayerScripts, or any other array that's index correlates to a player.
+        /// </summary>
+        public int PlayerObjectId => StartOfRound.Instance.ClientPlayerList[ClientId];
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s steam id.
@@ -99,6 +103,18 @@ namespace LC_API.GameInterfaceAPI.Features
             set
             {
                 PlayerController.playerUsername = value;
+                PlayerController.usernameBillboardText.text = value;
+                int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+                if (index != -1)
+                {
+                    StartOfRound.Instance.mapScreen.radarTargets[index].name = value;
+
+                    if (StartOfRound.Instance.mapScreen.targetTransformIndex == index) 
+                        StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + value;
+                }
+
+                LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = value;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
@@ -125,6 +141,17 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             PlayerController.playerUsername = name;
             PlayerController.usernameBillboardText.text = name;
+            int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+            if (index != -1)
+            {
+                StartOfRound.Instance.mapScreen.radarTargets[index].name = name;
+
+                if (StartOfRound.Instance.mapScreen.targetTransformIndex == index)
+                    StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + name;
+            }
+
+            LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = name;
         }
 
         /// <summary>
@@ -398,11 +425,7 @@ namespace LC_API.GameInterfaceAPI.Features
 
         private void Start()
         {
-            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
-            {
-                Dictionary.Add(PlayerController, this);
-            }
-            else
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) 
             {
                 PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
             }
@@ -411,6 +434,8 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                Dictionary.Add(PlayerController, this);
             }
 
             Inventory = GetComponent<PlayerInventory>();
@@ -436,6 +461,8 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                if (!Dictionary.ContainsKey(PlayerController)) Dictionary.Add(PlayerController, this);
             }
         }
         #endregion
