@@ -18,7 +18,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
             Tip tip = new Tip(headerText, bodyText, 5, 0, isWarning, useSave, prefsKey, 0);
 
-            if (player.CurrentTip != null)
+            if (player.CurrentTip != null && player.CurrentTip.TimeLeft >= 1.5f)
             {
                 // Ensures the current tip will continue afterwards
                 player.CurrentTip.TipId = int.MinValue;
