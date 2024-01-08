@@ -54,10 +54,10 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public ulong ClientId => PlayerController.actualClientId;
 
-        ///// <summary>
-        ///// Gets the <see cref="Player"/>'s player object id. This should be used when accessing allPlayerScripts, or any other array that's index correlates to a player.
-        ///// </summary>
-        //public int PlayerObjectId => StartOfRound.Instance.ClientPlayerList[ClientId];
+        /// <summary>
+        /// Gets the <see cref="Player"/>'s player object id. This should be used when accessing allPlayerScripts, or any other array that's index correlates to a player.
+        /// </summary>
+        public int PlayerObjectId => StartOfRound.Instance.ClientPlayerList[ClientId];
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s steam id.
