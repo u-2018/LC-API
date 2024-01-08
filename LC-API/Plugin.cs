@@ -1,18 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using GameNetcodeStuff;
 using HarmonyLib;
 using LC_API.ClientAPI;
 using LC_API.Comp;
 using LC_API.GameInterfaceAPI.Events;
-using LC_API.GameInterfaceAPI.Events.EventArgs.Player;
 using LC_API.ManualPatches;
 using LC_API.Networking;
-using LC_API.Networking.Serializers;
 using LC_API.ServerAPI;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
@@ -108,21 +103,6 @@ namespace LC_API
 
             Network.Init();
             Events.Patch(Harmony);
-
-            GameInterfaceAPI.Events.Handlers.Player.Left += OnLeft;
-        }
-
-        // Since the game neglects to reset these for all others on DC, we'll have to do it ourselves
-        internal void OnLeft(LeftEventArgs ev)
-        {
-            if (ev.Player.IsLocalPlayer)
-            {
-                foreach (PlayerControllerB playerController in StartOfRound.Instance.allPlayerScripts)
-                {
-                    playerController.isPlayerDead = false;
-                    playerController.isPlayerControlled = false;
-                }
-            }
         }
 
         internal void Start()
