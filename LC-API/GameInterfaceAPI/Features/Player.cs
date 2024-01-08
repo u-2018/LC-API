@@ -104,7 +104,16 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 PlayerController.playerUsername = value;
                 PlayerController.usernameBillboardText.text = value;
-                StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = value;
+                int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+                if (index != -1)
+                {
+                    StartOfRound.Instance.mapScreen.radarTargets[index].name = value;
+
+                    if (StartOfRound.Instance.mapScreen.targetTransformIndex == index) 
+                        StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + value;
+                }
+
                 LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = value;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
@@ -132,7 +141,16 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             PlayerController.playerUsername = name;
             PlayerController.usernameBillboardText.text = name;
-            StartOfRound.Instance.mapScreen.radarTargets.Find(t => t.transform == PlayerController.transform).name = name;
+            int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+            if (index != -1)
+            {
+                StartOfRound.Instance.mapScreen.radarTargets[index].name = name;
+
+                if (StartOfRound.Instance.mapScreen.targetTransformIndex == index)
+                    StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + name;
+            }
+
             LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = name;
         }
 
