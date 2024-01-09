@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - N/A
 
+## Version [3.3.2]
+
+- Fixed `Player.Postion` setter for v47.
+
 ## Version [3.3.1]
 - Fixed `Player.Username` not updating on the radar or escape menu.
   - Because of this, `Player.PlayerObjectId` has been added which returns the player's specified player object index in places like `allPlayerScripts`.

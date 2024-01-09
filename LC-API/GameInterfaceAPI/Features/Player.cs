@@ -217,7 +217,9 @@ namespace LC_API.GameInterfaceAPI.Features
 
             PlayerController.TeleportPlayer(position);
 
-            if (IsLocalPlayer) PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
+            bool inShip = PlayerController.playersManager.shipBounds.bounds.Contains(position);
+
+            if (IsLocalPlayer) PlayerController.UpdatePlayerPositionServerRpc(position, inShip, inShip, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
         }
 
         /// <summary>
