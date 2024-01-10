@@ -437,7 +437,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
 
-                Dictionary.Add(PlayerController, this);
+                if (!Dictionary.ContainsKey(PlayerController)) Dictionary.Add(PlayerController, this);
             }
 
             Inventory = GetComponent<PlayerInventory>();
