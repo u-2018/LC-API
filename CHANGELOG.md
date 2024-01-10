@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - With this, `GameTips` class has been deprecated, but will still work as expected.
 - Fixed `Player.Username` not updating on the radar or escape menu.  
 - Added `Player.PlayerObjectId` which returns the player's specified player object index in places like `allPlayerScripts`.
+- Fixed an issue where players would be added twice to the player's dictionary causing an error.
 
 ## Version [3.3.0]
 
