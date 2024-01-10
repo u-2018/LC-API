@@ -74,7 +74,7 @@ namespace LC_API.Networking
         {
             get
             {
-                if (_registerInfo == null)
+                if (_registerInfoGeneric == null)
                 {
                     foreach (MethodInfo methodInfo in typeof(Network).GetMethods())
                     {
