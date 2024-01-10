@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed an issue where network messages wouldn't properly be re-registered when rejoining.
 - Added a "Vanilla Support" config option that will disable installing the network bundle so you can play on vanilla servers.
   - The `Player` and `Item` classes will be completely disabled and this will probably break mods! Please just consider everyone in your game having LC API.
+- N/A
+
+## Version [3.3.2]
+
+- Fixed `Player.Postion` setter for v47.
+
+## Version [3.3.1]
+- Fixed `Player.Username` not updating on the radar or escape menu.
+  - Because of this, `Player.PlayerObjectId` has been added which returns the player's specified player object index in places like `allPlayerScripts`.
+- Fixed `Player.ActiveList` not resetting.
+- Fixed `Player.Dictionary` not resetting.
 
 ## Version [3.3.0]
 

@@ -31,6 +31,14 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             PlayerControllerB player = __instance.localPlayerController;
             Handlers.Player.OnLeft(new LeftEventArgs(Features.Player.GetOrAdd(player)));
             Cache.Player.ConnectedPlayers.Clear();
+
+            foreach (PlayerControllerB playerController in StartOfRound.Instance.allPlayerScripts)
+            {
+                playerController.isPlayerDead = false;
+                playerController.isPlayerControlled = false;
+            }
+
+            Features.Player.Dictionary.Clear();
         }
     }
 }
