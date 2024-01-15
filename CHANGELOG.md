@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 N/A
 
+## Version [3.4.1]
+- Fixed players not taking damage or dying.
+
 ## Version [3.4.0]
 - Added `Player.Died` and `Player.Hurt` *past-tense* events.
 - Added `Player.StartGrabbingItem` and `Player.GrabbingItem` and `Player.GrabbedItem` events.
