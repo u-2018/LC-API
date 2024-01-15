@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+N/A
+
+## Version [3.4.0]
 - Added `Player.Died` and `Player.Hurt` *past-tense* events.
 - Added `Player.StartGrabbingItem` and `Player.GrabbingItem` and `Player.GrabbedItem` events.
 - Added new `Player.ShowTip(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)` and `Player.QueueTip(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)`
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `Player.Username` not updating on the radar or escape menu.  
 - Added `Player.PlayerObjectId` which returns the player's specified player object index in places like `allPlayerScripts`.
 - Fixed an issue where players would be added twice to the player's dictionary causing an error.
+- Fixed an issue where giving an item to a player but not switching to it would cause it to not be held properly.
 
 ## Version [3.3.0]
 
