@@ -28,8 +28,11 @@ namespace LC_API.GameInterfaceAPI.Features
             Message = message;
             Duration = duration;
             TimeLeft = duration;
-
             Priority = priority;
+
+            IsWarning = isWarning;
+            UseSave = useSave;
+            PreferenceKey = prefsKey;
 
             TipId = tipId;
         }

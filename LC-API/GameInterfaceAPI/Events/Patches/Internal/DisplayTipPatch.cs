@@ -16,21 +16,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
             if (player == null) return true;
 
-            Tip tip = new Tip(headerText, bodyText, 5, 0, isWarning, useSave, prefsKey, 0);
-
-            if (player.CurrentTip != null && player.CurrentTip.TimeLeft >= 1.5f)
-            {
-                // Ensures the current tip will continue afterwards
-                player.CurrentTip.TipId = int.MinValue;
-                player.TipQueue.Insert(0, player.CurrentTip);
-            }
-
-            player.CurrentTip = tip;
-
-            HUDManager.Instance.tipsPanelAnimator.speed = 1;
-            HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
-
-            Features.Player.DisplayTip(tip.Header, tip.Message, isWarning, useSave, prefsKey);
+            player.ShowTip(headerText, bodyText, 5, isWarning, useSave, prefsKey);
 
             return false;
         }
