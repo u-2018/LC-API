@@ -1028,11 +1028,13 @@ namespace LC_API.GameInterfaceAPI.Features
                         HUDManager.Instance.itemSlotIcons[slot].enabled = true;
                     }
 
+                    item.GrabbableObject.heldByPlayerOnServer = Player.PlayerController;
                     item.GrabbableObject.EnablePhysics(false);
                     item.GrabbableObject.EnableItemMeshes(false);
                     item.GrabbableObject.playerHeldBy = Player.PlayerController;
                     item.GrabbableObject.hasHitGround = false;
                     item.GrabbableObject.isInFactory = Player.IsInFactory;
+                    item.GrabbableObject.isHeld = true;
 
                     Player.CarryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
 
@@ -1058,6 +1060,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 {
                     Player.PlayerController.SwitchToItemSlot(slot, item.GrabbableObject);
 
+                    item.GrabbableObject.heldByPlayerOnServer = Player.PlayerController;
                     item.GrabbableObject.EnablePhysics(false);
                     item.GrabbableObject.isHeld = true;
                     item.GrabbableObject.hasHitGround = false;
