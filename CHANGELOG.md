@@ -12,6 +12,7 @@ N/A
 ## Version [3.4.0]
 - Added `Player.Died` and `Player.Hurt` *past-tense* events.
 - Added `Player.StartGrabbingItem` and `Player.GrabbingItem` and `Player.GrabbedItem` events.
+- Added `Player.DroppingItem` event.
 - Added new `Player.ShowTip(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)` and `Player.QueueTip(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)`
   - `Player.ShowTip` bypasses the new tip queue.
   - Base game tips (or mods that use the `HUDManager.DisplayTip` method) will be treated as max priority tips for compatibility.
@@ -26,16 +27,6 @@ N/A
 - Added `Player.PlayerObjectId` which returns the player's specified player object index in places like `allPlayerScripts`.
 - Fixed an issue where players would be added twice to the player's dictionary causing an error.
 - Fixed an issue where giving an item to a player but not switching to it would cause it to not be held properly.
-
-## Version [3.3.0]
-
-- Fixed an issue where the old networking (`ServerAPI.Networking`) would not work properly.
-- Fixed issues with the build workflow.
-- Fixed the file structure in the README for manual installation.
-- Fixed an issue where network messages wouldn't properly be re-registered when rejoining.
-- Added a "Vanilla Support" config option that will disable installing the network bundle so you can play on vanilla servers.
-  - The `Player` and `Item` classes will be completely disabled and this will probably break mods! Please just consider everyone in your game having LC API.
-- N/A
 
 ## Version [3.3.2]
 
