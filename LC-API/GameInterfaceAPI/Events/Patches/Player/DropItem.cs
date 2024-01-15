@@ -20,8 +20,6 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
             Features.Player player = Features.Player.GetOrAdd(playerController);
 
-            Plugin.Log.LogInfo(playerController.currentlyHeldObjectServer == null);
-
             Features.Item item = Features.Item.GetOrAdd(playerController.currentlyHeldObjectServer);
 
             DroppingItemEventArgs ev = new DroppingItemEventArgs(player, item, placeObject, targetPosition, floorYRotation, parentObjectTo, matchRotationOfParent, droppedInShip);
@@ -61,7 +59,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                     new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
                     new CodeInstruction(OpCodes.Ldarg_1),
                     new CodeInstruction(OpCodes.Ldarg_3),
-                    new CodeInstruction(OpCodes.Ldloc_0),
+                    new CodeInstruction(OpCodes.Ldloc, 4),
                     new CodeInstruction(OpCodes.Ldarg_2),
                     new CodeInstruction(OpCodes.Ldarg, 4),
                     new CodeInstruction(OpCodes.Ldarg_0),
@@ -89,7 +87,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
                     // floorYRot2 = ev.FloorYRotation
                     new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DroppingItemEventArgs), nameof(DroppingItemEventArgs.FloorYRotation))),
-                    new CodeInstruction(OpCodes.Stloc_0),
+                    new CodeInstruction(OpCodes.Stloc, 4),
 
                     // parentObjectTo = ev.ParentObjectTo
                     new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DroppingItemEventArgs), nameof(DroppingItemEventArgs.ParentObjectTo))),
@@ -174,7 +172,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
                     // floorYRot = ev.FloorYRotation
                     new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DroppingItemEventArgs), nameof(DroppingItemEventArgs.FloorYRotation))),
-                    new CodeInstruction(OpCodes.Stloc, 4),
+                    new CodeInstruction(OpCodes.Stloc_0),
 
                     // parentObjectTo = ev.ParentObjectTo
                     new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DroppingItemEventArgs), nameof(DroppingItemEventArgs.ParentObjectTo))),

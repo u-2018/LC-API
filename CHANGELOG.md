@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 N/A
 
+## Version [3.4.2]
+- Fixed object placement not rotating with the player properly.
+
 ## Version [3.4.1]
 - Fixed players not taking damage or dying.
 

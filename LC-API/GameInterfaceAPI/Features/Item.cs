@@ -12,7 +12,7 @@ namespace LC_API.GameInterfaceAPI.Features
     public class Item : NetworkBehaviour
     {
         internal static GameObject ItemNetworkPrefab { get; set; }
-
+        
         /// <summary>
         /// Gets a dictionary containing all <see cref="Item"/>s that are currently spawned in the world or in <see cref="Player"/>s' inventories.
         /// </summary>

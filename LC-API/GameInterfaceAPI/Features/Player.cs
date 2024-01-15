@@ -818,7 +818,6 @@ namespace LC_API.GameInterfaceAPI.Features
         internal void CallDroppingItemOnOtherClients(Item item, bool placeObject, Vector3 targetPosition,
             int floorYRotation, NetworkObject parentObjectTo, bool matchRotationOfParent, bool droppedInShip)
         {
-            Plugin.Log.LogInfo(item == null);
             CallDroppingItemOnOtherClientsServerRpc(item.NetworkObjectId, placeObject, targetPosition, floorYRotation, parentObjectTo != null, parentObjectTo != null ? parentObjectTo.NetworkObjectId : 0, matchRotationOfParent, droppedInShip);
         }
 
