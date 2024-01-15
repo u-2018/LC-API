@@ -45,7 +45,7 @@ namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
         /// <summary>
         /// Gets or sets whether this damage is allowed to occur.
         /// </summary>
-        public bool IsAllowed { get; set; }
+        public bool IsAllowed { get; set; } = true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HurtingEventArgs"/> class.
