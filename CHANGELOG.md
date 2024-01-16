@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 N/A
 
+## Version [3.4.4]
+- Fixed an issue where dropping/grabbing items would not work properly if vanilla support was enabled.
+
 ## Version [3.4.3]
 - Fixed an issue where intro tips would play regardless of if you've seen them or not.
 
