@@ -51,24 +51,24 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
 
                 CodeInstruction[] inst = new CodeInstruction[]
                 {
-                // StartGrabbingItemEventArgs ev = GrabbingItem.CallStartGrabbingItem(PlayerControllerB, GrabbableObject)
-                new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.currentlyGrabbingObject))),
-                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(GrabbingItem), nameof(GrabbingItem.CallStartGrabbingItem))),
+                    // StartGrabbingItemEventArgs ev = GrabbingItem.CallStartGrabbingItem(PlayerControllerB, GrabbableObject)
+                    new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.currentlyGrabbingObject))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(GrabbingItem), nameof(GrabbingItem.CallStartGrabbingItem))),
 
-                // if (ev is null) -> base game code
-                new CodeInstruction(OpCodes.Dup),
-                new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
+                    // if (ev is null) -> base game code
+                    new CodeInstruction(OpCodes.Dup),
+                    new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
 
-                // if (!ev.IsAllowed) return
-                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(StartGrabbingItemEventArgs), nameof(StartGrabbingItemEventArgs.IsAllowed))),
-                new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
+                    // if (!ev.IsAllowed) return
+                    new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(StartGrabbingItemEventArgs), nameof(StartGrabbingItemEventArgs.IsAllowed))),
+                    new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
 
-                new CodeInstruction(OpCodes.Br, skipLabel),
-                new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
-                new CodeInstruction(OpCodes.Br, skipLabel),
-                new CodeInstruction(OpCodes.Ret).WithLabels(notAllowedLabel)
+                    new CodeInstruction(OpCodes.Br, skipLabel),
+                    new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
+                    new CodeInstruction(OpCodes.Br, skipLabel),
+                    new CodeInstruction(OpCodes.Ret).WithLabels(notAllowedLabel)
                 };
 
                 newInstructions.InsertRange(index, inst);
@@ -122,6 +122,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     {
         internal static void CallEvent(PlayerControllerB player)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             Handlers.Player.OnGrabbedItem(new GrabbedItemEventArgs(Features.Player.GetOrAdd(player),
                 Features.Item.GetOrAdd(player.currentlyHeldObjectServer)));
         }

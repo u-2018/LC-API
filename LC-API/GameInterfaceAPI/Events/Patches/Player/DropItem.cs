@@ -108,6 +108,15 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 {
                     new CodeInstruction(OpCodes.Br, skipLabel),
                     new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), nameof(PlayerControllerB.isInHangarShipRoom))),
+                    new CodeInstruction(OpCodes.Stloc, isInShipLocal.LocalIndex),
+                });
+
+                inst = inst.AddRangeToArray(animatorStuff);
+
+                inst = inst.AddRangeToArray(new CodeInstruction[]
+                {
                     new CodeInstruction(OpCodes.Br, skipLabel),
                     new CodeInstruction(OpCodes.Pop).WithLabels(notAllowedLabel),
                     new CodeInstruction(OpCodes.Ldarg_0),
@@ -193,6 +202,14 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 {
                     new CodeInstruction(OpCodes.Br, skipLabel),
                     new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
+                    new CodeInstruction(OpCodes.Ldloc_2),
+                    new CodeInstruction(OpCodes.Stloc, isInShipLocal.LocalIndex), 
+                });
+
+                inst = inst.AddRangeToArray(animatorStuff);
+
+                inst = inst.AddRangeToArray(new CodeInstruction[]
+                {
                     new CodeInstruction(OpCodes.Br, skipLabel),
                     new CodeInstruction(OpCodes.Pop).WithLabels(notAllowedLabel),
                     new CodeInstruction(OpCodes.Ldarg_0),
