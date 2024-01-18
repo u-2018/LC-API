@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 N/A
 
+## Version [3.4.5]
+- Fixed an issue where bodies would not ragdoll after death when using vanilla support.
+- Fixed an issue where hurting sometimes did not work while using vanilla support.
+
 ## Version [3.4.4]
 - Fixed an issue where dropping/grabbing items would not work properly if vanilla support was enabled.
 
