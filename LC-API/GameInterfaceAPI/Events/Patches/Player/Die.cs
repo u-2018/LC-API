@@ -97,6 +97,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Prefix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
             int causeOfDeath, int deathAnimation)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             Features.Player player = Features.Player.GetOrAdd(__instance);
 
             // The local player Dying event has already been fired
@@ -109,6 +111,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static void Postfix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
             int causeOfDeath, int deathAnimation)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             Handlers.Player.OnDied(new DiedEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
                 spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
         }
