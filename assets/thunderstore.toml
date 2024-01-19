@@ -8,7 +8,7 @@ repository = "https://thunderstore.io"
 namespace = "2018"
 name = "LC_API"
 description = "Multipurpose modding API for Lethal Company"
-websiteUrl = "https://github.com/u-2018/LC-API"
+websiteUrl = "https://github.com/steven4547466/LC-API"
 containsNsfwContent = false
 
 [package.dependencies]
@@ -20,7 +20,7 @@ readme = "../README.md"
 outdir = "../dist"
 
 [[build.copy]]
-source = "../LC-API/bin/LC_API.dll"
+source = "../LC-API/bin/netstandard2.1/LC_API.dll"
 target = "BepInEx/plugins/LC_API.dll"
 
 [[build.copy]]

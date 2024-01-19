@@ -1,8 +1,9 @@
 using LC_API.GameInterfaceAPI;
 using LC_API.GameInterfaceAPI.Features;
-using LC_API.Networking;
 using LC_API.ServerAPI;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace LC_API.Comp
 {
@@ -12,6 +13,12 @@ namespace LC_API.Comp
         private static int playerCount;
         private static bool wanttoCheckMods;
         private static float lobbychecktimer;
+
+        public void Awake()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
         public void Update()
         {
             GameState.GSUpdate();
@@ -48,6 +55,18 @@ namespace LC_API.Comp
             {
                 wanttoCheckMods = false;
                 CD();
+            }
+        }
+
+        // For pre-placed items
+        internal void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            foreach (GrabbableObject grabbable in FindObjectsOfType<GrabbableObject>())
+            {
+                if (!grabbable.TryGetComponent(out GameInterfaceAPI.Features.Item _))
+                {
+                    grabbable.gameObject.AddComponent<GameInterfaceAPI.Features.Item>();
+                }
             }
         }
 

@@ -1,9 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
-using LC_API.GameInterfaceAPI;
 using LC_API.GameInterfaceAPI.Features;
 using LC_API.Networking;
-using LC_API.ServerAPI;
 using System.Collections.Generic;
 
 namespace LC_API
@@ -38,8 +36,8 @@ namespace LC_API
         public static void OtherPlayerCheatDetector()
         {
             Plugin.Log.LogWarning("Asking all other players for their mod list..");
-            GameTips.ShowTip("Mod List:", "Asking all other players for installed mods..");
-            GameTips.ShowTip("Mod List:", "Check the logs for more detailed results.\n<size=13>(Note that if someone doesnt show up on the list, they may not have LC_API installed)</size>");
+            Player.LocalPlayer.QueueTip("Mod List:", "Asking all other players for installed mods..");
+            Player.LocalPlayer.QueueTip("Mod List:", "Check the logs for more detailed results.\n<size=13>(Note that if someone doesnt show up on the list, they may not have LC_API installed)</size>");
             Network.Broadcast(SIG_REQ_GUID);
         }
 
@@ -48,7 +46,7 @@ namespace LC_API
         {
             Player player = Player.Get(senderId);
             string data = $"{player.Username} responded with these mods:\n{string.Join("\n", mods)}";
-            GameTips.ShowTip("Mod List:", data);
+            Player.LocalPlayer.QueueTip("Mod List:", data);
             Plugin.Log.LogWarning(data);
         }
 

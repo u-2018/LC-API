@@ -9,11 +9,13 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     {
         private static void Prefix(StartOfRound __instance, int playerObjectNumber, ulong clientId)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             PlayerControllerB player = __instance.allPlayerScripts[playerObjectNumber];
             if (__instance.ClientPlayerList.ContainsKey(clientId) &&
-                Cache.Player.ConnectedPlayers.Contains(player.playerSteamId))
+                Cache.Player.ConnectedPlayers.Contains(player.actualClientId))
             {
-                Cache.Player.ConnectedPlayers.Remove(player.playerSteamId);
+                Cache.Player.ConnectedPlayers.Remove(player.actualClientId);
                 Handlers.Player.OnLeft(new LeftEventArgs(Features.Player.GetOrAdd(player)));
             }
         }
@@ -24,9 +26,19 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
     {
         private static void Prefix(StartOfRound __instance)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             PlayerControllerB player = __instance.localPlayerController;
             Handlers.Player.OnLeft(new LeftEventArgs(Features.Player.GetOrAdd(player)));
             Cache.Player.ConnectedPlayers.Clear();
+
+            foreach (PlayerControllerB playerController in StartOfRound.Instance.allPlayerScripts)
+            {
+                playerController.isPlayerDead = false;
+                playerController.isPlayerControlled = false;
+            }
+
+            Features.Player.Dictionary.Clear();
         }
     }
 }

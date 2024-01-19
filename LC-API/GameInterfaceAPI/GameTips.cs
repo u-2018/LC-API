@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace LC_API.GameInterfaceAPI
@@ -6,6 +7,7 @@ namespace LC_API.GameInterfaceAPI
     /// <summary>
     /// Allows for displaying information through the tip box on the players screen, without any tips overlapping.
     /// </summary>
+    [Obsolete("Use Player::QueueTip instead.")]
     public class GameTips
     {
         private static List<string> tipHeaders = new List<string>();

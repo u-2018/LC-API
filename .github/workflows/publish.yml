@@ -25,12 +25,12 @@ jobs:
         run: |
           dotnet restore
           
-      - name: Setup NetcodeWeaver
-        id: setup-netcode-weaver
-        uses: Lordfirespeed/setup-netcode-weaver@v0
+      - name: Setup Netcode Patcher
+        id: setup-netcode-patcher
+        uses: Lordfirespeed/setup-netcode-patcher@v0
         with:
-          netcode-weaver-version: 2.4.0
-          deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "45.0.2-alpha.1"}]'
+          netcode-patcher-version: 2.4.0
+          deps-packages: '[{"id": "UnityEngine.Modules", "version": "2022.3.9"}, {"id": "LethalCompany.GameLibs.Steam", "version": "49.0.0-alpha.1"}]'
           target-framework: "netstandard2.1"
 
       - name: Install Thunderstore CLI
@@ -39,7 +39,7 @@ jobs:
           
       - name: Build and pack solution
         run: |
-          dotnet pack -p:NETCODE_PATCHER_DIR="${{ steps.setup-netcode-weaver.outputs.netcode-weaver-directory }}"
+          dotnet pack -p:NETCODE_PATCHER_DIR="${{ steps.setup-netcode-patcher.outputs.netcode-patcher-directory }}"
 
       - name: Upload Thunderstore artifact
         uses: actions/upload-artifact@v4
@@ -51,50 +51,71 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nupkg-build
-          path: bin/*.nupkg
+          path: ./*/bin/*.nupkg
   
   upload-release-artifacts:
     name: Upload Release Artifacts
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       
       - name: Upload artifacts to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} dist/*.zip bin/*.nupkg
+        run: gh release upload ${{ github.event.release.tag_name }} thunderstore-build/*.zip nupkg-build/*/bin/*.nupkg
       
   deploy-nuget:
     name: Deploy to NuGet
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download nupkg artifact
         uses: actions/download-artifact@v4
         with:
           name: nupkg-build
-
-      - name: Validate artifact exists
-        run: test -d ./bin
+        
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.100"
       
       - name: Publish to NuGet.org
         run: |
-          dotnet nuget push bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push ./*/bin/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
   
   deploy-thunderstore:
     name: Deploy to Thunderstore
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+        
       - name: Download Thunderstore artifact
         uses: actions/download-artifact@v4
         with:
           name: thunderstore-build
+          path: ./dist
 
       - name: Validate artifact exists
         run: test -d ./dist
+
+      - name: Setup .NET environment
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.100"
+
+      - name: Install Thunderstore CLI
+        run: |
+          dotnet tool install -g tcli
           
       - name: Publish to Thunderstore
         env:

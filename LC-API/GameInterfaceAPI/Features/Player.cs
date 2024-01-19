@@ -1,12 +1,10 @@
 ﻿using GameNetcodeStuff;
+using LC_API.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using LC_API.Exceptions;
-using Steamworks.Ugc;
-using static UnityEngine.UIElements.StylePropertyAnimationSystem;
 
 namespace LC_API.GameInterfaceAPI.Features
 {
@@ -18,12 +16,12 @@ namespace LC_API.GameInterfaceAPI.Features
         internal static GameObject PlayerNetworkPrefab { get; set; }
 
         /// <summary>
-        /// Gets a dictionary containing all <see cref="Player"/>s. Even inactive ones.
+        /// Gets a dictionary containing all <see cref="Player"/>s. Even inactive ones. When on a client, this may not contain all inactive players as they will not yet have been linked to a player controller.
         /// </summary>
         public static Dictionary<PlayerControllerB, Player> Dictionary { get; } = new Dictionary<PlayerControllerB, Player>();
 
         /// <summary>
-        /// Gets a list containing all <see cref="Player"/>s. Even inactive ones.
+        /// Gets a list containing all <see cref="Player"/>s. Even inactive ones. When on a client, this may not contain all inactive players as they will not yet have been linked to a player controller.
         /// </summary>
         public static IReadOnlyCollection<Player> List => Dictionary.Values;
 
@@ -48,12 +46,28 @@ namespace LC_API.GameInterfaceAPI.Features
         /// </summary>
         public PlayerControllerB PlayerController { get; internal set; }
 
+        /// <summary>
+        /// Gets a <see cref="List{T}"/> of <see cref="Tip"/>s that will show to the player.
+        /// </summary>
+        public List<Tip> TipQueue { get; internal set; } = new List<Tip>();
+
+        internal Tip CurrentTip { get; set; }
+
+        internal int NextTipId = int.MinValue;
+
+        internal ClientRpcParams SendToMeParams { get; set; }
+
         internal NetworkVariable<ulong> NetworkClientId { get; } = new NetworkVariable<ulong>(ulong.MaxValue);
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s client id.
         /// </summary>
         public ulong ClientId => PlayerController.actualClientId;
+
+        /// <summary>
+        /// Gets the <see cref="Player"/>'s player object id. This should be used when accessing allPlayerScripts, or any other array that's index correlates to a player.
+        /// </summary>
+        public int PlayerObjectId => StartOfRound.Instance.ClientPlayerList[ClientId];
 
         /// <summary>
         /// Gets the <see cref="Player"/>'s steam id.
@@ -99,6 +113,18 @@ namespace LC_API.GameInterfaceAPI.Features
             set
             {
                 PlayerController.playerUsername = value;
+                PlayerController.usernameBillboardText.text = value;
+                int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+                if (index != -1)
+                {
+                    StartOfRound.Instance.mapScreen.radarTargets[index].name = value;
+
+                    if (StartOfRound.Instance.mapScreen.targetTransformIndex == index) 
+                        StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + value;
+                }
+
+                LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = value;
 
                 if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
                 {
@@ -125,6 +151,17 @@ namespace LC_API.GameInterfaceAPI.Features
         {
             PlayerController.playerUsername = name;
             PlayerController.usernameBillboardText.text = name;
+            int index = StartOfRound.Instance.mapScreen.radarTargets.FindIndex(t => t.transform == PlayerController.transform);
+
+            if (index != -1)
+            {
+                StartOfRound.Instance.mapScreen.radarTargets[index].name = name;
+
+                if (StartOfRound.Instance.mapScreen.targetTransformIndex == index)
+                    StartOfRound.Instance.mapScreenPlayerName.text = "MONITORING: " + name;
+            }
+
+            LocalPlayer.PlayerController.quickMenuManager.playerListSlots[PlayerObjectId].usernameHeader.text = name;
         }
 
         /// <summary>
@@ -190,7 +227,9 @@ namespace LC_API.GameInterfaceAPI.Features
 
             PlayerController.TeleportPlayer(position);
 
-            if (IsLocalPlayer) PlayerController.UpdatePlayerPositionServerRpc(position, PlayerController.isInElevator, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
+            bool inShip = PlayerController.playersManager.shipBounds.bounds.Contains(position);
+
+            if (IsLocalPlayer) PlayerController.UpdatePlayerPositionServerRpc(position, inShip, inShip, PlayerController.isExhausted, PlayerController.thisController.isGrounded);
         }
 
         /// <summary>
@@ -396,13 +435,173 @@ namespace LC_API.GameInterfaceAPI.Features
             }
         }
 
+        /// <summary>
+        /// Sets the <see cref="Player"/>'s username locally and doesn't attempt to network it.
+        /// </summary>
+        /// <param name="name">The new name.</param>
+        public void SetPlayerUsernameLocally(string name)
+        {
+            PlayerController.playerUsername = name;
+            PlayerController.usernameBillboardText.text = name;
+        }
+
+        /// <summary>
+        /// Queues a <see cref="Tip"/> to show to the <see cref="Player"/>.
+        /// </summary>
+        /// <param name="header">The <see cref="Tip"/>'s header</param>
+        /// <param name="message">The <see cref="Tip"/>'s message.</param>
+        /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
+        /// <param name="priority">The priority of the <see cref="Tip"/>. Higher means will show sooner. Goes to the end of the priority list.</param>
+        /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips.</param>
+        /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
+        public void QueueTip(string header, string message, float duration = 5f, int priority = 0, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
+        {
+            if (!IsLocalPlayer)
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new NoAuthorityException("Tried to show tips to other clients from client.");
+                }
+
+                QueueTipClientRpc(header, message, duration, priority, isWarning, useSave, prefsKey, SendToMeParams);
+
+                return;
+            }
+
+            QueueTipInternal(header, message, duration, priority, isWarning, useSave, prefsKey);
+        }
+
+        [ClientRpc]
+        private void QueueTipClientRpc(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey, ClientRpcParams clientRpcParams = default)
+        {
+            QueueTipInternal(header, message, duration, priority, isWarning, useSave, prefsKey);
+        }
+
+        internal void QueueTipInternal(string header, string message, float duration, int priority, bool isWarning, bool useSave, string prefsKey)
+        {
+            Tip tip = new Tip(header, message, duration, priority, isWarning, useSave, prefsKey, NextTipId++);
+
+            if (!HUDManager.Instance.CanTipDisplay(tip.IsWarning, tip.UseSave, tip.PreferenceKey))
+            {
+                return;
+            }
+
+            if (TipQueue.Count == 0)
+            {
+                TipQueue.Add(tip);
+                return;
+            }
+
+            if (TipQueue[TipQueue.Count - 1].CompareTo(tip) <= 0)
+            {
+                TipQueue.Add(tip);
+                return;
+            }
+
+            if (TipQueue[0].CompareTo(tip) >= 0)
+            {
+                TipQueue.Insert(0, tip);
+                return;
+            }
+
+            int index = TipQueue.BinarySearch(tip);
+
+            if (index < 0) index = ~index;
+
+            TipQueue.Insert(index, tip);
+        }
+
+        /// <summary>
+        /// Shows a <see cref="Tip"/> to the <see cref="Player"/>, bypassing the queue.
+        /// </summary>
+        /// <param name="header">The <see cref="Tip"/>'s header</param>
+        /// <param name="message">The <see cref="Tip"/>'s message.</param>
+        /// <param name="duration">The <see cref="Tip"/>'s duration.</param>
+        /// <param name="isWarning">Whether or not this <see cref="Tip"/> is a warning.</param>
+        /// <param name="useSave">Whether or not to save <see langword="true"/> to the <paramref name="prefsKey"/>. Useful for showing one time only tips.</param>
+        /// <param name="prefsKey">The key to save as when <paramref name="useSave"/> is set to <see langword="true" /></param>
+        public void ShowTip(string header, string message, float duration = 5f, bool isWarning = false, bool useSave = false, string prefsKey = "LC_Tip1")
+        {
+            if (!IsLocalPlayer)
+            {
+                if (!(NetworkManager.IsServer || NetworkManager.IsHost))
+                {
+                    throw new NoAuthorityException("Tried to show tips to other clients from client.");
+                }
+
+                ShowTipClientRpc(header, message, duration, isWarning, useSave, prefsKey, SendToMeParams);
+
+                return;
+            }
+
+            ShowTipInternal(header, message, duration, isWarning, useSave, prefsKey);
+        }
+
+        [ClientRpc]
+        private void ShowTipClientRpc(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey, ClientRpcParams clientRpcParams = default)
+        {
+            ShowTipInternal(header, message, duration, isWarning, useSave, prefsKey);
+        }
+
+        private void ShowTipInternal(string header, string message, float duration, bool isWarning, bool useSave, string prefsKey)
+        {
+            Tip tip = new Tip(header, message, duration, int.MaxValue, isWarning, useSave, prefsKey, NextTipId++);
+
+            if (!HUDManager.Instance.CanTipDisplay(tip.IsWarning, tip.UseSave, tip.PreferenceKey))
+            {
+                return;
+            }
+
+            // if there is a tip with >= 1.5 seconds left, queue it back up
+            if (CurrentTip != null && CurrentTip.TimeLeft >= 1.5f)
+            {
+                // Ensures the current tip will continue afterwards
+                CurrentTip.TipId = int.MinValue;
+                TipQueue.Insert(0, CurrentTip);
+            }
+
+            CurrentTip = tip;
+
+            HUDManager.Instance.tipsPanelAnimator.speed = 1;
+            HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
+
+            DisplayTip();
+        }
+
+        internal void DisplayTip()
+        {
+            if (CurrentTip == null) return;
+
+            if (!HUDManager.Instance.CanTipDisplay(CurrentTip.IsWarning, CurrentTip.UseSave, CurrentTip.PreferenceKey))
+            {
+                CurrentTip = null;
+                return;
+            }
+
+            if (CurrentTip.UseSave)
+            {
+                ES3.Save(CurrentTip.PreferenceKey, true, "LCGeneralSaveData");
+            }
+
+            HUDManager.Instance.tipsPanelHeader.text = CurrentTip.Header;
+            HUDManager.Instance.tipsPanelBody.text = CurrentTip.Message;
+
+            if (CurrentTip.IsWarning)
+            {
+                HUDManager.Instance.tipsPanelAnimator.SetTrigger("TriggerWarning");
+                RoundManager.PlayRandomClip(HUDManager.Instance.UIAudio, HUDManager.Instance.warningSFX, false, 1f, 0);
+                return;
+            }
+
+            HUDManager.Instance.tipsPanelAnimator.SetTrigger("TriggerHint");
+            RoundManager.PlayRandomClip(HUDManager.Instance.UIAudio, HUDManager.Instance.tipsSFX, false, 1f, 0);
+        }
+
+        #region Unity related things
         private void Start()
         {
-            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)
-            {
-                Dictionary.Add(PlayerController, this);
-            }
-            else
+            if (!(NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost)) 
             {
                 PlayerController = StartOfRound.Instance.allPlayerScripts.FirstOrDefault(c => c.actualClientId == NetworkClientId.Value);
             }
@@ -411,11 +610,53 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                if (!Dictionary.ContainsKey(PlayerController)) Dictionary.Add(PlayerController, this);
+
+                SendToMeParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ClientId }
+                    }
+                };
             }
 
             Inventory = GetComponent<PlayerInventory>();
 
             NetworkClientId.OnValueChanged += clientIdChanged;
+        }
+
+        private void Update()
+        {
+            if (!IsLocalPlayer) return;
+
+            if (CurrentTip != null)
+            {
+                // Prevent the panel from automatically disappearing after 5 seconds
+                if (HUDManager.Instance.tipsPanelAnimator.speed > 0 &&
+                    HUDManager.Instance.tipsPanelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.9f)
+                {
+                    HUDManager.Instance.tipsPanelAnimator.speed = 0;
+                }
+
+                CurrentTip.TimeLeft -= Time.deltaTime;
+
+                if (CurrentTip.TimeLeft <= 0)
+                {
+                    HUDManager.Instance.tipsPanelAnimator.speed = 1;
+                    HUDManager.Instance.tipsPanelAnimator.ResetTrigger("TriggerHint");
+                    CurrentTip = null;
+                }
+            }
+
+            if (CurrentTip == null && TipQueue.Count > 0)
+            {
+                CurrentTip = TipQueue[0];
+                TipQueue.RemoveAt(0);
+
+                DisplayTip();
+            }
         }
 
         /// <summary>
@@ -426,6 +667,7 @@ namespace LC_API.GameInterfaceAPI.Features
             NetworkClientId.OnValueChanged -= clientIdChanged;
             base.OnDestroy();
         }
+        #endregion
 
         #region Network variable handlers
         private void clientIdChanged(ulong oldId, ulong newId)
@@ -436,6 +678,16 @@ namespace LC_API.GameInterfaceAPI.Features
             {
                 if (IsLocalPlayer) LocalPlayer = this;
                 if (IsHost) HostPlayer = this;
+
+                if (!Dictionary.ContainsKey(PlayerController)) Dictionary.Add(PlayerController, this);
+
+                SendToMeParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { ClientId }
+                    }
+                };
             }
         }
         #endregion
@@ -525,6 +777,83 @@ namespace LC_API.GameInterfaceAPI.Features
         }
         #endregion
 
+        #region Event stuff
+        internal void CallHurtingOnOtherClients(int damage, bool hasSFX, CauseOfDeath causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            CallHurtingOnOtherClientsServerRpc(damage, hasSFX, (int)causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallHurtingOnOtherClientsServerRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force, ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallHurtingOnOtherClientsClientRpc(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ClientRpc]
+        private void CallHurtingOnOtherClientsClientRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnHurting(new Events.EventArgs.Player.HurtingEventArgs(this, damage, hasSFX,
+                (CauseOfDeath)causeOfDeath, deathAnimation, fallDamage, force));
+        }
+
+        internal void CallHurtOnOtherClients(int damage, bool hasSFX, CauseOfDeath causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            CallHurtOnOtherClientsServerRpc(damage, hasSFX, (int)causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallHurtOnOtherClientsServerRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force, ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallHurtOnOtherClientsClientRpc(damage, hasSFX, causeOfDeath, deathAnimation, fallDamage, force);
+        }
+
+        [ClientRpc]
+        private void CallHurtOnOtherClientsClientRpc(int damage, bool hasSFX, int causeOfDeath,
+            int deathAnimation, bool fallDamage, Vector3 force)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnHurt(new Events.EventArgs.Player.HurtEventArgs(this, damage, hasSFX,
+                (CauseOfDeath)causeOfDeath, deathAnimation, fallDamage, force));
+        }
+
+        internal void CallDroppingItemOnOtherClients(Item item, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, NetworkObject parentObjectTo, bool matchRotationOfParent, bool droppedInShip)
+        {
+            CallDroppingItemOnOtherClientsServerRpc(item.NetworkObjectId, placeObject, targetPosition, floorYRotation, parentObjectTo != null, parentObjectTo != null ? parentObjectTo.NetworkObjectId : 0, matchRotationOfParent, droppedInShip);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CallDroppingItemOnOtherClientsServerRpc(ulong itemNetworkId, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, bool hasParent, ulong parentObjectToId, bool matchRotationOfParent, bool droppedInShip, 
+            ServerRpcParams serverRpcParams = default)
+        {
+            if (serverRpcParams.Receive.SenderClientId != ClientId) return;
+
+            CallDroppingItemOnOtherClientsClientRpc(itemNetworkId, placeObject, targetPosition, floorYRotation, hasParent, parentObjectToId, matchRotationOfParent, droppedInShip);
+        }
+
+        [ClientRpc]
+        private void CallDroppingItemOnOtherClientsClientRpc(ulong itemNetworkId, bool placeObject, Vector3 targetPosition,
+            int floorYRotation, bool hasParent, ulong parentObjectToId, bool matchRotationOfParent, bool droppedInShip)
+        {
+            if (IsLocalPlayer) return;
+
+            Events.Handlers.Player.OnDroppingItem(new Events.EventArgs.Player.DroppingItemEventArgs(this, Item.Get(itemNetworkId), placeObject, targetPosition, floorYRotation, hasParent ? NetworkManager.Singleton.SpawnManager.SpawnedObjects[parentObjectToId] : null, matchRotationOfParent, droppedInShip));
+        }
+        #endregion
+
         /// <summary>
         /// Encapsulates a <see cref="Player"/>'s inventory to provide useful tools to it.
         /// </summary>
@@ -544,7 +873,8 @@ namespace LC_API.GameInterfaceAPI.Features
             /// <summary>
             /// Gets the <see cref="Player"/>'s current item slot.
             /// </summary>
-            public int CurrentSlot {
+            public int CurrentSlot
+            {
                 get
                 {
                     return Player.PlayerController.currentItemSlot;
@@ -556,7 +886,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 }
             }
 
-            [ServerRpc]
+            [ServerRpc(RequireOwnership = false)]
             private void SetSlotServerRpc(int slot, ServerRpcParams serverRpcParams = default)
             {
                 if (serverRpcParams.Receive.SenderClientId != Player.ClientId) return;
@@ -710,11 +1040,13 @@ namespace LC_API.GameInterfaceAPI.Features
                         HUDManager.Instance.itemSlotIcons[slot].enabled = true;
                     }
 
+                    item.GrabbableObject.heldByPlayerOnServer = Player.PlayerController;
                     item.GrabbableObject.EnablePhysics(false);
                     item.GrabbableObject.EnableItemMeshes(false);
                     item.GrabbableObject.playerHeldBy = Player.PlayerController;
                     item.GrabbableObject.hasHitGround = false;
                     item.GrabbableObject.isInFactory = Player.IsInFactory;
+                    item.GrabbableObject.isHeld = true;
 
                     Player.CarryWeight += Mathf.Clamp(item.ItemProperties.weight - 1f, 0f, 10f);
 
@@ -740,6 +1072,7 @@ namespace LC_API.GameInterfaceAPI.Features
                 {
                     Player.PlayerController.SwitchToItemSlot(slot, item.GrabbableObject);
 
+                    item.GrabbableObject.heldByPlayerOnServer = Player.PlayerController;
                     item.GrabbableObject.EnablePhysics(false);
                     item.GrabbableObject.isHeld = true;
                     item.GrabbableObject.hasHitGround = false;
@@ -753,7 +1086,7 @@ namespace LC_API.GameInterfaceAPI.Features
                     if (!Player.IsLocalPlayer)
                     {
                         item.GrabbableObject.parentObject = Player.PlayerController.serverItemHolder;
-                    } 
+                    }
                     else
                     {
                         item.GrabbableObject.parentObject = Player.PlayerController.localItemHolder;

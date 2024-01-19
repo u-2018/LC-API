@@ -1,7 +1,5 @@
-﻿using BepInEx;
-using HarmonyLib;
+﻿using HarmonyLib;
 using LC_API.BundleAPI;
-using LC_API.Networking;
 using System;
 using System.IO;
 using Unity.Netcode;
@@ -18,6 +16,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Internal
 
         private static void Postfix(GameNetworkManager __instance)
         {
+            if (Plugin.configVanillaSupport.Value) return;
+
             if (!File.Exists(BUNDLE_PATH))
             {
                 throw new Exception("Networking bundle not found at expected path.");

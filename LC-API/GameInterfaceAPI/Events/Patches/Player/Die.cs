@@ -13,6 +13,8 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
         private static DyingEventArgs CallEvent(PlayerControllerB playerController, Vector3 force, bool spawnBody,
             CauseOfDeath causeOfDeath, int deathAnimation)
         {
+            if (Plugin.configVanillaSupport.Value) return null;
+
             DyingEventArgs ev = new DyingEventArgs(Features.Player.GetOrAdd(playerController), force, spawnBody,
                 causeOfDeath, deathAnimation);
 
@@ -29,6 +31,7 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             int index = newInstructions.FindLastIndex(i => i.OperandIs(AccessTools.Method(typeof(PlayerControllerB),
                 nameof(PlayerControllerB.AllowPlayerDeath)))) + offset;
 
+            Label nullLabel = generator.DefineLabel();
             Label notAllowedLabel = generator.DefineLabel();
             Label skipLabel = generator.DefineLabel();
 
@@ -42,7 +45,12 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Ldarg, 4),
                 new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Dying), nameof(Dying.CallEvent))),
                 new CodeInstruction(OpCodes.Dup),
-                // if (!ev.IsAllwed) return
+
+                // if (ev is null) -> base game code
+                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Brfalse_S, nullLabel),
+
+                // if (!ev.IsAllowed) return
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(DyingEventArgs), nameof(DyingEventArgs.IsAllowed))),
                 new CodeInstruction(OpCodes.Brfalse_S, notAllowedLabel),
 
@@ -68,6 +76,9 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
                 new CodeInstruction(OpCodes.Starg_S, 4),
 
                 new CodeInstruction(OpCodes.Br, skipLabel),
+                new CodeInstruction(OpCodes.Pop).WithLabels(nullLabel),
+                new CodeInstruction(OpCodes.Pop),
+                new CodeInstruction(OpCodes.Br, skipLabel),
                 new CodeInstruction(OpCodes.Pop).WithLabels(notAllowedLabel),
                 new CodeInstruction(OpCodes.Ret)
             };
@@ -77,6 +88,33 @@ namespace LC_API.GameInterfaceAPI.Events.Patches.Player
             newInstructions[index + inst.Length].labels.Add(skipLabel);
 
             for (int i = 0; i < newInstructions.Count; i++) yield return newInstructions[i];
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.KillPlayerClientRpc))]
+    internal class Died
+    {
+        private static void Prefix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
+            int causeOfDeath, int deathAnimation)
+        {
+            if (Plugin.configVanillaSupport.Value) return;
+
+            Features.Player player = Features.Player.GetOrAdd(__instance);
+
+            // The local player Dying event has already been fired
+            if (player.IsLocalPlayer) return;
+
+            Handlers.Player.OnDying(new DyingEventArgs(player, bodyVelocity,
+                spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
+        }
+
+        private static void Postfix(PlayerControllerB __instance, bool spawnBody, Vector3 bodyVelocity,
+            int causeOfDeath, int deathAnimation)
+        {
+            if (Plugin.configVanillaSupport.Value) return;
+
+            Handlers.Player.OnDied(new DiedEventArgs(Features.Player.GetOrAdd(__instance), bodyVelocity,
+                spawnBody, (CauseOfDeath)causeOfDeath, deathAnimation));
         }
     }
 }

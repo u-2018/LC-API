@@ -3,49 +3,44 @@
 namespace LC_API.GameInterfaceAPI.Events.EventArgs.Player
 {
     /// <summary>
-    /// Contains all the information before a <see cref="Features.Player"/> is dies.
+    /// Contains all the information after a <see cref="Features.Player"/> dies.
     /// </summary>
-    public class DyingEventArgs : System.EventArgs
+    public class DiedEventArgs : System.EventArgs
     {
         /// <summary>
-        /// Gets the player that is dying.
+        /// Gets the player that died.
         /// </summary>
         public Features.Player Player { get; }
 
         /// <summary>
-        /// Gets or sets the force to add to the ragdoll.
+        /// Gets the force that was added to the ragdoll.
         /// </summary>
-        public Vector3 Force { get; set; }
+        public Vector3 Force { get; }
 
         /// <summary>
-        /// Gets or sets whether or not to spawn a ragdoll.
+        /// Gets whether or not a ragdoll was spawned.
         /// </summary>
-        public bool SpawnBody { get; set; }
+        public bool SpawnBody { get; }
 
         /// <summary>
-        /// Gets or sets the cause of death.
+        /// Gets the cause of death.
         /// </summary>
-        public CauseOfDeath CauseOfDeath { get; set; }
+        public CauseOfDeath CauseOfDeath { get; }
 
         /// <summary>
-        /// Gets or sets the death animation index.
+        /// Gets the death animation index.
         /// </summary>
-        public int DeathAnimation { get; set; }
+        public int DeathAnimation { get; }
 
         /// <summary>
-        /// Gets or sets whether this death is allowed to occur.
-        /// </summary>
-        public bool IsAllowed { get; set; } = true;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DyingEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="DiedEventArgs"/> class.
         /// </summary>
         /// <param name="player"><inheritdoc cref="Player" /></param>
         /// <param name="force"><inheritdoc cref="Force" /></param>
         /// <param name="spawnBody"><inheritdoc cref="SpawnBody" /></param>
         /// <param name="causeOfDeath"><inheritdoc cref="CauseOfDeath" /></param>
         /// <param name="deathAnimation"><inheritdoc cref="DeathAnimation" /></param>
-        public DyingEventArgs(Features.Player player, Vector3 force, bool spawnBody, CauseOfDeath causeOfDeath, int deathAnimation)
+        public DiedEventArgs(Features.Player player, Vector3 force, bool spawnBody, CauseOfDeath causeOfDeath, int deathAnimation)
         {
             Player = player;
             Force = force;
